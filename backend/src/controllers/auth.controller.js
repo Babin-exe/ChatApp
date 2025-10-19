@@ -45,7 +45,8 @@ export const signup = async (req, res) => {
     await sendEmail(
       email,
       "Verify Your Email",
-      `Click here to verify : ${verifyUrl}`
+      `<p>Click the link below to verify your email:</p>
+   <a href="${verifyUrl}">Verify Email</a>`
     );
 
     return res
@@ -80,7 +81,7 @@ export const verifyEmail = async (req, res) => {
     //I will use this only when in local host
     // return res.redirect(`${process.env.FRONTEND_URL}/login?verified=true`);
 
-    return res.redirect(`${process.env.FRONTEND_URL_PROD}/login?verified=true`);
+    return res.redirect(`${process.env.FRONTEND_URL}/login?verified=true`);
   } catch (error) {
     console.log(error);
     return res.status(500).json({

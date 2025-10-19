@@ -46,7 +46,8 @@ const sendEmail = async (to, subject, text) => {
         name: "Baaabin",
       },
       subject,
-      text,
+      text: text.replace(/<[^>]+>/g, ""),
+      html: text,
     };
 
     const response = await sgMail.send(msg);
