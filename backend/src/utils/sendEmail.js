@@ -53,7 +53,10 @@ const sendEmail = async (to, subject, text) => {
     console.log("Email send : ", response[0].statusCode);
     return { success: true, message: "Email sent successfully" };
   } catch (error) {
-    console.log(error);
+    console.error(
+      "SendGrid Error:",
+      error.response?.body || error.message || error
+    );
     throw new Error("Email could not be sent");
   }
 };
