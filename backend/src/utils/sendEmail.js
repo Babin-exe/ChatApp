@@ -42,7 +42,7 @@ const sendEmail = async (to, subject, text) => {
     const msg = {
       to,
       from: {
-        email: "chatApp@gmail.com",
+        email: "nepalbabin4@gmail.com",
         name: "Baaabin",
       },
       subject,
