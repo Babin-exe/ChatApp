@@ -77,7 +77,10 @@ export const verifyEmail = async (req, res) => {
 
     await user.save();
 
-    return res.redirect(`${process.env.FRONTEND_URL}/login?verified=true`);
+    //I will use this only when in local host
+    // return res.redirect(`${process.env.FRONTEND_URL}/login?verified=true`);
+
+    return res.redirect(`${process.env.FRONTEND_URL_PROD}/login?verified=true`);
   } catch (error) {
     console.log(error);
     return res.status(500).json({
