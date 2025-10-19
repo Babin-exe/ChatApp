@@ -20,7 +20,9 @@ const Signup = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const response = await axios.post(`${url}/api/auth/signup`, {
+      // const response = await axios.post(`${url}/api/auth/signup`, {
+      //using relative path because the backend is serving the frontend also
+      const response = await axios.post(`/api/auth/signup`, {
         name: data.name,
         email: data.email,
         password: data.password,
