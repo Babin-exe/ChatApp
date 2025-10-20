@@ -31,12 +31,13 @@ export const signup = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
     const token = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
     const user = await User.create({
       name,
       email,
       password: hashedPassword,
-      verificationToken: token,
+      verificationToken: hashedToken,
       verificationTokenExpires: Date.now() + 24 * 60 * 60 * 1000,
     });
 
@@ -62,13 +63,18 @@ export const signup = async (req, res) => {
 
 export const verifyEmail = async (req, res) => {
   try {
-    const { token } = req.params;
+    // const { token } = req.params;
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(req.params.token)
+      .digest("hex");
     const user = await User.findOne({
-      verificationToken: token,
+      verificationToken: hashedToken,
       verificationTokenExpires: { $gt: Date.now() },
     });
 
     if (!user) {
+      console.log("Verificaion token failed : invalid or expired token");
       return res.redirect(`${process.env.FRONTEND_URL}/verification-failed`);
     }
 
@@ -92,8 +98,65 @@ export const verifyEmail = async (req, res) => {
 };
 
 export const login = async (req, res) => {
-  res.send("Login");
+  const { email, password } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid credentials" });
+    }
+
+    if (!user.isVerified) {
+      return res.status(403).json({
+        success: false,
+        message: "Please verify your email before logging in",
+      });
+    }
+
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordCorrect) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid Credentials" });
+    }
+
+    const token = jwt.sign(
+      { id: user._id, email: user.email },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Login successful",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      },
+    });
+  } catch (error) {
+    console.log(`Oops Someting went wrong : ${error}`);
+    return res.json({ success: false, message: `User login failed:${error}` });
+  }
 };
 export const logout = async (req, res) => {
-  res.send("Logout");
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production" ? "none" : "lax",
+    sameSite: "strict",
+  });
+  return res
+    .status(200)
+    .json({ success: true, message: "Logged out successfully" });
 };
+``;
