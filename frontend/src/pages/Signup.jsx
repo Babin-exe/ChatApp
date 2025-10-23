@@ -69,6 +69,7 @@ const Signup = () => {
             className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-400"
           />
           <button
+            disabled={loading}
             type="submit"
             className="mt-4 px-4 py-2 bg-pink-500 text-white font-semibold rounded-lg hover:bg-pink-600 transition˝"
           >
@@ -76,7 +77,7 @@ const Signup = () => {
           </button>
         </form>
         <p className="text-sm text-gray-600 text-center mt-4">
-          Already have an account?{" "}
+          Already have an account?
           <span className="text-pink-500 font-semibold cursor-pointer hover:underline">
             <Link to="/login">Login</Link>
           </span>

@@ -122,16 +122,25 @@ export const login = async (req, res) => {
         .json({ success: false, message: "Invalid Credentials" });
     }
 
+    const now = new Date();
+    user.sessions = user.sessions.filter(
+      (sessions) => sessions.expiresAt > now
+    );
+
     const token = jwt.sign(
       { id: user._id, email: user.email },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
 
+    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    user.sessions.push({ token, expiresAt });
+    await user.save();
+
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
@@ -146,17 +155,57 @@ export const login = async (req, res) => {
     });
   } catch (error) {
     console.log(`Oops Someting went wrong : ${error}`);
-    return res.json({ success: false, message: `User login failed:${error}` });
+    return res.json({
+      success: false,
+      message: `User login failed:${error.message}`,
+    });
   }
 };
+
 export const logout = async (req, res) => {
-  res.clearCookie("token", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production" ? "none" : "lax",
-    sameSite: "strict",
-  });
-  return res
-    .status(200)
-    .json({ success: true, message: "Logged out successfully" });
+  try {
+    const token = req.cookies.token;
+
+    if (!token) {
+      return res
+        .status(400)
+        .json({ success: false, message: "No active session" });
+    }
+
+    await User.updateOne(
+      { "sessions.token": token },
+      { $pull: { sessions: { token } } }
+    );
+
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+    });
+
+    return res
+      .status(200)
+      .json({ success: true, message: "Logged out successfully" });
+  } catch (error) {
+    console.log(`Logout Error :${error}`);
+    return res.status(500).json({ success: false, message: "Logout Failed" });
+  }
 };
-``;
+
+export const getMe = async (req, res) => {
+  try {
+    const token = req.cookies.token;
+    if (!token) throw new Error("No active session");
+
+    const decode = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decode.id);
+    if (!user) throw new Error("User not found");
+
+    return res.status(200).json({
+      success: true,
+      user: { id: user._id, name: user.name, email: user.email },
+    });
+  } catch (error) {
+    return res.status(401).json({ success: false, message: error.message });
+  }
+};

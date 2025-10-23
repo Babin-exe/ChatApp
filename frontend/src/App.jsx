@@ -4,6 +4,7 @@ import LandingPage from "./pages/LandingPage.jsx";
 import Signup from "./pages/Signup.jsx";
 import Login from "./pages/Login.jsx";
 import StoreContextProvider from "./context/StoreContext.jsx";
+import Message from "./pages/Messages.jsx";
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/message" element={<Message />} />
         </Routes>
       </StoreContextProvider>
     </>

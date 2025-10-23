@@ -23,7 +23,9 @@
   },
   "homepage": "https://github.com/Babin-exe/ChatApp#readme",
   "dependencies": {
+    "cookie-parser": "^1.4.7",
     "crypto": "^1.0.1",
-    "nodemailer": "^7.0.9"
+    "nodemailer": "^7.0.9",
+    "react-hot-toast": "^2.6.0"
   }
 }
