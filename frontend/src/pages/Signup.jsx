@@ -22,11 +22,16 @@ const Signup = () => {
     try {
       // const response = await axios.post(`${url}/api/auth/signup`, {
       //using relative path because the backend is serving the frontend also
-      const response = await axios.post(`/api/auth/signup`, {
-        name: data.name,
-        email: data.email,
-        password: data.password,
-      });
+      //Removet this link once you finish doing this locaally and dont forgetttttttt http://localhost:4000
+      const response = await axios.post(
+        `http://localhost:4000/api/auth/signup`,
+        {
+          name: data.name,
+          email: data.email,
+          password: data.password,
+          profilePic: "",
+        }
+      );
       toast.success("Verification email sent! Please check your inbox.");
       navigate("/");
     } catch (error) {

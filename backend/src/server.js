@@ -5,6 +5,7 @@ import authRoutes from "./routes/auth.route.js";
 import path from "path";
 import connectDb from "./config/db.js";
 import cookieParser from "cookie-parser";
+import messageRouters from "./routes/message.route.js";
 
 dotenv.config();
 
@@ -22,7 +23,9 @@ app.use(cookieParser());
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
+app.use("/api/messages", messageRouters);
 
+//Make this production
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/dist")));
 

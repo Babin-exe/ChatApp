@@ -14,17 +14,23 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    /*
+Here i am only using /api/auth/login because the front end and backend are running at the same place
+if not i must mention the full backend link 
+    */
     try {
       const response = await axios.post(
-        `/api/auth/login`,
+        //I have to change this link later 
+        `http://localhost:4000/api/auth/login`,
         { email: formData.email, password: formData.password },
         { withCredentials: true }
       );
-      
+
       console.log(response);
 
       if (response.data.success) {
-        const verifyRes = await axios.get("/api/auth/me", {
+        //I have to change this also , just get rid of the prefix
+        const verifyRes = await axios.get("http://localhost:4000/api/auth/me", {
           withCredentials: true,
         });
         if (verifyRes.data.success) {

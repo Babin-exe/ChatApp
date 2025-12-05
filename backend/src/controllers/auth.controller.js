@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import crypto from "crypto";
 import User from "../models/user.model.js";
 import sendEmail from "../utils/sendEmail.js";
+import cloudinary from "../lib/cloudinary.js";
 
 export const signup = async (req, res) => {
   try {
@@ -37,6 +38,7 @@ export const signup = async (req, res) => {
       name,
       email,
       password: hashedPassword,
+      profilePic: "",
       verificationToken: hashedToken,
       verificationTokenExpires: Date.now() + 24 * 60 * 60 * 1000,
     });
@@ -207,5 +209,43 @@ export const getMe = async (req, res) => {
     });
   } catch (error) {
     return res.status(401).json({ success: false, message: error.message });
+  }
+};
+
+export const updateProfile = async (req, res) => {
+  try {
+    const { profilePic } = req.body;
+    if (!profilePic) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Profile Picture is required" });
+    }
+
+    const userId = req.user?._id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const uploadResponse = await cloudinary.uploader.upload(profilePic);
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { profilePic: uploadResponse.secure_url },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    return res
+      .status(200)
+      .json({ success: true, message: "Profile Updated", data: updatedUser });
+  } catch (error) {
+    console.log("Error updating the profile picture : ", error);
+    return res
+      .status(500)
+      .json({ success: false, message: "Internal server Error" });
   }
 };
