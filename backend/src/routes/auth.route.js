@@ -16,6 +16,7 @@ import {
   createChatRequest,
   declineChatRequest,
   getContacts,
+  getUserMessage,
 } from "../controllers/message.controller.js";
 
 const router = express.Router();
@@ -37,7 +38,7 @@ router.post("/chat/request", protectRoute, createChatRequest);
 router.post("/chat/accept/:chatId", protectRoute, acceptChatRequest);
 router.post("/chat/decline/:chatId", protectRoute, declineChatRequest);
 router.post("/chat/block/:chatId", protectRoute, blockChatRequest);
-// router.get("/chat/get/:receiverId", protectRoute, getUserMessage);
+router.get("/chat/get/:receiverId", protectRoute, getUserMessage);
 
 // Construction
 

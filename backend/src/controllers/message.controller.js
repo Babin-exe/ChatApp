@@ -238,8 +238,75 @@ export const getContacts = async (req, res) => {
 };
 
 export const getUserMessage = async (req, res) => {
-  const senderId = req.user._id;
-  const { receiverId } = req.params.receiverId;
+  try {
+    //Getting the sender and receiver id
+    const senderId = req.user._id;
+    const { receiverId } = req.params;
 
-  
+    //If either Id is missing
+    if (!senderId || !receiverId) {
+      return res.status(400).json({
+        success: false,
+        message: "Sender and Receiver id are required",
+      });
+    }
+
+    //Getting the cursor and limit
+    const { cursor, limit = 30 } = req.query;
+
+    //Making sure limit is bounded
+    const parsedLimit = Math.min(parseInt(limit), 100);
+
+    //This is to get the chat
+    const chat = await Chat.find({
+      members: { $all: [senderId, receiverId] },
+      status: "accepted",
+    });
+
+    //If chat doesn't exists
+    if (!chat) {
+      return res.status(404).json({
+        success: false,
+        message: "Active chat not found or request not accepted",
+      });
+    }
+
+    //This is for searching the database
+    const query = { chatId: chat._id };
+
+    //If cursor exists then we will use this as a reference point for fetching older messages
+    if (cursor) {
+      query.createdAt = { $lt: new Date(cursor) };
+    }
+
+    const messages = await Message.find(query)
+      .sort({ createdAt: -1 })
+      .limit(parsedLimit)
+      .populate("senderId", "name profilePic")
+      .populate({
+        path: "replyToMessageId",
+        select: "senderId content type",
+        populate: { path: "senderId", select: "name" },
+      })
+      .exec();
+
+    const nextCursor =
+      messages.length === parsedLimit
+        ? messages[messages.length - 1].createdAt
+        : null;
+
+    return res.status(200).json({
+      success: true,
+      message: "Message Retrieved successfully",
+      data: messages,
+      nextCursor,
+      chatId: chat._id,
+    });
+  } catch (error) {
+    console.error("Error Retrieving received : ", error);
+    return res.statusr(error.status || 500).json({
+      success: false,
+      message: error.message || "Internal server error",
+    });
+  }
 };
