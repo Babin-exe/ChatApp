@@ -30,5 +30,13 @@ const chatSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+chatSchema.index(
+  { members: 1, status: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { status: { $in: ["pending", "accepted"] } },
+  }
+);
+
 const Chat = mongoose.model("Chat", chatSchema);
 export default Chat;

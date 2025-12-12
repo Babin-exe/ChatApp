@@ -7,6 +7,6 @@ const router = express.Router();
 // router.get("/:chatId", getMessagesByChatId);
 // router.post("/send/:receiverId", sendMessage);
 // router.patch("/status/:messageId", updateMessageStatus);
-// router.patch("/edit/:messageId", editMessageContent);
+//  router.patch("/edit/:messageId", editMessageContent);
 
 export default router;

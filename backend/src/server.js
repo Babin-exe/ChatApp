@@ -6,6 +6,7 @@ import path from "path";
 import connectDb from "./config/db.js";
 import cookieParser from "cookie-parser";
 import messageRouters from "./routes/message.route.js";
+import chatRoutes from "./routes/chat.route.js";
 
 dotenv.config();
 
@@ -23,6 +24,7 @@ app.use(cookieParser());
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
+app.use("/api/chats", chatRoutes);
 app.use("/api/messages", messageRouters);
 
 //Make this production
