@@ -39,11 +39,18 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 const sendEmail = async (to, subject, text) => {
   try {
+    const senderEmail = process.env.SENDGRID_FROM_EMAIL;
+    const senderName = process.env.SENDGRID_FROM_NAME || "ChatApp";
+
+    if (!senderEmail) {
+      throw new Error("SENDGRID_FROM_EMAIL is not configured");
+    }
+
     const msg = {
       to,
       from: {
-        email: "nepalbabin4@gmail.com",
-        name: "Baaabin",
+        email: senderEmail,
+        name: senderName,
       },
       subject,
       text: text.replace(/<[^>]+>/g, ""),

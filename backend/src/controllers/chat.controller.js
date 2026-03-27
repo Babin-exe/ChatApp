@@ -4,6 +4,9 @@ import {
   updateChatStatus,
   getMessagesByChatParticipants,
   createNewChatRequest,
+  sendMessage,
+  getIncomingChatRequest,
+  discoverUsersToChat
 } from "../services/chat.service.js";
 
 export const createChatRequest = asyncHandler(async (req, res) => {
@@ -94,6 +97,7 @@ export const getContacts = asyncHandler(async (req, res) => {
     },
   ]);
 
+
   return res.status(200).json({
     success: true,
     contacts,
@@ -123,4 +127,41 @@ export const getUserMessage = asyncHandler(async (req, res) => {
     nextCursor,
     chatId,
   });
+});
+
+export const sendMessageController = asyncHandler(async (req, res) => {
+  // Get all the required data here
+
+  const senderId = req.user._id;
+  const { content, type } = req.body;
+  const { receiverId } = req.params;
+
+  const message = await sendMessage({
+    senderId,
+    receiverId,
+    content,
+    type: type || "text",
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: "Message sent successfully",
+    messageData: message,
+  });
+});
+
+
+export const getIncomingRequests = asyncHandler(async (req, res) => {
+  const requests = await getIncomingChatRequest({ userId: req.user._id });
+
+
+  return res.status(200).json({ success: true, requests });
+
+});
+
+export const getDiscoverUsers = asyncHandler(async (req, res) => {
+  const users = await discoverUsersToChat({ userId: req.user._id, q: req.query.q || "" });
+
+  return res.status(200).json({ success: true, users });
+
 });

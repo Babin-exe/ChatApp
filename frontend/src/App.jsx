@@ -1,23 +1,22 @@
 import { Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
-import LandingPage from "./pages/LandingPage.jsx";
-import Signup from "./pages/Signup.jsx";
-import Login from "./pages/Login.jsx";
-import StoreContextProvider from "./context/StoreContext.jsx";
-import Message from "./pages/Messages.jsx";
-
+import LandingPage from "./pages/LandingPage/LandingPage.jsx";
+import Signup from "./pages/Signup/Signup.jsx";
+import Login from "./pages/Login/Login.jsx";
+import Messages from "./pages/Messages.jsx";
+import { SocketContextProvider } from "./context/SocketContext.jsx";
 function App() {
   return (
     <>
-      <StoreContextProvider>
+      <SocketContextProvider>
         <Toaster position="top-right" reverseOrder={false} />
         <Routes>
           <Route path="/" element={<LandingPage />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/message" element={<Message />} />
+          <Route path="/message" element={<Messages />} />
         </Routes>
-      </StoreContextProvider>
+      </SocketContextProvider>
     </>
   );
 }

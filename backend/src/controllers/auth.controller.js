@@ -9,7 +9,7 @@ import {
 } from "../services/auth.service.js";
 
 export const signup = asyncHandler(async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password } = req.body ? req.body : "";
 
   const user = await signupService({ name, email, password });
 

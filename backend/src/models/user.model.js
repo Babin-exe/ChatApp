@@ -23,8 +23,23 @@ const userSchema = new mongoose.Schema(
     verificationTokenExpires: { type: Date },
     sessions: [sessionSchema],
     profilePic: { type: String },
+    nameSearch: { type: String, default: "" },
+    emailSearch: { type: String, default: "" },
   },
   { timestamps: true }
 );
+
+userSchema.pre("save", function (next) {
+  this.nameSearch = (this.name || "").trim().toLowerCase();
+  this.emailSearch = (this.email || "").trim().toLowerCase();
+  next();
+});
+
+userSchema.index({ isVerified: 1, nameSearch: 1 });
+userSchema.index({ isVerified: 1, emailSearch: 1 });
+
+
+
+
 const User = mongoose.model("User", userSchema);
 export default User;

@@ -1,29 +1,34 @@
 import { aj } from "../lib/arcjet.js";
 import { isSpoofedBot } from "@arcjet/inspect";
+import asyncHandler from "../utils/asyncHandler.js"
 
-export const arcjectProtection = async (req, res, next) => {
+export const arcjetProtection = asyncHandler(async (req, res, next) => {
   try {
-    const decison = await aj.protect(req, {
+    if (!process.env.ARCJET_KEY) {
+      return next();
+    }
+
+    const decision = await aj.protect(req, {
       user: req.user?._id.toString() || req.ip,
     });
 
-    if (decison.isDenied()) {
-      if (decison.reason.isRateLimit()) {
+    if (decision.isDenied()) {
+      if (decision.reason.isRateLimit()) {
         return res
           .status(429)
           .json({ success: false, message: "RATE_LIMITED" });
       }
-      if (decison.reason.isBot()) {
+      if (decision.reason.isBot()) {
         return res.status(403).json({ success: false, message: "BOT_BLOCKED" });
       }
       return res.status(403).json({ success: false, message: "FORBIDDEN" });
     }
-    if (decison.results.some(isSpoofedBot)) {
+    if (decision.results.some(isSpoofedBot)) {
       return res.status(403).json({ success: false, message: "FORBIDDEN" });
     }
     return next();
   } catch (error) {
-    console.log("Arcject Protection Error : ", error);
+    console.error("Arcject Protection Error : ", error);
     if (req.user) {
       return next();
     }
@@ -31,4 +36,4 @@ export const arcjectProtection = async (req, res, next) => {
       .status(503)
       .json({ success: false, message: "RATE_LIMIT_SERVICE_UNAVAILABLE" });
   }
-};
+});

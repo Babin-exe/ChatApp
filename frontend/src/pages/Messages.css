@@ -1,0 +1,42 @@
+.messages-page {
+  min-height: 100vh;
+  padding: clamp(14px, 2vw, 24px);
+}
+
+.messages-shell {
+  width: min(1160px, 100%);
+  margin: 0 auto;
+  height: calc(100vh - clamp(28px, 4vw, 48px));
+  max-height: calc(100vh - clamp(28px, 4vw, 48px));
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  overflow: hidden;
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+  display: grid;
+  grid-template-columns: 320px 1fr;
+}
+
+.messages-state {
+  width: min(1160px, 100%);
+  margin: 0 auto;
+  min-height: calc(100vh - clamp(28px, 4vw, 48px));
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  background: var(--surface);
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 20px;
+  box-shadow: var(--shadow-md);
+}
+
+.messages-error-card {
+  max-width: 340px;
+  padding: 16px;
+  border: 1px solid #efc2c3;
+  border-radius: 16px;
+  background: #fff4f4;
+  color: var(--danger);
+}

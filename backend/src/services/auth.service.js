@@ -5,6 +5,7 @@ import sendEmail from "../utils/sendEmail.js";
 import HttpError from "../utils/HttpError.js";
 import jwt from "jsonwebtoken";
 import cloudinary from "../lib/cloudinary.js";
+import verifyJwt from "../utils/verifyJwt.js";
 
 export const signupService = async ({ name, email, password }) => {
   if (!name || !email || !password) {
@@ -14,13 +15,13 @@ export const signupService = async ({ name, email, password }) => {
   if (password.length < 8) {
     throw new HttpError(
       "Enter password length greater or equal to Eight(8)",
-      400
+      400,
     );
   }
 
   const existingUser = await User.findOne({ email });
   if (existingUser) {
-    throw new HttpError("Email is already in use", 400);
+    throw new HttpError("Email is already in use", 409);
   }
 
   // Hash password
@@ -47,7 +48,7 @@ export const signupService = async ({ name, email, password }) => {
       email,
       "Verify Your Email",
       `<p>Click the link below to verify your email:</p>
-          <a href="${verifyUrl}">Verify Email</a>`
+          <a href="${verifyUrl}">Verify Email</a>`,
     );
   } catch (err) {
     console.error("Email sending failed:", err);
@@ -82,7 +83,7 @@ export const verifyEmailService = async (token) => {
 export const loginService = async ({ email, password }) => {
   const user = await User.findOne({ email });
   if (!user) {
-    throw new HttpError("Invalid credentials", 400);
+    throw new HttpError("Invalid credentials", 401);
   }
 
   if (!user.isVerified) {
@@ -91,7 +92,7 @@ export const loginService = async ({ email, password }) => {
 
   const isPasswordCorrect = await bcrypt.compare(password, user.password);
   if (!isPasswordCorrect) {
-    throw new HttpError("Invalid credentials", 400);
+    throw new HttpError("Invalid credentials", 401);
   }
 
   // Remove expired sessions
@@ -102,7 +103,7 @@ export const loginService = async ({ email, password }) => {
   const token = jwt.sign(
     { id: user._id, email: user.email },
     process.env.JWT_SECRET,
-    { expiresIn: "7d" }
+    { expiresIn: "7d" },
   );
 
   // Add new session
@@ -124,7 +125,7 @@ export const logoutService = async (token) => {
   // Remove session containing this token
   await User.updateOne(
     { "sessions.token": token },
-    { $pull: { sessions: { token } } }
+    { $pull: { sessions: { token } } },
   );
 };
 
@@ -133,12 +134,7 @@ export const getMeService = async (token) => {
     throw new HttpError("No active session", 401);
   }
 
-  let decoded;
-  try {
-    decoded = jwt.verify(token, process.env.JWT_SECRET);
-  } catch (err) {
-    throw new HttpError("Invalid or expired token", 401);
-  }
+  const decoded = verifyJwt(token);
 
   const user = await User.findById(decoded.id);
   if (!user) {
@@ -169,7 +165,7 @@ export const updateProfileService = async (userId, profilePic) => {
   const updatedUser = await User.findByIdAndUpdate(
     userId,
     { profilePic: uploadResponse.secure_url },
-    { new: true }
+    { new: true },
   ).select("name email profilePic _id");
 
   if (!updatedUser) {

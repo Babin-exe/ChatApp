@@ -3,6 +3,11 @@ import Message from "../models/Message.js";
 import HttpError from "../utils/HttpError.js";
 import validateObjectId from "../utils/validation.js";
 import User from "../models/user.model.js";
+import { sendToUser } from "../lib/socket.js";
+import mongoose, { mongo } from "mongoose";
+
+
+
 
 const ALLOWED_STATUS = ["declined", "blocked", "accepted"];
 export const updateChatStatus = async ({
@@ -11,58 +16,64 @@ export const updateChatStatus = async ({
   actorId,
   systemMessage,
 }) => {
-  validateObjectId(chatId);
-  validateObjectId(actorId);
+  validateObjectId(chatId, "chatId");
+  validateObjectId(actorId, "actorId");
 
   if (!ALLOWED_STATUS.includes(status)) {
     throw new HttpError("Invalid chat status", 400);
   }
 
-  //This will search for the chat By id
+
   const chat = await Chat.findById(chatId);
 
-  //If the chat is not found
   if (!chat) throw new HttpError("Chat not found", 404);
 
-  //This will run if status is anything other than "pending"
   if (chat.status !== "pending") {
     throw new HttpError(
       `Chat is already ${chat.status}, cannot ${status}`,
-      400
+      400,
     );
   }
 
-  //This will check the person who is accepting/declining/blocking is correct person
 
   const isMember = chat.members.some(
-    (id) => id.toString() === actorId.toString()
+    (id) => id.toString() === actorId.toString(),
   );
 
-  const isInitiator = actorId.toString() !== chat.initiator.toString();
+  const isNotInitiator = actorId.toString() !== chat.initiator.toString();
 
-  //If the person is not verified
-  if (!isMember || !isInitiator) {
-    throw new HttpError(`Not authorized to: ${status} this request`, 403);
+
+
+  if (status === "accepted" || status === "declined") {
+    if (!isMember || !isNotInitiator) {
+      throw new HttpError(`Not authorized to: ${status} this request`, 403);
+    }
   }
 
-  //Update the status in the database
-  const updatedChat = await Chat.findByIdAndUpdate(
-    chatId,
-    { status },
-    { new: true }
-  ).populate("members", "name email profilePic");
 
-  //Create a new message for this updation
-  await Message.create({
+
+  const otherMemberId = chat.members.find(
+    (id) => id.toString() !== actorId.toString(),
+  );
+
+
+  const newMessage = await Message.create({
     senderId: actorId,
-    receiverId: chat.initiator,
-    chatId: updatedChat._id,
+    receiverId: otherMemberId,
+    chatId: chat._id,
     content: systemMessage,
     type: "system",
     status: "sent",
   });
 
-  return updatedChat;
+
+  return await Chat.findByIdAndUpdate(
+    chatId,
+    { status, lastMessage: newMessage._id },
+    { new: true },
+  )
+    .populate("members", "name email profilePic")
+    .populate("lastMessage", "content");
 };
 
 export const createNewChatRequest = async ({ senderId, receiverId }) => {
@@ -89,13 +100,13 @@ export const createNewChatRequest = async ({ senderId, receiverId }) => {
     if (err.code === 11000) {
       throw new HttpError(
         "Chat Request (pending or accepted) already exists with this user.",
-        400
+        400,
       );
     }
     throw err;
   }
 
-  await Message.create({
+  const newMessage = await Message.create({
     senderId,
     receiverId,
     chatId: chat._id,
@@ -104,55 +115,54 @@ export const createNewChatRequest = async ({ senderId, receiverId }) => {
     status: "sent",
   });
 
-  const populatedChat = await Chat.findById(chat._id).populate(
-    "members",
-    "name email profilePic"
-  );
+  const populatedChat = await Chat.findByIdAndUpdate(
+    chat._id,
+    { lastMessage: newMessage._id },
+    { new: true },
+  )
+    .populate("members", "name email profilePic")
+    .populate("lastMessage", "content");
 
   return populatedChat;
 };
 
-/*
-@param {ObjectId} senderId - The ID of the current user.
- * @param {ObjectId} receiverId - The ID of the other user.
- * @param {string} [cursor] - The datetime string for pagination reference.
- * @param {number} [limit=30] - The maximum number of messages to return.
- * @returns {Promise<object>} */
+
 export const getMessagesByChatParticipants = async ({
   senderId,
   receiverId,
   cursor,
   limit = 30,
 }) => {
-  //Making sure limit is bounded
+
   const parsedLimit = Math.min(Number(limit) || 30, 100);
 
-  //This is to get the chat
+
   const chat = await Chat.findOne({
     members: { $all: [senderId, receiverId] },
     status: "accepted",
   });
 
-  //If chat doesn't exists
+
   if (!chat) {
     throw new HttpError("Active chat not found or request not accepted", 404);
   }
 
-  //This is for searching the database
+
   const query = { chatId: chat._id };
 
-  //If cursor exists then we will use this as a reference point for fetching older messages
+
 
   const cursorDate = cursor ? new Date(cursor) : null;
-  if (cursorDate && !isNaN(cursorDate)) {
-    query.createdAt = { $lt: cursorDate };
-  }
 
   if (cursor && isNaN(cursorDate)) {
     throw new HttpError("Invalid cursor format", 400);
   }
 
-  //Get a limited message for the page
+  if (cursorDate && !isNaN(cursorDate)) {
+    query.createdAt = { $lt: cursorDate };
+  }
+
+
   const messages = await Message.find(query)
     .sort({ createdAt: -1 })
     .limit(parsedLimit)
@@ -164,11 +174,139 @@ export const getMessagesByChatParticipants = async ({
     })
     .exec();
 
-  //Set the cursor to the first message sent in the gained batch or null if all the messages are gained
+  messages.reverse();
+
+
   const nextCursor =
     messages.length === parsedLimit
-      ? messages[messages.length - 1].createdAt
+      ? messages[0].createdAt
       : null;
 
   return { messages, nextCursor, chatId: chat._id };
 };
+
+export const sendMessage = async ({
+  senderId,
+  receiverId,
+  content,
+  type = "text",
+}) => {
+
+  validateObjectId(senderId, "senderId");
+  validateObjectId(receiverId, "receiverId");
+
+
+  if (!content || !content.trim()) {
+    throw new HttpError("Message content is required", 400);
+  }
+
+
+  const chat = await Chat.findOne({
+    members: { $all: [senderId, receiverId] },
+    status: "accepted",
+  });
+
+
+  if (!chat) {
+    throw new HttpError("Active chat not found or request not accepted", 404);
+  }
+
+
+  const message = await Message.create({
+    senderId,
+    receiverId,
+    chatId: chat._id,
+    content: content.trim(),
+    type,
+    status: "sent",
+  });
+
+  await Chat.findByIdAndUpdate(chat._id, { lastMessage: message._id });
+
+
+
+  const realtimePayload = {
+    type: "message",
+    data: message.toObject(),
+  };
+
+  sendToUser(receiverId.toString(), realtimePayload);
+
+
+
+  return message;
+};
+
+
+
+export const getIncomingChatRequest = async ({ userId }) => {
+
+  validateObjectId(userId, "userId");
+
+  const chats = await Chat.find({
+    members: userId,
+    status: "pending",
+    initiator: { $ne: userId }
+  })
+    .populate("initiator", "email name profilePic")
+    .sort({ createdAt: -1 });
+
+
+
+  return chats.map((chat) => ({
+    chatId: chat._id,
+    from: chat.initiator,
+    createdAt: chat.createdAt,
+  }));
+};
+
+
+
+const toObjectId = (id) => id instanceof mongoose.Types.ObjectId ? id : mongoose.Types.ObjectId.createFromHexString(id);
+
+const prefixRange = (prefix) => ({
+  $gte: prefix,
+  $lt: `${prefix}\uffff`
+});
+
+export const discoverUsersToChat = async ({ userId, q = "" }) => {
+
+  //Make sure the id is valid
+  validateObjectId(userId, "userId");
+
+  //Get the id of the user  in proper format
+  const uid = toObjectId(userId);
+
+  //Make the search param better 
+  const search = String(q ?? "").trim().toLowerCase().slice(0, 64);
+
+  const excludedUsers = (await Chat.distinct("members", {
+    members: uid,
+    status: { $in: ["accepted", "pending"] },
+  })).filter(id => !id.equals(uid));
+
+  //These are the ids i want to exclude 
+  const excludedIds = [...excludedUsers, uid];
+
+  //This is my filter 
+  const filter = {
+    _id: { $nin: excludedIds },
+    isVerified: { $ne: false }
+  };
+
+
+
+  if (search) {
+    filter.$or = [
+      { nameSearch: prefixRange(search) },
+      { emailSearch: prefixRange(search) },
+    ]
+  }
+
+
+  return User.find(filter).select("_id name email profilePic")
+    .sort({ nameSearch: 1, _id: 1 })
+    .limit(20)
+    .lean().exec();
+};
+

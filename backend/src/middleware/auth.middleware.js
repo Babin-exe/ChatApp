@@ -1,32 +1,27 @@
-import jwt from "jsonwebtoken";
+import verifyJwt from "../utils/verifyJwt.js";
 import User from "../models/user.model.js";
+import HttpError from "../utils/HttpError.js";
+import asyncHandler from "../utils/asyncHandler.js";
 
-export const protectRoute = async (req, res, next) => {
-  try {
-    const token = req.cookies.token;
-    if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: "Couldn't verify the user , token not found",
-      });
-    }
-    const decode = jwt.verify(token, process.env.JWT_SECRET);
-    if (!decode) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Unauthorized - user not found" });
-    }
+export const protectRoute = asyncHandler(async (req, res, next) => {
 
-    const user = await User.findById(decode.id).select("-password");
-    if (!user) {
-      return res.status(404).json({ stauts: false, message: "User not found" });
-    }
-    req.user = user;
-    next(); 
-  } catch (err) {
-    console.log("Error in the auth route : ", err);
-    return res
-      .status(500)
-      .json({ success: false, message: "Internal server error" });
+  const token = req.cookies.token;
+  if (!token) {
+    throw new HttpError("Unauthorized - token not found", 401);
   }
-};
+
+  const decode = verifyJwt(token);
+
+  const now = new Date();
+  const user = await User.findOne({
+    _id: decode.id,
+    sessions: { $elemMatch: { token, expiresAt: { $gt: now } } },
+  }).select("-password");
+
+  if (!user) {
+    throw new HttpError("Session expired or logged out", 401);
+  }
+
+  req.user = user;
+  next();
+});
