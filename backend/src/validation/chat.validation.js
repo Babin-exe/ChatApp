@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MESSAGE_TYPES } from "../constants/message.constants.js";
 
 const objectIdMessage = "Invalid id format";
 const objectIdRegex = /^[a-f\d]{24}$/i;
@@ -26,5 +27,5 @@ export const messageQuerySchema = z.object({
 
 export const sendMessageSchema = z.object({
   content: z.string().trim().min(1, "Message content is required"),
-  type: z.enum(["text", "image", "file", "system"]).optional(),
+  type: z.enum(MESSAGE_TYPES).optional(),
 });

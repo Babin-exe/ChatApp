@@ -5,7 +5,10 @@ import validateObjectId from "../utils/validation.js";
 import User from "../models/user.model.js";
 import { sendToUser } from "../lib/socket.js";
 import mongoose, { mongo } from "mongoose";
-
+import {
+  DEFAULT_MESSAGE_TYPE,
+  DEFAULT_MESSAGE_STATUS,
+} from "../constants/message.constants.js";
 
 
 
@@ -63,7 +66,7 @@ export const updateChatStatus = async ({
     chatId: chat._id,
     content: systemMessage,
     type: "system",
-    status: "sent",
+    status: DEFAULT_MESSAGE_STATUS,
   });
 
 
@@ -112,7 +115,7 @@ export const createNewChatRequest = async ({ senderId, receiverId }) => {
     chatId: chat._id,
     content: "Sent a chat request",
     type: "system",
-    status: "sent",
+    status: DEFAULT_MESSAGE_STATUS,
   });
 
   const populatedChat = await Chat.findByIdAndUpdate(
@@ -189,7 +192,7 @@ export const sendMessage = async ({
   senderId,
   receiverId,
   content,
-  type = "text",
+  type = DEFAULT_MESSAGE_TYPE,
 }) => {
 
   validateObjectId(senderId, "senderId");
@@ -218,7 +221,7 @@ export const sendMessage = async ({
     chatId: chat._id,
     content: content.trim(),
     type,
-    status: "sent",
+    status: DEFAULT_MESSAGE_STATUS,
   });
 
   await Chat.findByIdAndUpdate(chat._id, { lastMessage: message._id });

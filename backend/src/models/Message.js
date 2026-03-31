@@ -1,4 +1,10 @@
 import mongoose from "mongoose";
+import {
+  MESSAGE_TYPES,
+  MESSAGE_STATUS,
+  DEFAULT_MESSAGE_STATUS,
+  DEFAULT_MESSAGE_TYPE
+} from "../constants/message.constants.js";
 
 const messageSchema = new mongoose.Schema(
   {
@@ -25,14 +31,14 @@ const messageSchema = new mongoose.Schema(
     type: {
       type: String,
       required: true,
-      default: "text",
-      enum: ["text", "image", "video", "system"],
+      default: DEFAULT_MESSAGE_TYPE,
+      enum: MESSAGE_TYPES,
     },
 
     status: {
       type: String,
-      enum: ["sent", "delivered", "read"],
-      default: "sent",
+      enum: MESSAGE_STATUS,
+      default: DEFAULT_MESSAGE_STATUS,
       required: true,
     },
 
