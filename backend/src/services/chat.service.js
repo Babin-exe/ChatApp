@@ -3,7 +3,7 @@ import Message from "../models/Message.js";
 import HttpError from "../utils/HttpError.js";
 import validateObjectId from "../utils/validation.js";
 import User from "../models/user.model.js";
-import { sendToUser } from "../lib/socket.js";
+import { sendToUser, onChatAccepted } from "../lib/socket.js";
 import mongoose, { mongo } from "mongoose";
 import {
   DEFAULT_MESSAGE_TYPE,
@@ -70,13 +70,20 @@ export const updateChatStatus = async ({
   });
 
 
-  return await Chat.findByIdAndUpdate(
+  const updated = await Chat.findByIdAndUpdate(
     chatId,
     { status, lastMessage: newMessage._id },
     { new: true },
   )
     .populate("members", "name email profilePic")
     .populate("lastMessage", "content");
+
+  if (status === "accepted" && chat.members.length >= 2) {
+    const [m0, m1] = chat.members;
+    onChatAccepted(m0.toString(), m1.toString());
+  }
+
+  return updated;
 };
 
 export const createNewChatRequest = async ({ senderId, receiverId }) => {
