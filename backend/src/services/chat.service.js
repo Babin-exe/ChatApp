@@ -3,7 +3,7 @@ import Message from "../models/Message.js";
 import HttpError from "../utils/HttpError.js";
 import validateObjectId from "../utils/validation.js";
 import User from "../models/user.model.js";
-import { sendToUser, onChatAccepted } from "../lib/socket.js";
+import { sendToUser, onChatAccepted, onChatRelationRemoved } from "../lib/socket.js";
 import mongoose, { mongo } from "mongoose";
 import {
   DEFAULT_MESSAGE_TYPE,
@@ -78,9 +78,16 @@ export const updateChatStatus = async ({
     .populate("members", "name email profilePic")
     .populate("lastMessage", "content");
 
+
+
   if (status === "accepted" && chat.members.length >= 2) {
     const [m0, m1] = chat.members;
     onChatAccepted(m0.toString(), m1.toString());
+  }
+
+  if ((status === "declined" || status === "blocked") && chat.members.length >= 2) {
+    const [m0, m1] = chat.members;
+    onChatRelationRemoved(m0.toString(), m1.toString());
   }
 
   return updated;
@@ -98,6 +105,7 @@ export const createNewChatRequest = async ({ senderId, receiverId }) => {
   if (!receiver) {
     throw new HttpError("Receiver not found", 404);
   }
+
 
   let chat;
   try {

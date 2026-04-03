@@ -247,9 +247,8 @@ const ChatPanel = ({ selectedContact }) => {
         {messages.map((m) => (
           <div
             key={m._id}
-            className={`chat-message-row ${
-              getSenderId(m) === selectedContact._id ? "incoming" : "outgoing"
-            }`}
+            className={`chat-message-row ${getSenderId(m) === selectedContact._id ? "incoming" : "outgoing"
+              }`}
           >
             <div className="chat-message-bubble">{m.content}</div>
           </div>

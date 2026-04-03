@@ -57,7 +57,11 @@
 }
 
 .button-options .tab-active {
-  background: linear-gradient(135deg, rgba(47, 143, 131, 0.18) 0%, rgba(47, 143, 131, 0.08) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(47, 143, 131, 0.18) 0%,
+    rgba(47, 143, 131, 0.08) 100%
+  );
   border-color: rgba(47, 143, 131, 0.55);
   color: #1a5e56;
   box-shadow: 0 6px 14px rgba(47, 143, 131, 0.14);

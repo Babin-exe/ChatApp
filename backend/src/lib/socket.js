@@ -15,6 +15,7 @@ const userSocket = new Map();
 
 const contactsByUser = new Map();
 const watchersByUser = new Map();
+const lastSeen = new Map();
 
 
 const fetchContacts = async (userId) => {
@@ -92,16 +93,18 @@ export const sendToUser = (userId, payload) => {
   const data = JSON.stringify(payload);
 
 
-  for (const ws of set) {
-    if (ws.readyState === WebSocket.OPEN) {
-      ws.send(data);
-    } else {
+  for (const ws of [...set]) {
+    if (ws.readyState !== WebSocket.OPEN) {
       set.delete(ws);
-      if (set.size === 0) {
-        userSocket.delete(userId);
-      }
+      continue;
     }
+    ws.send(data);
   }
+
+  if (set.size === 0) {
+    userSocket.delete(userId);
+  }
+
 };
 
 export const isUserOnline = (userId) => {
@@ -121,11 +124,16 @@ export const notifyWatchers = (userId, payload) => {
   }
 };
 
+
+
 export const cleanupUserGraph = (userId) => {
 
   const contacts = contactsByUser.get(userId);
 
-  if (!contacts) return;
+  if (!contacts) {
+    contactsByUser.delete(userId);
+    return;
+  }
 
   for (const contactId of contacts) {
     const watchers = watchersByUser.get(contactId);
@@ -136,11 +144,15 @@ export const cleanupUserGraph = (userId) => {
     if (watchers.size === 0) {
       watchersByUser.delete(contactId);
     }
+
+    const contactSet = contactsByUser.get(contactId);
+    if (contactSet) {
+      contactSet.delete(userId);
+      if (contactSet.size === 0) contactsByUser.delete(contactId);
+    }
   }
   contactsByUser.delete(userId);
 };
-
-
 
 
 export const onChatAccepted = (userIdA, userIdB) => {
@@ -150,7 +162,12 @@ export const onChatAccepted = (userIdA, userIdB) => {
 
 
   const linkPresence = (ownerId, contactId) => {
-    if (!contactsByUser.has(ownerId)) return;
+
+    if (!contactsByUser.has(ownerId)) {
+      contactsByUser.set(ownerId, new Set());
+    }
+
+
     contactsByUser.get(ownerId).add(contactId);
     if (!watchersByUser.has(contactId)) {
       watchersByUser.set(contactId, new Set());
@@ -178,6 +195,70 @@ export const onChatAccepted = (userIdA, userIdB) => {
 
 
 
+export const onChatRelationRemoved = (userIdA, userIdB) => {
+
+  const a = String(userIdA);
+  const b = String(userIdB);
+
+
+  const hadRelation = contactsByUser.get(a)?.has(b) ||
+    contactsByUser.get(b)?.has(a);
+
+  const unlinkPresence = (ownerId, contactId) => {
+
+    const contacts = contactsByUser.get(ownerId);
+
+    if (contacts) {
+      contacts.delete(contactId);
+
+      if (contacts.size === 0) {
+        contactsByUser.delete(ownerId);
+      }
+    }
+
+    const watchers = watchersByUser.get(contactId);
+
+    if (watchers) {
+      watchers.delete(ownerId);
+
+      if (watchers.size === 0) {
+        watchersByUser.delete(contactId);
+      }
+    }
+
+  }
+
+  unlinkPresence(a, b);
+  unlinkPresence(b, a);
+
+
+  if (!hadRelation) return;
+
+
+
+  if (isUserOnline(a)) {
+
+    sendToUser(a, {
+      type: "presence:remove",
+      data: {
+        userId: b,
+      }
+    });
+
+  }
+
+  if (isUserOnline(b)) {
+    sendToUser(b, {
+      type: "presence:remove",
+      data: {
+        userId: a,
+      }
+    });
+  }
+
+};
+
+
 const interval = setInterval(() => {
   wss.clients.forEach((ws) => {
     if (ws.isAlive === false) {
@@ -193,10 +274,27 @@ const interval = setInterval(() => {
 }, 30000);
 
 setInterval(() => {
-  for (const [key, set] of watchersByUser) {
+  for (const [key, set] of [...watchersByUser.entries()]) {
     if (set.size === 0) watchersByUser.delete(key);
   }
 }, 600000);
+
+setInterval(() => {
+  const now = Date.now();
+
+
+  for (const [id, time] of [...lastSeen.entries()]) {
+
+    if (userSocket.has(id)) continue;
+
+    if (now - time > 30 * 60 * 1000) {
+      cleanupUserGraph(id);
+      lastSeen.delete(id);
+    }
+  }
+
+}, 10 * 60 * 1000)
+
 
 wss.on("close", () => { clearInterval(interval) });
 
@@ -243,11 +341,15 @@ wss.on("connection", async (ws, req) => {
       contactsByUser.set(userId, contacts);
 
       for (const contactId of contacts) {
-        if (!watchersByUser.has(contactId)) {
-          watchersByUser.set(contactId, new Set());
+        let watchers = watchersByUser.get(contactId);
+
+        if (!watchers) {
+          watchers = new Set();
+          watchersByUser.set(contactId, watchers);
         }
 
-        watchersByUser.get(contactId).add(userId);
+        if (!watchers.has(userId))
+          watchers.add(userId);
 
       }
     }
@@ -256,6 +358,12 @@ wss.on("connection", async (ws, req) => {
     const onlineContacts = [...contacts].filter(isUserOnline);
 
     console.log(`A user is connected to the socket server: ${userId}`);
+
+
+    lastSeen.set(userId, Date.now());
+
+
+
 
     ws.send(
       JSON.stringify({
@@ -278,7 +386,7 @@ wss.on("connection", async (ws, req) => {
 
     const sockets = userSocket.get(userId);
 
-    if (sockets.size === 1) {
+    if (sockets && sockets.size === 1) {
       notifyWatchers(userId, {
         type: "presence:update",
         data: {
@@ -292,12 +400,14 @@ wss.on("connection", async (ws, req) => {
 
     ws.on("pong", () => {
       ws.isAlive = true;
+      lastSeen.set(userId, Date.now());
     });
 
     ws.on("message", (message) => {
       try {
         const data = JSON.parse(message.toString());
         console.log(`User ${userId}`, data);
+        lastSeen.set(userId, Date.now());
       } catch {
         console.log(`Raw message from user ${userId}`, message.toString());
 
@@ -311,9 +421,11 @@ wss.on("connection", async (ws, req) => {
     ws.on("close", () => {
       console.log(`User ${userId} disconnected`);
       removeSocket(userId, ws);
+
       const socket = userSocket.get(userId);
 
       if (!socket || socket.size === 0) {
+        lastSeen.set(userId, Date.now());
         notifyWatchers(userId, {
           type: "presence:update",
           data: {
@@ -321,10 +433,13 @@ wss.on("connection", async (ws, req) => {
             isOnline: false
           }
         });
-        cleanupUserGraph(userId);
+
       }
 
     });
+
+
+
 
   } catch (error) {
     console.error("WebSocket Connection Error : ", error);
