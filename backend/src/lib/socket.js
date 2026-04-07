@@ -10,12 +10,19 @@ dotenv.config();
 
 export const app = express();
 export const server = http.createServer(app);
-export const wss = new WebSocketServer({ server });
+export const wss = new WebSocketServer({ server, maxPayload: 64 * 1024 });
 const userSocket = new Map();
 
 const contactsByUser = new Map();
 const watchersByUser = new Map();
 const lastSeen = new Map();
+
+
+
+//The ttl index is removed from the user model now remains the turn for writing 
+// the session expiry code dont forget it 
+
+
 
 
 const fetchContacts = async (userId) => {
@@ -53,7 +60,7 @@ const parseCookies = (cookieHeader = "") => {
 
 const isAllowedOrigin = (origin) => {
   const allowed = process.env.FRONTEND_URL;
-  if (!allowed) return true;
+  if (!allowed) return false;
   if (!origin) return false;
   return origin === allowed;
 };

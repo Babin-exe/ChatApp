@@ -24,6 +24,7 @@ const userSchema = new mongoose.Schema(
     profilePic: { type: String },
     nameSearch: { type: String, default: "" },
     emailSearch: { type: String, default: "" },
+
   },
   { timestamps: true }
 );
@@ -37,6 +38,7 @@ userSchema.pre("save", function (next) {
 userSchema.index({ isVerified: 1, nameSearch: 1 });
 userSchema.index({ isVerified: 1, emailSearch: 1 });
 
+userSchema.index({ "sessions.expiresAt": 1 });
 
 
 
