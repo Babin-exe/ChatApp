@@ -12,7 +12,7 @@ import {
 
 
 
-const ALLOWED_STATUS = ["declined", "blocked", "accepted"];
+const ALLOWED_STATUS = ["declined", "accepted"];
 export const updateChatStatus = async ({
   chatId,
   status,
@@ -90,7 +90,7 @@ export const updateChatStatus = async ({
     onChatAccepted(m0.toString(), m1.toString());
   }
 
-  if ((status === "declined" || status === "blocked") && chat.members.length >= 2) {
+  if ((status === "declined") && chat.members.length >= 2) {
     const [m0, m1] = chat.members;
     onChatRelationRemoved(m0.toString(), m1.toString());
   }

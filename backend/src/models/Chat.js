@@ -19,7 +19,7 @@ const chatSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["pending", "accepted", "declined", "blocked"],
+      enum: ["pending", "accepted", "declined"],
       default: "pending",
     },
     lastMessage: {
