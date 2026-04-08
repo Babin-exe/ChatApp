@@ -6,6 +6,7 @@ import HttpError from "../utils/HttpError.js";
 import jwt from "jsonwebtoken";
 import cloudinary from "../lib/cloudinary.js";
 import verifyJwt from "../utils/verifyJwt.js";
+import asyncHandler from "../utils/asyncHandler.js";
 
 export const signupService = async ({ name, email, password }) => {
   if (!name || !email || !password) {
@@ -129,20 +130,15 @@ export const logoutService = async (token) => {
   );
 };
 
-export const getMeService = async (token) => {
-  if (!token) {
-    throw new HttpError("No active session", 401);
-  }
+export const getMeService = asyncHandler(async (req, res) => {
+  const user = req.user;
 
-  const decoded = verifyJwt(token);
-
-  const user = await User.findById(decoded.id);
-  if (!user) {
-    throw new HttpError("User not found", 401);
-  }
-
-  return { id: user._id, name: user.name, email: user.email };
-};
+  return res.status(200).json({
+    success: true,
+    user: { id: user._id, name: user.name, email: user.email },
+  });
+  
+});
 
 export const updateProfileService = async (userId, profilePic) => {
   if (!userId) {

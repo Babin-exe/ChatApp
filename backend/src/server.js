@@ -46,8 +46,8 @@ if (process.env.NODE_ENV === "production") {
 app.use(errorHandler);
 
 const port = process.env.PORT || 4000;
-server.listen(port, () => {
+server.listen(port, async () => {
   console.log(`The server is running at port :${port}`);
-  connectDb();
+  await connectDb();
   cleanExpiredSessions();
 });

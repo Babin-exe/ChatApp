@@ -4,7 +4,7 @@ import HttpError from "../utils/HttpError.js";
 import validateObjectId from "../utils/validation.js";
 import User from "../models/user.model.js";
 import { sendToUser, onChatAccepted, onChatRelationRemoved } from "../lib/socket.js";
-import mongoose, { mongo } from "mongoose";
+import mongoose from "mongoose";
 import {
   DEFAULT_MESSAGE_TYPE,
   DEFAULT_MESSAGE_STATUS,
