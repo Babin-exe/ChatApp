@@ -48,6 +48,6 @@ app.use(errorHandler);
 const port = process.env.PORT || 4000;
 server.listen(port, () => {
   console.log(`The server is running at port :${port}`);
-  cleanExpiredSessions();
   connectDb();
+  cleanExpiredSessions();
 });
