@@ -12,7 +12,12 @@ export const protectRoute = asyncHandler(async (req, res, next) => {
     throw new HttpError("Unauthorized - token not found", 401);
   }
 
-  const decode = verifyJwt(token);
+  let decode;
+  try {
+    decode = verifyJwt(token);
+  } catch (error) {
+    throw new HttpError("Invalid token", 401);
+  }
 
   const user = await User.findOneAndUpdate(
     {

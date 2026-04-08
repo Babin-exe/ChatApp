@@ -5,7 +5,6 @@ import sendEmail from "../utils/sendEmail.js";
 import HttpError from "../utils/HttpError.js";
 import jwt from "jsonwebtoken";
 import cloudinary from "../lib/cloudinary.js";
-import verifyJwt from "../utils/verifyJwt.js";
 import asyncHandler from "../utils/asyncHandler.js";
 
 export const signupService = async ({ name, email, password }) => {
