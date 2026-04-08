@@ -70,14 +70,19 @@ export const updateChatStatus = async ({
   });
 
 
-  const updated = await Chat.findByIdAndUpdate(
-    chatId,
+  const updated = await Chat.findOneAndUpdate(
+    { _id: chatId, status: "pending" },
     { status, lastMessage: newMessage._id },
     { new: true },
   )
     .populate("members", "name email profilePic")
     .populate("lastMessage", "content");
 
+
+  if (!updated) {
+    await Message.findByIdAndDelete(newMessage._id);
+    throw new HttpError("Chat status was alredy updated by another request", 409);
+  }
 
 
   if (status === "accepted" && chat.members.length >= 2) {

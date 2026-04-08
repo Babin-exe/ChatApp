@@ -428,7 +428,7 @@ wss.on("connection", async (ws, req) => {
 
       const socket = userSocket.get(userId);
 
-      if (!socket || socket.size === 0) { 
+      if (!socket || socket.size === 0) {
         lastSeen.set(userId, Date.now());
         notifyWatchers(userId, {
           type: "presence:update",
@@ -437,7 +437,7 @@ wss.on("connection", async (ws, req) => {
             isOnline: false
           }
         });
-        
+
         contactsByUser.delete(userId);
 
       }
