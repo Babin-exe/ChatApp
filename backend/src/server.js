@@ -9,6 +9,7 @@ import cookieParser from "cookie-parser";
 import messageRouters from "./routes/message.route.js";
 import chatRoutes from "./routes/chat.route.js";
 import errorHandler from "./middleware/errorHandler.js";
+import cleanExpiredSessions from "./cron/cleanExpiredSessions.cron.js";
 
 dotenv.config();
 
@@ -47,5 +48,6 @@ app.use(errorHandler);
 const port = process.env.PORT || 4000;
 server.listen(port, () => {
   console.log(`The server is running at port :${port}`);
+  cleanExpiredSessions();
   connectDb();
 });

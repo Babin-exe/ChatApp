@@ -44,3 +44,6 @@ userSchema.index({ "sessions.expiresAt": 1 });
 
 const User = mongoose.model("User", userSchema);
 export default User;
+
+
+
