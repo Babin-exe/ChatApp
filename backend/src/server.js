@@ -10,6 +10,7 @@ import messageRouters from "./routes/message.route.js";
 import chatRoutes from "./routes/chat.route.js";
 import errorHandler from "./middleware/errorHandler.js";
 import cleanExpiredSessions from "./cron/cleanExpiredSessions.cron.js";
+import blockRoutes from "./routes/block.route.js";
 
 dotenv.config();
 
@@ -33,6 +34,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/chats", chatRoutes);
 app.use("/api/messages", messageRouters);
+app.use("/api/access", blockRoutes);
 
 //Make this production
 if (process.env.NODE_ENV === "production") {

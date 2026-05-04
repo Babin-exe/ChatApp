@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import verifyJwt from "../utils/verifyJwt.js";
 import User from "../models/user.model.js";
 import Chat from "../models/Chat.js";
+import Blocked from "../models/Block.js";
 
 dotenv.config();
 
@@ -23,24 +24,39 @@ const lastSeen = new Map();
 
 
 const fetchContacts = async (userId) => {
-  const chats = await Chat.find({
-    members: userId,
-    status: "accepted"
-  }).select("members");
+  const userIdString = userId.toString();
+
+  const [chats, blockedByMe, blockedMe] = await Promise.all([
+    Chat.find({
+      members: userId,
+      status: "accepted",
+    }).select("members"),
+
+    Blocked.distinct("blocked", { blocker: userId }),
+    Blocked.distinct("blocker", { blocked: userId }),
+  ]);
+
+  const excludedUserIds = new Set([
+    userIdString,
+    ...blockedByMe.map((id) => id.toString()),
+    ...blockedMe.map((id) => id.toString()),
+  ]);
 
   const contacts = new Set();
 
   for (const chat of chats) {
     for (const member of chat.members) {
-      const id = member.toString();
-      if (id !== userId) {
-        contacts.add(id);
+      const memberId = member.toString();
+
+      if (!excludedUserIds.has(memberId)) {
+        contacts.add(memberId);
       }
     }
   }
 
   return contacts;
 };
+
 
 const parseCookies = (cookieHeader = "") => {
   return cookieHeader.split(";").reduce((acc, part) => {
@@ -128,8 +144,6 @@ export const notifyWatchers = (userId, payload) => {
   }
 };
 
-
-
 export const cleanupUserGraph = (userId) => {
 
   const contacts = contactsByUser.get(userId);
@@ -196,8 +210,6 @@ export const onChatAccepted = (userIdA, userIdB) => {
     });
   }
 };
-
-
 
 export const onChatRelationRemoved = (userIdA, userIdB) => {
 
@@ -443,9 +455,6 @@ wss.on("connection", async (ws, req) => {
       }
 
     });
-
-
-
 
   } catch (error) {
     console.error("WebSocket Connection Error : ", error);

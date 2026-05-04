@@ -5,7 +5,12 @@ import api from "../../lib/api.js";
 import { useRef } from "react";
 import { UseSocketContext } from "../../context/socketContext.js";
 
-const ChatPanel = ({ selectedContact }) => {
+const ChatPanel = ({
+  selectedContact,
+  onBlockUser,
+  onUnblockUser,
+  actionLoadingId,
+}) => {
   const { authUser, lastMessage } = UseSocketContext();
 
   const normalizeId = (value) => {
@@ -247,8 +252,9 @@ const ChatPanel = ({ selectedContact }) => {
         {messages.map((m) => (
           <div
             key={m._id}
-            className={`chat-message-row ${getSenderId(m) === selectedContact._id ? "incoming" : "outgoing"
-              }`}
+            className={`chat-message-row ${
+              getSenderId(m) === selectedContact._id ? "incoming" : "outgoing"
+            }`}
           >
             <div className="chat-message-bubble">{m.content}</div>
           </div>

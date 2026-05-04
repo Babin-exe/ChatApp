@@ -9,10 +9,14 @@ import {
   DEFAULT_MESSAGE_TYPE,
   DEFAULT_MESSAGE_STATUS,
 } from "../constants/message.constants.js";
+import isBlocked from "../utils/blockChecker.js";
+import Blocked from "../models/Block.js";
+
 
 
 
 const ALLOWED_STATUS = ["declined", "accepted"];
+
 export const updateChatStatus = async ({
   chatId,
   status,
@@ -58,6 +62,20 @@ export const updateChatStatus = async ({
   const otherMemberId = chat.members.find(
     (id) => id.toString() !== actorId.toString(),
   );
+
+
+
+  const blocked = await isBlocked(actorId, otherMemberId);
+
+  if (status === "accepted" && blocked) {
+    throw new HttpError("Cannot do stuff with blocked chat request", 403);
+  }
+
+
+
+
+
+
 
 
   const newMessage = await Message.create({
@@ -110,6 +128,13 @@ export const createNewChatRequest = async ({ senderId, receiverId }) => {
   if (!receiver) {
     throw new HttpError("Receiver not found", 404);
   }
+
+
+  const blocked = await isBlocked(senderId, receiverId);
+  if (blocked) {
+    throw new HttpError("You cannot send a request to this user", 403);
+  }
+
 
 
   let chat;
@@ -168,6 +193,13 @@ export const getMessagesByChatParticipants = async ({
 
   if (!chat) {
     throw new HttpError("Active chat not found or request not accepted", 404);
+  }
+
+
+  const blocked = await isBlocked(senderId, receiverId);
+
+  if (blocked) {
+    throw new HttpError("Blocked chat cannot be accessed", 403);
   }
 
 
@@ -235,6 +267,20 @@ export const sendMessage = async ({
   }
 
 
+
+
+  const blocked = await isBlocked(senderId, receiverId);
+
+  if (blocked) {
+    throw new HttpError("You cannot message this user", 403);
+  }
+
+
+
+
+
+
+
   const message = await Message.create({
     senderId,
     receiverId,
@@ -266,13 +312,21 @@ export const getIncomingChatRequest = async ({ userId }) => {
 
   validateObjectId(userId, "userId");
 
+  const blockedByMe = await Blocked.distinct("blocked", { blocker: userId });
+  const blockedMe = await Blocked.distinct("blocker", { blocked: userId });
+
   const chats = await Chat.find({
     members: userId,
     status: "pending",
-    initiator: { $ne: userId }
+    initiator: { $nin: [userId, ...blockedByMe, ...blockedMe] }
   })
     .populate("initiator", "email name profilePic")
     .sort({ createdAt: -1 });
+
+
+
+
+
 
 
 
@@ -302,6 +356,9 @@ export const discoverUsersToChat = async ({ userId, q = "" }) => {
 
   //Make the search param better 
   const search = String(q ?? "").trim().toLowerCase().slice(0, 64);
+  const blockedByMe = await Blocked.distinct("blocked", { blocker: uid });
+  const blockedMe = await Blocked.distinct("blocker", { blocked: uid });
+
 
   const excludedUsers = (await Chat.distinct("members", {
     members: uid,
@@ -309,7 +366,7 @@ export const discoverUsersToChat = async ({ userId, q = "" }) => {
   })).filter(id => !id.equals(uid));
 
   //These are the ids i want to exclude 
-  const excludedIds = [...excludedUsers, uid];
+  const excludedIds = [...excludedUsers, ...blockedByMe, ...blockedMe, uid];
 
   //This is my filter 
   const filter = {

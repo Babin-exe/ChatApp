@@ -3,7 +3,6 @@ import { protectRoute } from "../middleware/auth.middleware.js";
 import { arcjetProtection } from "../middleware/arcjet.middleware.js";
 import {
   acceptChatRequest,
-  blockChatRequest,
   createChatRequest,
   declineChatRequest,
   getContacts,
@@ -47,12 +46,12 @@ router.post(
   validate(chatParamsSchema, "params"),
   declineChatRequest,
 );
-router.post(
-  "/block/:chatId",
-  protectRoute,
-  validate(chatParamsSchema, "params"),
-  blockChatRequest,
-);
+
+
+
+
+
+
 router.get(
   "/messages/:receiverId",
   protectRoute,
@@ -68,3 +67,4 @@ router.get("/requests/incoming", protectRoute, getIncomingRequests);
 
 export default router;
 
+       

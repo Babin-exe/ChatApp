@@ -1,5 +1,6 @@
 import HttpError from "../utils/HttpError.js";
 
+
 export const validate = (schema, target = "body") => (req, _res, next) => {
   const result = schema.safeParse(req[target]);
 
@@ -21,3 +22,4 @@ export const validate = (schema, target = "body") => (req, _res, next) => {
 
   return next();
 };
+

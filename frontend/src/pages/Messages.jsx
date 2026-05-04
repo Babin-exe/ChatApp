@@ -16,6 +16,8 @@ const Messages = () => {
   const [discoverLoading, setDiscoverLoading] = useState(false);
   const [requestsLoading, setRequestsLoading] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState("");
+  const [blockedUsers, setBlockedUsers] = useState([]);
+  const [blockedLoading, setBlockedLoading] = useState(false);
 
   const fetchContacts = useCallback(async () => {
     try {
@@ -62,13 +64,33 @@ const Messages = () => {
     }
   }, []);
 
+  const fetchBlockedUsers = useCallback(async () => {
+    try {
+      setBlockedLoading(true);
+      const allBlockedUsers = await api.get(`/api/access/blocked-users`);
+      setBlockedUsers(allBlockedUsers || []);
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Failed to load blocked users",
+      );
+    } finally {
+      setBlockedLoading(false);
+    }
+  }, []);
+
   const handleSearchUsers = () => fetchDiscoverUsers(searchText);
 
   useEffect(() => {
     fetchContacts();
     fetchIncomingRequest();
     fetchDiscoverUsers();
-  }, [fetchContacts, fetchIncomingRequest, fetchDiscoverUsers]);
+    fetchBlockedUsers();
+  }, [
+    fetchContacts,
+    fetchIncomingRequest,
+    fetchDiscoverUsers,
+    fetchBlockedUsers,
+  ]);
 
   const handleSendRequest = async (receiverId) => {
     const key = `request-${receiverId}`;
@@ -113,6 +135,46 @@ const Messages = () => {
     }
   };
 
+  const handleBlockUser = async (blockedId) => {
+    const key = `block-${blockedId}`;
+    try {
+      setActionLoadingId(key);
+      await api.post(`/api/access/block/${blockedId}`);
+      toast.success("User blocked successfully");
+
+      setSelectedContact(null);
+
+      await fetchContacts();
+      await fetchIncomingRequest();
+      await fetchDiscoverUsers();
+      await fetchBlockedUsers();
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to block the user");
+    } finally {
+      setActionLoadingId("");
+    }
+  };
+
+  const handleUnblockUser = async (blockedId) => {
+    const key = `unblock-${blockedId}`;
+    try {
+      setActionLoadingId(key);
+      await api.post(`/api/access/unblock/${blockedId}`);
+
+      toast.success("User Unblocked");
+
+      await fetchBlockedUsers();
+      await fetchDiscoverUsers();
+      await fetchContacts();
+    } catch (error) {
+      toast.error(
+        error.response?.data?.message || "Failed to unblock the user",
+      );
+    } finally {
+      setActionLoadingId("");
+    }
+  };
+
   if (loadingContacts) {
     return (
       <div className="messages-state">
@@ -150,14 +212,23 @@ const Messages = () => {
           onSearchUsers={handleSearchUsers}
           discoverUsers={discoverUsers}
           discoverLoading={discoverLoading}
+          blockedUsers={blockedUsers}
+          blockedLoading={blockedLoading}
           incomingRequests={incomingRequests}
           requestsLoading={requestsLoading}
           onSendRequest={handleSendRequest}
           onAcceptRequest={handleAcceptRequest}
           onDeclineRequest={handleDeclineRequest}
           actionLoadingId={actionLoadingId}
+          onUnblockUser={handleUnblockUser}
+          onBlockUser={handleBlockUser}
         />
-        <ChatPanel selectedContact={selectedContact} />
+        <ChatPanel
+          selectedContact={selectedContact}
+          onBlockUser={handleBlockUser}
+          onUnblockUser={handleUnblockUser}
+          actionLoadingId={actionLoadingId}
+        />
       </div>
     </div>
   );

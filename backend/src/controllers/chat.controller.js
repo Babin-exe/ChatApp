@@ -8,6 +8,8 @@ import {
   getIncomingChatRequest,
   discoverUsersToChat,
 } from "../services/chat.service.js";
+import Blocked from "../models/Block.js";
+import { Types } from "mongoose";
 
 export const createChatRequest = asyncHandler(async (req, res) => {
   const senderId = req.user._id;
@@ -55,37 +57,64 @@ export const declineChatRequest = asyncHandler(async (req, res) => {
   });
 });
 
-export const blockChatRequest = asyncHandler(async (req, res) => {
-  const updatedChat = await updateChatStatus({
-    chatId: req.params.chatId,
-    status: "blocked",
-    actorId: req.user._id,
-    systemMessage: "Chat request blocked",
-  });
 
-  return res.status(200).json({
-    success: true,
-    message: "Chat request blocked successfully",
-    chat: updatedChat,
-  });
-});
 
 export const getContacts = asyncHandler(async (req, res) => {
-  const userId = req.user._id;
+
+  const userId = new Types.ObjectId(req.user._id);
+
+  const [blockedByMe, blockedMe] = await Promise.all([
+    Blocked.distinct("blocked", { blocker: userId }),
+    Blocked.distinct("blocker", { blocked: userId }),
+  ]);
+
+  const excluded = [userId, ...blockedByMe, ...blockedMe].map((id) => new Types.ObjectId(id));
 
   const contacts = await Chat.aggregate([
     { $match: { members: userId, status: "accepted" } },
+    { $sort: { updatedAt: -1 } },
+
+    {
+      $project: {
+        members: {
+          $filter: {
+            input: "$members",
+            as: "m",
+            cond: { $not: { $in: ["$$m", excluded] } }
+          },
+        },
+        updatedAt: 1,
+      },
+    },
+
+
+
+
+    { $match: { "members.0": { $exists: true } } },
+
     { $unwind: "$members" },
-    { $match: { members: { $ne: userId } } },
+
     {
       $lookup: {
         from: "users",
         localField: "members",
         foreignField: "_id",
+        pipeline: [
+          {
+            $project: {
+              _id: 1,
+              name: 1,
+              email: 1,
+              profilePic: 1,
+            },
+          },
+        ],
         as: "member",
       },
     },
+    { $match: { "member.0": { $exists: true } } },
     { $unwind: "$member" },
+
     {
       $project: {
         chatId: "$_id",
@@ -95,6 +124,18 @@ export const getContacts = asyncHandler(async (req, res) => {
         profilePic: "$member.profilePic",
       },
     },
+
+    {
+      $group: {
+        _id: "$_id",
+        chatId: { $first: "$chatId" },
+        name: { $first: "$name" },
+        email: { $first: "$email" },
+        profilePic: { $first: "$profilePic" },
+        lastActivity: { $first: "$updatedAt" },
+      },
+    },
+    { $sort: { lastActivity: -1 } },
   ]);
 
   return res.status(200).json({
@@ -163,3 +204,4 @@ export const getDiscoverUsers = asyncHandler(async (req, res) => {
 
   return res.status(200).json({ success: true, users });
 });
+

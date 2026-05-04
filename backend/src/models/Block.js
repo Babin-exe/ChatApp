@@ -4,13 +4,13 @@ import User from "./user.model.js";
 const blockSchema = new mongoose.Schema({
     blocker: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: User,
+        ref: "User",
         required: true
     },
     blocked: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
-        ref: User
+        ref: "User"
     }
 
 }, { timestamps: true });
@@ -25,6 +25,8 @@ blockSchema.index({ blocked: 1 });
 const Blocked = mongoose.model("Blocked", blockSchema);
 
 export default Blocked;
+
+
 
 
 

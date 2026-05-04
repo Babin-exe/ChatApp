@@ -123,6 +123,14 @@ const ContactsPanel = ({
               >
                 <div className="contact-name">{c.name}</div>
                 <div className="contact-email">{c.email}</div>
+
+                {/* Some stuffs over here will be added soon  */}
+
+                <button className="more-options">...</button>
+
+                {/* This is the boundary  */}
+
+                
               </button>
             );
           })}
