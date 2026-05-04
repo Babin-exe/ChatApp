@@ -18,9 +18,40 @@ const ContactsPanel = ({
   actionLoadingId,
   blockedUsers = [],
   blockedLoading = false,
+  onBlockUser,
   onUnblockUser,
 }) => {
   const [activeTab, setActiveTab] = useState("discover");
+  const [openMenuContactId, setOpenMenuContactId] = useState(null);
+  const [blockTarget, setBlockTarget] = useState(null);
+
+  const blockTargetKey = blockTarget ? `block-${blockTarget._id}` : "";
+  const blockingTarget = actionLoadingId === blockTargetKey;
+
+  const selectContact = (contact) => {
+    setOpenMenuContactId(null);
+    onSelectContact(contact);
+  };
+
+  const toggleContactMenu = (contactId) => {
+    setOpenMenuContactId((current) =>
+      current === contactId ? null : contactId,
+    );
+  };
+
+  const requestBlockConfirmation = (contact) => {
+    setBlockTarget(contact);
+    setOpenMenuContactId(null);
+  };
+
+  const confirmBlock = async () => {
+    if (!blockTarget?._id || !onBlockUser) return;
+
+    const blocked = await onBlockUser(blockTarget._id);
+    if (blocked) {
+      setBlockTarget(null);
+    }
+  };
 
   return (
     <aside className="contacts-panel">
@@ -62,7 +93,7 @@ const ContactsPanel = ({
           className={activeTab === "blocked" ? "tab-active" : ""}
           onClick={() => setActiveTab("blocked")}
         >
-          Blocked
+          Blocked {blockedUsers.length ? `(${blockedUsers.length})` : ""}
         </button>
       </div>
 
@@ -122,19 +153,65 @@ const ContactsPanel = ({
 
       {activeTab === "contacts" && (
         <div className="contacts-list">
+          {contacts.length === 0 && (
+            <p className="panel-empty">No active contacts</p>
+          )}
+
           {contacts.map((c) => {
             const isActive = selectedContact && selectedContact._id === c._id;
+            const isMenuOpen = openMenuContactId === c._id;
 
             return (
-              <button
+              <div
                 key={c.chatId || c._id}
-                type="button"
-                onClick={() => onSelectContact(c)}
                 className={`contact-item ${isActive ? "is-active" : ""}`}
               >
-                <div className="contact-name">{c.name}</div>
-                <div className="contact-email">{c.email}</div>
-              </button>
+                <button
+                  type="button"
+                  className="contact-select"
+                  onClick={() => selectContact(c)}
+                >
+                  <div className="contact-name">
+                    {c.name}
+                    {!c.canMessage && (
+                      <span className="contact-badge">
+                        {c.blockedByCurrentUser ? "Blocked" : "Blocked you"}
+                      </span>
+                    )}
+                  </div>
+                  <div className="contact-email">{c.email}</div>
+                </button>
+
+                <button
+                  type="button"
+                  className="more-options"
+                  aria-haspopup="menu"
+                  aria-expanded={isMenuOpen}
+                  aria-label={`Open options for ${c.name}`}
+                  onClick={() => toggleContactMenu(c._id)}
+                >
+                  ...
+                </button>
+
+                {isMenuOpen && (
+                  <div className="contact-menu" role="menu">
+                    <button type="button" role="menuitem" disabled>
+                      View profile
+                    </button>
+                    <button type="button" role="menuitem" disabled>
+                      Mute notifications
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="danger-option"
+                      onClick={() => requestBlockConfirmation(c)}
+                    >
+                      Block
+                    </button>
+                  </div>
+                )}
+              </div>
             );
           })}
         </div>
@@ -195,7 +272,7 @@ const ContactsPanel = ({
       )}
 
       {activeTab === "blocked" && (
-        <div className="requests-list">
+        <div className="blocked-list">
           {blockedLoading && (
             <p className="panel-empty">Loading Blocked Users...</p>
           )}
@@ -233,6 +310,41 @@ const ContactsPanel = ({
                 </div>
               );
             })}
+        </div>
+      )}
+
+      {blockTarget && (
+        <div className="block-confirm-backdrop" role="presentation">
+          <section
+            className="block-confirm"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="block-confirm-title"
+          >
+            <h3 id="block-confirm-title">Block {blockTarget.name}?</h3>
+            <p>
+              This contact will be removed from your chats and they will not be
+              able to message you.
+            </p>
+
+            <div className="block-confirm-actions">
+              <button
+                type="button"
+                onClick={() => setBlockTarget(null)}
+                disabled={blockingTarget}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="danger-option"
+                onClick={confirmBlock}
+                disabled={blockingTarget}
+              >
+                {blockingTarget ? "Blocking..." : "Yes, block"}
+              </button>
+            </div>
+          </section>
         </div>
       )}
     </aside>

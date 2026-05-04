@@ -59,37 +59,6 @@ export const blockUserService = async (blockerId, blockedId) => {
 
 
 
-/*
-1) Validate both user IDs and prepare string versions for later use (mainly for events/response)
-
-2) Prevent invalid operation: a user cannot unblock themselves
-
-3) Attempt to delete the block relationship where:
-   blocker = blockerId AND blocked = blockedId
-
-4) Check if a document was actually deleted:
-   - If not, it means no such block existed → throw error
-
-5) Check if ANY block still exists between the two users in either direction:
-   (A blocked B OR B blocked A)
-
-6) If a block still exists:
-   - Do nothing further (chat remains restricted)
-   - Return response with restoredPresence = false
-
-7) If NO block exists anymore:
-   - Check if an accepted chat exists between the users
-
-8) If such a chat exists:
-   - Trigger onChatAccepted(blocker, blocked)
-   - This likely restores visibility / presence / messaging capability
-
-9) Return response:
-   - unblockedId → who was unblocked
-   - deletedCount → confirms deletion
-   - restoredPresence → whether chat state was restored
-
-   */
 export const unblockUserService = async (blockerId, blockedId) => {
     validateObjectId(blockerId, "blocker");
     validateObjectId(blockedId, "blocked");

@@ -196,13 +196,6 @@ export const getMessagesByChatParticipants = async ({
   }
 
 
-  const blocked = await isBlocked(senderId, receiverId);
-
-  if (blocked) {
-    throw new HttpError("Blocked chat cannot be accessed", 403);
-  }
-
-
   const query = { chatId: chat._id };
 
 

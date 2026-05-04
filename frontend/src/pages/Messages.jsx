@@ -83,7 +83,7 @@ const Messages = () => {
   useEffect(() => {
     fetchContacts();
     fetchIncomingRequest();
-    fetchDiscoverUsers(searchText);
+    fetchDiscoverUsers();
     fetchBlockedUsers();
   }, [
     fetchContacts,
@@ -142,14 +142,21 @@ const Messages = () => {
       await api.post(`/api/access/block/${blockedId}`);
       toast.success("User blocked successfully");
 
-      setSelectedContact(null);
+      setSelectedContact((current) =>
+        current?._id === blockedId ? null : current,
+      );
 
-      await fetchContacts();
-      await fetchIncomingRequest();
-      await fetchDiscoverUsers(searchText);
-      await fetchBlockedUsers();
+      await Promise.all([
+        fetchContacts(),
+        fetchIncomingRequest(),
+        fetchDiscoverUsers(searchText),
+        fetchBlockedUsers(),
+      ]);
+
+      return true;
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to block the user");
+      return false;
     } finally {
       setActionLoadingId("");
     }
@@ -163,13 +170,19 @@ const Messages = () => {
 
       toast.success("User Unblocked");
 
-      await fetchBlockedUsers();
-      await fetchDiscoverUsers(searchText);
-      await fetchContacts();
+      await Promise.all([
+        fetchBlockedUsers(),
+        fetchDiscoverUsers(searchText),
+        fetchContacts(),
+        fetchIncomingRequest(),
+      ]);
+
+      return true;
     } catch (error) {
       toast.error(
         error.response?.data?.message || "Failed to unblock the user",
       );
+      return false;
     } finally {
       setActionLoadingId("");
     }
@@ -225,7 +238,6 @@ const Messages = () => {
         />
         <ChatPanel
           selectedContact={selectedContact}
-          onBlockUser={handleBlockUser}
           onUnblockUser={handleUnblockUser}
           actionLoadingId={actionLoadingId}
           blockedUsers={blockedUsers}

@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useEffectEvent,
+  useMemo,
+  useState,
+} from "react";
 import { toast } from "react-hot-toast";
 import "./ChatPanel.css";
 import api from "../../lib/api.js";
@@ -7,7 +13,6 @@ import { UseSocketContext } from "../../context/socketContext.js";
 
 const ChatPanel = ({
   selectedContact,
-  onBlockUser,
   onUnblockUser,
   actionLoadingId,
   blockedUsers = [],
@@ -29,6 +34,14 @@ const ChatPanel = ({
   const [retryMessage, setRetryMessage] = useState("");
   const [nextCursor, setNextCursor] = useState(null);
   const [loadingOlder, setLoadingOlder] = useState(false);
+
+  const [chatStatus, setChatStatus] = useState({
+    blockedByMe: false,
+    blockedMe: false,
+    canMessage: true,
+  });
+
+  const [statusLoading, setStatusLoading] = useState(false);
   const chatStreamRef = useRef(null);
   const isInitialLoadDone = useRef(false);
   const myUserId = normalizeId(authUser);
@@ -111,6 +124,18 @@ const ChatPanel = ({
     }
   }, [nextCursor, loadingOlder, fetchOlderMessages]);
 
+  const defaultStatusFromBlockedList = useMemo(() => {
+    const isBlockedByMe = blockedUsers.some(
+      (entry) => entry?.blocked?._id === selectedContact?._id,
+    );
+
+    return {
+      blockedByMe: isBlockedByMe,
+      blockedMe: false,
+      canMessage: !isBlockedByMe,
+    };
+  }, [blockedUsers, selectedContact]);
+
   useEffect(() => {
     if (!selectedContact) {
       setMessages([]);
@@ -118,13 +143,66 @@ const ChatPanel = ({
       setSendError("");
       setRetryMessage("");
       setNextCursor(null);
+      setChatStatus({
+        blockedByMe: false,
+        blockedMe: false,
+        canMessage: true,
+      });
       isInitialLoadDone.current = false;
       return;
     }
 
+    setChatStatus(defaultStatusFromBlockedList);
     isInitialLoadDone.current = false;
     fetchMessages();
-  }, [fetchMessages, selectedContact]);
+  }, [defaultStatusFromBlockedList, fetchMessages, selectedContact]);
+
+
+  useEffect(() => {
+    if (!selectedContact?._id) return;
+
+    const controller = new AbortController();
+
+    const fetchChatStatus = async () => {
+      try {
+        setStatusLoading(true);
+
+        const res = await api.get(`/api/chats/status/${selectedContact._id}`, {
+          signal: controller.signal,
+        });
+
+        const status = res.data?.status;
+        if (!status) return;
+
+        setChatStatus({
+          blockedByMe: Boolean(status.blockedByMe),
+          blockedMe: Boolean(status.blockedMe),
+          canMessage: Boolean(status.canMessage),
+        });
+      } catch (err) {
+    
+        if (err.name === "CanceledError" || err.name === "AbortError") {
+          return;
+        }
+
+        setChatStatus(defaultStatusFromBlockedList);
+      } finally {
+        setStatusLoading(false);
+      }
+    };
+
+    fetchChatStatus();
+
+    return () => {
+      controller.abort(); 
+    };
+  }, [selectedContact?._id, defaultStatusFromBlockedList]);
+
+
+
+
+
+
 
   useEffect(() => {
     if (!selectedContact || !lastMessage || !myUserId) return;
@@ -153,6 +231,10 @@ const ChatPanel = ({
 
   const sendCurrentMessage = async (contentToSend) => {
     if (!selectedContact || !contentToSend.trim()) return;
+    if (!chatStatus.canMessage) {
+      toast.error("You can't message this user");
+      return;
+    }
 
     try {
       setSending(true);
@@ -214,37 +296,48 @@ const ChatPanel = ({
     );
   }
 
-  const isSelected = blockedUsers.some((entry) => {
-    return entry?.blocked?._id === selectedContact?._id;
-  });
+  const isBlockedByMe = chatStatus.blockedByMe;
+  const canMessage = chatStatus.canMessage;
+  const unblockKey = `unblock-${selectedContact._id}`;
+  const unblocking = actionLoadingId === unblockKey;
+  const blockMessage = isBlockedByMe
+    ? "You blocked this user. Unblock to send messages."
+    : "You can't message this user.";
+
+  const handleUnblock = async () => {
+    if (!onUnblockUser) return;
+    const ok = await onUnblockUser(selectedContact._id);
+    if (ok) {
+      setChatStatus({
+        blockedByMe: false,
+        blockedMe: false,
+        canMessage: true,
+      });
+    }
+  };
 
   return (
     <section className="chat-panel">
       <header className="chat-header">
         <h2>{selectedContact.name}</h2>
         <p>{selectedContact.email}</p>
-        <button
-          type="button"
-          className="chat-link-btn"
-          disabled={
-            actionLoadingId === `block-${selectedContact?._id}` ||
-            actionLoadingId === `unblock-${selectedContact?._id}`
-          }
-          onClick={() => {
-            isSelected
-              ? onUnblockUser(selectedContact?._id)
-              : onBlockUser(selectedContact?._id);
-          }}
-        >
-          {actionLoadingId === `block-${selectedContact?._id}`
-            ? "Blocking..."
-            : actionLoadingId === `unblock-${selectedContact?._id}`
-              ? "Unblocking..."
-              : isSelected
-                ? "Unblock"
-                : "Block"}
-        </button>
+        {isBlockedByMe && (
+          <button
+            type="button"
+            className="chat-link-btn"
+            onClick={handleUnblock}
+            disabled={unblocking || statusLoading}
+          >
+            {unblocking ? "Unblocking..." : "Unblock"}
+          </button>
+        )}
       </header>
+
+      {!canMessage && (
+        <div className="chat-alert inline">
+          <p>{blockMessage}</p>
+        </div>
+      )}
 
       <article
         className="chat-stream"
@@ -297,11 +390,12 @@ const ChatPanel = ({
           value={newMessage}
           onChange={(e) => setNewMessage(e.target.value)}
           className="chat-input"
+          disabled={!canMessage || sending}
           placeholder={`Message ${selectedContact.name}`}
         />
         <button
           type="submit"
-          disabled={sending || !newMessage.trim()}
+          disabled={sending || !newMessage.trim() || !canMessage}
           className="ui-btn ui-btn-primary chat-send-btn"
         >
           {sending ? "Sending..." : "Send"}

@@ -7,7 +7,7 @@ import { blockUserSchema, unblockUserSchema } from "../validation/block.validati
 
 
 const router = express.Router();
-// router.use(arcjetProtection);
+router.use(arcjetProtection);
 router.use(protectRoute);
 
 router.post("/block/:blockedId", validate(blockUserSchema, "params"), blockUser);
@@ -15,5 +15,4 @@ router.post("/unblock/:blockedId", validate(unblockUserSchema, "params"), unbloc
 router.get("/blocked-users", getBlockedUsers);
 
 export default router;
-
 

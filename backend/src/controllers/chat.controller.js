@@ -68,7 +68,7 @@ export const getContacts = asyncHandler(async (req, res) => {
     Blocked.distinct("blocker", { blocked: userId }),
   ]);
 
-  const excluded = [userId, ...blockedByMe, ...blockedMe].map((id) => new Types.ObjectId(id));
+  const excluded = [userId];
 
   const contacts = await Chat.aggregate([
     { $match: { members: userId, status: "accepted" } },
@@ -86,9 +86,6 @@ export const getContacts = asyncHandler(async (req, res) => {
         updatedAt: 1,
       },
     },
-
-
-
 
     { $match: { "members.0": { $exists: true } } },
 
@@ -138,9 +135,25 @@ export const getContacts = asyncHandler(async (req, res) => {
     { $sort: { lastActivity: -1 } },
   ]);
 
+  const blockedByMeSet = new Set(blockedByMe.map((id) => id.toString()));
+  const blockedMeSet = new Set(blockedMe.map((id) => id.toString()));
+
+  const enrichedContacts = contacts.map((contact) => {
+    const contactId = contact._id.toString();
+    const blockedByCurrentUser = blockedByMeSet.has(contactId);
+    const blockedCurrentUser = blockedMeSet.has(contactId);
+
+    return {
+      ...contact,
+      blockedByCurrentUser,
+      blockedCurrentUser,
+      canMessage: !(blockedByCurrentUser || blockedCurrentUser),
+    };
+  });
+
   return res.status(200).json({
     success: true,
-    contacts,
+    contacts: enrichedContacts,
     message: "Contacts received successfully",
   });
 });
@@ -205,3 +218,21 @@ export const getDiscoverUsers = asyncHandler(async (req, res) => {
   return res.status(200).json({ success: true, users });
 });
 
+export const getChatAccessStatus = asyncHandler(async (req, res) => {
+  const currentUserId = req.user._id;
+  const { receiverId } = req.params;
+
+  const [blockedByMe, blockedMe] = await Promise.all([
+    Blocked.exists({ blocker: currentUserId, blocked: receiverId }),
+    Blocked.exists({ blocker: receiverId, blocked: currentUserId }),
+  ]);
+
+  return res.status(200).json({
+    success: true,
+    status: {
+      blockedByMe: Boolean(blockedByMe),
+      blockedMe: Boolean(blockedMe),
+      canMessage: !(blockedByMe || blockedMe),
+    },
+  });
+});
