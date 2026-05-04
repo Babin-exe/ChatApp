@@ -16,6 +16,9 @@ const ContactsPanel = ({
   onAcceptRequest,
   onDeclineRequest,
   actionLoadingId,
+  blockedUsers = [],
+  blockedLoading = false,
+  onUnblockUser,
 }) => {
   const [activeTab, setActiveTab] = useState("discover");
 
@@ -52,6 +55,14 @@ const ContactsPanel = ({
         >
           Requests{" "}
           {incomingRequests?.length ? `(${incomingRequests.length})` : ""}
+        </button>
+
+        <button
+          type="button"
+          className={activeTab === "blocked" ? "tab-active" : ""}
+          onClick={() => setActiveTab("blocked")}
+        >
+          Blocked
         </button>
       </div>
 
@@ -123,14 +134,6 @@ const ContactsPanel = ({
               >
                 <div className="contact-name">{c.name}</div>
                 <div className="contact-email">{c.email}</div>
-
-                {/* Some stuffs over here will be added soon  */}
-
-                <button className="more-options">...</button>
-
-                {/* This is the boundary  */}
-
-                
               </button>
             );
           })}
@@ -183,6 +186,48 @@ const ContactsPanel = ({
                       onClick={() => onDeclineRequest(request.chatId)}
                     >
                       {declining ? "Declining..." : "Decline"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+        </div>
+      )}
+
+      {activeTab === "blocked" && (
+        <div className="requests-list">
+          {blockedLoading && (
+            <p className="panel-empty">Loading Blocked Users...</p>
+          )}
+
+          {!blockedLoading && blockedUsers.length === 0 && (
+            <p className="panel-empty">No blocked users. </p>
+          )}
+
+          {!blockedLoading &&
+            blockedUsers.map((entry) => {
+              const user = entry.blocked;
+              if (!user?._id) return null;
+
+              const key = `unblock-${user?._id}`;
+              const isBusy = actionLoadingId === key;
+
+              return (
+                <div key={entry._id || user._id} className="request-container">
+                  <div className="req-user">
+                    <div className="req-name">{user?.name}</div>
+                    <div className="req-email">{user?.email}</div>
+                  </div>
+
+                  <div className="req-button">
+                    <button
+                      type="button"
+                      disabled={isBusy}
+                      onClick={() => {
+                        onUnblockUser(user._id);
+                      }}
+                    >
+                      {isBusy ? "Unblocking..." : "Unblock"}
                     </button>
                   </div>
                 </div>

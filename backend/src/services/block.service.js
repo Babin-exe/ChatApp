@@ -149,9 +149,7 @@ export const getBlockedUsersService = async (userId) => {
             .populate("blocked", "name email profilePic")
             .sort({ createdAt: -1 });
 
-        if (!blockedUsers) {
-            throw new HttpError("No blocked users found", 404);
-        }
+
 
         return blockedUsers;
 

@@ -67,8 +67,8 @@ const Messages = () => {
   const fetchBlockedUsers = useCallback(async () => {
     try {
       setBlockedLoading(true);
-      const allBlockedUsers = await api.get(`/api/access/blocked-users`);
-      setBlockedUsers(allBlockedUsers || []);
+      const res = await api.get("/api/access/blocked-users");
+      setBlockedUsers(res.data?.blockedUsers || []);
     } catch (error) {
       toast.error(
         error.response?.data?.message || "Failed to load blocked users",
@@ -83,7 +83,7 @@ const Messages = () => {
   useEffect(() => {
     fetchContacts();
     fetchIncomingRequest();
-    fetchDiscoverUsers();
+    fetchDiscoverUsers(searchText);
     fetchBlockedUsers();
   }, [
     fetchContacts,
@@ -146,7 +146,7 @@ const Messages = () => {
 
       await fetchContacts();
       await fetchIncomingRequest();
-      await fetchDiscoverUsers();
+      await fetchDiscoverUsers(searchText);
       await fetchBlockedUsers();
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to block the user");
@@ -164,7 +164,7 @@ const Messages = () => {
       toast.success("User Unblocked");
 
       await fetchBlockedUsers();
-      await fetchDiscoverUsers();
+      await fetchDiscoverUsers(searchText);
       await fetchContacts();
     } catch (error) {
       toast.error(
@@ -212,7 +212,6 @@ const Messages = () => {
           onSearchUsers={handleSearchUsers}
           discoverUsers={discoverUsers}
           discoverLoading={discoverLoading}
-          blockedUsers={blockedUsers}
           blockedLoading={blockedLoading}
           incomingRequests={incomingRequests}
           requestsLoading={requestsLoading}
@@ -222,12 +221,14 @@ const Messages = () => {
           actionLoadingId={actionLoadingId}
           onUnblockUser={handleUnblockUser}
           onBlockUser={handleBlockUser}
+          blockedUsers={blockedUsers}
         />
         <ChatPanel
           selectedContact={selectedContact}
           onBlockUser={handleBlockUser}
           onUnblockUser={handleUnblockUser}
           actionLoadingId={actionLoadingId}
+          blockedUsers={blockedUsers}
         />
       </div>
     </div>

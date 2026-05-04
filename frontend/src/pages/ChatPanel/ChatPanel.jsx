@@ -10,6 +10,7 @@ const ChatPanel = ({
   onBlockUser,
   onUnblockUser,
   actionLoadingId,
+  blockedUsers = [],
 }) => {
   const { authUser, lastMessage } = UseSocketContext();
 
@@ -213,11 +214,36 @@ const ChatPanel = ({
     );
   }
 
+  const isSelected = blockedUsers.some((entry) => {
+    return entry?.blocked?._id === selectedContact?._id;
+  });
+
   return (
     <section className="chat-panel">
       <header className="chat-header">
         <h2>{selectedContact.name}</h2>
         <p>{selectedContact.email}</p>
+        <button
+          type="button"
+          className="chat-link-btn"
+          disabled={
+            actionLoadingId === `block-${selectedContact?._id}` ||
+            actionLoadingId === `unblock-${selectedContact?._id}`
+          }
+          onClick={() => {
+            isSelected
+              ? onUnblockUser(selectedContact?._id)
+              : onBlockUser(selectedContact?._id);
+          }}
+        >
+          {actionLoadingId === `block-${selectedContact?._id}`
+            ? "Blocking..."
+            : actionLoadingId === `unblock-${selectedContact?._id}`
+              ? "Unblocking..."
+              : isSelected
+                ? "Unblock"
+                : "Block"}
+        </button>
       </header>
 
       <article
