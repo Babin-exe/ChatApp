@@ -2,8 +2,15 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import "./ChatPanel.css";
 import api from "../../lib/api.js";
+import axios from "axios";
 import { useRef } from "react";
 import { UseSocketContext } from "../../context/socketContext.js";
+
+const isRequestCanceled = (err) =>
+  axios.isCancel(err) ||
+  err?.code === "ERR_CANCELED" ||
+  err?.name === "CanceledError" ||
+  err?.name === "AbortError";
 
 const ChatPanel = ({
   selectedContact,
@@ -39,7 +46,10 @@ const ChatPanel = ({
   const [statusLoading, setStatusLoading] = useState(false);
   const chatStreamRef = useRef(null);
   const isInitialLoadDone = useRef(false);
+  /** Messages / pagination responses must match this id or they are ignored (fast contact switching). */
+  const activeMessagesContactIdRef = useRef(null);
   const myUserId = normalizeId(authUser);
+  const selectedContactId = selectedContact?._id;
 
   const getSenderId = (message) => {
     if (!message?.senderId) return "";
@@ -48,19 +58,22 @@ const ChatPanel = ({
       : message.senderId._id;
   };
 
-  const fetchMessages = useCallback(async () => {
-    if (!selectedContact) return;
-
+  const loadMessages = useCallback(async (contactId, signal) => {
     try {
       setLoadingMessages(true);
       setMessagesError("");
 
-      const res = await api.get(`/api/chats/messages/${selectedContact._id}`);
+      const res = await api.get(`/api/chats/messages/${contactId}`, {
+        signal,
+      });
+
+      if (activeMessagesContactIdRef.current !== contactId) return;
 
       setMessages(res.data.data || []);
       setNextCursor(res.data.nextCursor || null);
 
       setTimeout(() => {
+        if (activeMessagesContactIdRef.current !== contactId) return;
         const el = chatStreamRef.current;
         if (el) {
           el.scrollTop = el.scrollHeight;
@@ -68,25 +81,40 @@ const ChatPanel = ({
         isInitialLoadDone.current = true;
       }, 50);
     } catch (err) {
+      if (isRequestCanceled(err)) return;
+      if (activeMessagesContactIdRef.current !== contactId) return;
+
       const message =
         err.response?.data?.message || "Failed to load messages. Please retry.";
       setMessagesError(message);
       toast.error(message);
     } finally {
-      setLoadingMessages(false);
+      if (activeMessagesContactIdRef.current === contactId) {
+        setLoadingMessages(false);
+      }
     }
-  }, [selectedContact]);
+  }, []);
+
+  const reloadMessages = useCallback(async () => {
+    if (!selectedContactId) return;
+    await loadMessages(selectedContactId);
+  }, [selectedContactId, loadMessages]);
 
   const fetchOlderMessages = useCallback(async () => {
-    if (!nextCursor || loadingOlder || !selectedContact) return;
+    if (!nextCursor || loadingOlder || !selectedContactId) return;
+
+    const contactId = selectedContactId;
 
     try {
       setLoadingOlder(true);
       const el = chatStreamRef.current;
       const prevScrollHeight = el ? el.scrollHeight : 0;
       const res = await api.get(
-        `/api/chats/messages/${selectedContact._id}?cursor=${nextCursor}`,
+        `/api/chats/messages/${contactId}?cursor=${nextCursor}`,
       );
+
+      if (activeMessagesContactIdRef.current !== contactId) return;
+
       const olderMessages = res.data.data || [];
       setNextCursor(res.data.nextCursor || null);
       setMessages((prev) => {
@@ -97,17 +125,22 @@ const ChatPanel = ({
         return [...uniqueOlder, ...prev];
       });
       setTimeout(() => {
+        if (activeMessagesContactIdRef.current !== contactId) return;
         if (el) {
           const newScrollHeight = el.scrollHeight;
           el.scrollTop = newScrollHeight - prevScrollHeight;
         }
       }, 30);
     } catch {
-      toast.error("Failed to load older messages. Please retry.");
+      if (activeMessagesContactIdRef.current === contactId) {
+        toast.error("Failed to load older messages. Please retry.");
+      }
     } finally {
-      setLoadingOlder(false);
+      if (activeMessagesContactIdRef.current === contactId) {
+        setLoadingOlder(false);
+      }
     }
-  }, [nextCursor, loadingOlder, selectedContact]);
+  }, [nextCursor, loadingOlder, selectedContactId]);
 
   const handleScroll = useCallback(() => {
     const el = chatStreamRef.current;
@@ -132,7 +165,8 @@ const ChatPanel = ({
   }, [blockedUsers, selectedContact]);
 
   useEffect(() => {
-    if (!selectedContact) {
+    if (!selectedContactId) {
+      activeMessagesContactIdRef.current = null;
       setMessages([]);
       setMessagesError("");
       setSendError("");
@@ -147,13 +181,28 @@ const ChatPanel = ({
       return;
     }
 
-    setChatStatus(defaultStatusFromBlockedList);
+    const contactId = selectedContactId;
+    activeMessagesContactIdRef.current = contactId;
+
+    setMessages([]);
+    setNextCursor(null);
+    setMessagesError("");
+    setSendError("");
+    setRetryMessage("");
     isInitialLoadDone.current = false;
-    fetchMessages();
-  }, [defaultStatusFromBlockedList, fetchMessages, selectedContact]);
+    setChatStatus(defaultStatusFromBlockedList);
+
+    const controller = new AbortController();
+    loadMessages(contactId, controller.signal);
+
+    return () => {
+      controller.abort();
+    };
+  }, [selectedContactId, defaultStatusFromBlockedList, loadMessages]);
 
   useEffect(() => {
-    if (!selectedContact?._id) return;
+    const contactId = selectedContactId;
+    if (!contactId) return;
 
     const controller = new AbortController();
 
@@ -161,12 +210,14 @@ const ChatPanel = ({
       try {
         setStatusLoading(true);
 
-        const res = await api.get(`/api/chats/status/${selectedContact._id}`, {
+        const res = await api.get(`/api/chats/status/${contactId}`, {
           signal: controller.signal,
         });
 
         const status = res.data?.status;
         if (!status) return;
+
+        if (activeMessagesContactIdRef.current !== contactId) return;
 
         setChatStatus({
           blockedByMe: Boolean(status.blockedByMe),
@@ -174,13 +225,14 @@ const ChatPanel = ({
           canMessage: Boolean(status.canMessage),
         });
       } catch (err) {
-        if (err.name === "CanceledError" || err.name === "AbortError") {
-          return;
-        }
+        if (isRequestCanceled(err)) return;
+        if (activeMessagesContactIdRef.current !== contactId) return;
 
         setChatStatus(defaultStatusFromBlockedList);
       } finally {
-        setStatusLoading(false);
+        if (activeMessagesContactIdRef.current === contactId) {
+          setStatusLoading(false);
+        }
       }
     };
 
@@ -189,7 +241,7 @@ const ChatPanel = ({
     return () => {
       controller.abort();
     };
-  }, [selectedContact?._id, defaultStatusFromBlockedList]);
+  }, [selectedContactId, defaultStatusFromBlockedList]);
 
   useEffect(() => {
     if (!selectedContact || !lastMessage || !myUserId) return;
@@ -203,12 +255,16 @@ const ChatPanel = ({
 
     if (!belongsToOpenChat) return;
 
+    const contactId = selectedContact._id;
+
     setMessages((prev) => {
+      if (activeMessagesContactIdRef.current !== contactId) return prev;
       if (prev.some((m) => m._id === lastMessage._id)) return prev;
       return [...prev, lastMessage];
     });
 
     setTimeout(() => {
+      if (activeMessagesContactIdRef.current !== contactId) return;
       const el = chatStreamRef.current;
       if (el) {
         el.scrollTop = el.scrollHeight;
@@ -223,11 +279,13 @@ const ChatPanel = ({
       return;
     }
 
+    const contactId = selectedContact._id;
+
     try {
       setSending(true);
       setSendError("");
 
-      const res = await api.post(`/api/messages/send/${selectedContact._id}`, {
+      const res = await api.post(`/api/messages/send/${contactId}`, {
         content: contentToSend,
         type: "text",
       });
@@ -237,6 +295,8 @@ const ChatPanel = ({
         throw new Error("Invalid send response");
       }
 
+      if (activeMessagesContactIdRef.current !== contactId) return;
+
       setMessages((prev) => {
         if (prev.some((message) => message._id === savedMessage._id))
           return prev;
@@ -244,6 +304,7 @@ const ChatPanel = ({
       });
 
       setTimeout(() => {
+        if (activeMessagesContactIdRef.current !== contactId) return;
         const el = chatStreamRef.current;
         if (el) {
           el.scrollTop = el.scrollHeight;
@@ -357,7 +418,7 @@ const ChatPanel = ({
             <p>{messagesError}</p>
             <button
               type="button"
-              onClick={fetchMessages}
+              onClick={reloadMessages}
               disabled={loadingMessages}
               className="chat-link-btn"
             >
