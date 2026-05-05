@@ -13,7 +13,6 @@ export const app = express();
 export const server = http.createServer(app);
 export const wss = new WebSocketServer({ server, maxPayload: 64 * 1024 });
 const userSocket = new Map();
-
 const contactsByUser = new Map();
 const watchersByUser = new Map();
 const lastSeen = new Map();
@@ -373,6 +372,7 @@ wss.on("connection", async (ws, req) => {
     const contacts = contactsByUser.get(userId) ?? new Set();
     const onlineContacts = [...contacts].filter(isUserOnline);
 
+
     console.log(`A user is connected to the socket server: ${userId}`);
 
 
@@ -390,6 +390,8 @@ wss.on("connection", async (ws, req) => {
         },
       }),
     );
+
+
 
     ws.send(
       JSON.stringify({
