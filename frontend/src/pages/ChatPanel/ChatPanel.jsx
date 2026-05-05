@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useEffectEvent,
-  useMemo,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-hot-toast";
 import "./ChatPanel.css";
 import api from "../../lib/api.js";
@@ -16,6 +10,7 @@ const ChatPanel = ({
   onUnblockUser,
   actionLoadingId,
   blockedUsers = [],
+  onBack,
 }) => {
   const { authUser, lastMessage } = UseSocketContext();
 
@@ -157,7 +152,6 @@ const ChatPanel = ({
     fetchMessages();
   }, [defaultStatusFromBlockedList, fetchMessages, selectedContact]);
 
-
   useEffect(() => {
     if (!selectedContact?._id) return;
 
@@ -180,7 +174,6 @@ const ChatPanel = ({
           canMessage: Boolean(status.canMessage),
         });
       } catch (err) {
-    
         if (err.name === "CanceledError" || err.name === "AbortError") {
           return;
         }
@@ -194,15 +187,9 @@ const ChatPanel = ({
     fetchChatStatus();
 
     return () => {
-      controller.abort(); 
+      controller.abort();
     };
   }, [selectedContact?._id, defaultStatusFromBlockedList]);
-
-
-
-
-
-
 
   useEffect(() => {
     if (!selectedContact || !lastMessage || !myUserId) return;
@@ -319,18 +306,33 @@ const ChatPanel = ({
   return (
     <section className="chat-panel">
       <header className="chat-header">
-        <h2>{selectedContact.name}</h2>
-        <p>{selectedContact.email}</p>
-        {isBlockedByMe && (
+        {onBack && (
           <button
             type="button"
-            className="chat-link-btn"
-            onClick={handleUnblock}
-            disabled={unblocking || statusLoading}
+            className="chat-back-btn"
+            onClick={onBack}
+            aria-label="Back to contacts"
           >
-            {unblocking ? "Unblocking..." : "Unblock"}
+            ← Back
           </button>
         )}
+        <div className="chat-header-text">
+          <h2>{selectedContact.name}</h2>
+          <p>{selectedContact.email}</p>
+        </div>
+
+        <span className="header-unblock">
+          {isBlockedByMe && (
+            <button
+              type="button"
+              className="chat-link-btn"
+              onClick={handleUnblock}
+              disabled={unblocking || statusLoading}
+            >
+              {unblocking ? "Unblocking..." : "Unblock"}
+            </button>
+          )}
+        </span>
       </header>
 
       {!canMessage && (

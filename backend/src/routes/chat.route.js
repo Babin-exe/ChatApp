@@ -65,6 +65,7 @@ router.get(
 router.get("/discover", protectRoute, getDiscoverUsers);
 
 router.get("/requests/incoming", protectRoute, getIncomingRequests);
+
 router.get(
   "/status/:receiverId",
   protectRoute,

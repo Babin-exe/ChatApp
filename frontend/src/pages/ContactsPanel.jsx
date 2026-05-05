@@ -84,8 +84,10 @@ const ContactsPanel = ({
           className={activeTab === "requests" ? "tab-active" : ""}
           onClick={() => setActiveTab("requests")}
         >
-          Requests{" "}
-          {incomingRequests?.length ? `(${incomingRequests.length})` : ""}
+          <span className="tab-label">Requests</span>
+          {incomingRequests?.length ? (
+            <span className="tab-count">({incomingRequests.length})</span>
+          ) : null}
         </button>
 
         <button
@@ -93,7 +95,10 @@ const ContactsPanel = ({
           className={activeTab === "blocked" ? "tab-active" : ""}
           onClick={() => setActiveTab("blocked")}
         >
-          Blocked {blockedUsers.length ? `(${blockedUsers.length})` : ""}
+          <span className="tab-label">Blocked</span>
+          {blockedUsers.length ? (
+            <span className="tab-count">({blockedUsers.length})</span>
+          ) : null}
         </button>
       </div>
 

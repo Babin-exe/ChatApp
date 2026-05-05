@@ -4,8 +4,12 @@ import ContactsPanel from "./ContactsPanel.jsx";
 import ChatPanel from "./ChatPanel/ChatPanel.jsx";
 import { toast } from "react-hot-toast";
 import api from "../lib/api.js";
+import { useMediaQuery } from "../hooks/useMediaQuery.js";
+
+const MOBILE_BREAKPOINT = "(max-width: 768px)";
 
 const Messages = () => {
+  const isMobileLayout = useMediaQuery(MOBILE_BREAKPOINT);
   const [contacts, setContacts] = useState([]);
   const [selectedContact, setSelectedContact] = useState(null);
   const [loadingContacts, setLoadingContacts] = useState(true);
@@ -190,58 +194,79 @@ const Messages = () => {
 
   if (loadingContacts) {
     return (
-      <div className="messages-state">
-        <p>Loading contacts...</p>
+      <div className="messages-page">
+        <div className="messages-state">
+          <p>Loading contacts...</p>
+        </div>
       </div>
     );
   }
 
   if (contactsError && contacts.length === 0) {
     return (
-      <div className="messages-state">
-        <div className="messages-error-card">
-          <p>{contactsError}</p>
-          <button
-            type="button"
-            onClick={fetchContacts}
-            className="ui-btn ui-btn-primary"
-          >
-            Retry
-          </button>
+      <div className="messages-page">
+        <div className="messages-state">
+          <div className="messages-error-card">
+            <p>{contactsError}</p>
+            <button
+              type="button"
+              onClick={fetchContacts}
+              className="ui-btn ui-btn-primary"
+            >
+              Retry
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
+  const shellClassName = [
+    "messages-shell",
+    isMobileLayout ? "messages-shell--mobile" : "",
+    isMobileLayout && selectedContact ? "messages-shell--chat-open" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <div className="messages-page">
-      <div className="messages-shell">
-        <ContactsPanel
-          contacts={contacts}
-          selectedContact={selectedContact}
-          onSelectContact={setSelectedContact}
-          searchText={searchText}
-          onSearchTextChange={setSearchText}
-          onSearchUsers={handleSearchUsers}
-          discoverUsers={discoverUsers}
-          discoverLoading={discoverLoading}
-          blockedLoading={blockedLoading}
-          incomingRequests={incomingRequests}
-          requestsLoading={requestsLoading}
-          onSendRequest={handleSendRequest}
-          onAcceptRequest={handleAcceptRequest}
-          onDeclineRequest={handleDeclineRequest}
-          actionLoadingId={actionLoadingId}
-          onUnblockUser={handleUnblockUser}
-          onBlockUser={handleBlockUser}
-          blockedUsers={blockedUsers}
-        />
-        <ChatPanel
-          selectedContact={selectedContact}
-          onUnblockUser={handleUnblockUser}
-          actionLoadingId={actionLoadingId}
-          blockedUsers={blockedUsers}
-        />
+      <div className={shellClassName}>
+        <div className="messages-sidebar">
+          <ContactsPanel
+            contacts={contacts}
+            selectedContact={selectedContact}
+            onSelectContact={setSelectedContact}
+            searchText={searchText}
+            onSearchTextChange={setSearchText}
+            onSearchUsers={handleSearchUsers}
+            discoverUsers={discoverUsers}
+            discoverLoading={discoverLoading}
+            blockedLoading={blockedLoading}
+            incomingRequests={incomingRequests}
+            requestsLoading={requestsLoading}
+            onSendRequest={handleSendRequest}
+            onAcceptRequest={handleAcceptRequest}
+            onDeclineRequest={handleDeclineRequest}
+            actionLoadingId={actionLoadingId}
+            onUnblockUser={handleUnblockUser}
+            onBlockUser={handleBlockUser}
+            blockedUsers={blockedUsers}
+          />
+        </div>
+        <div className="messages-chat">
+          <ChatPanel
+            selectedContact={selectedContact}
+            onUnblockUser={handleUnblockUser}
+            actionLoadingId={actionLoadingId}
+            blockedUsers={blockedUsers}
+            onBack={
+              isMobileLayout && selectedContact
+                ? () => setSelectedContact(null)
+                : undefined
+            }
+          />
+        </div>
       </div>
     </div>
   );

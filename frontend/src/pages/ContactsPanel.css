@@ -33,16 +33,21 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  overflow: scroll;
   gap: 8px;
   padding: 12px 14px 10px;
 }
+.button-options::-webkit-scrollbar {
+  display: none;
+}
 
 .button-options button {
-  flex: 1;
+  flex: 1 1 0;
+  min-width: max-content;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
   padding: 9px 10px;
   border-radius: 999px;
   border: 1px solid rgba(228, 200, 173, 0.85);
@@ -50,11 +55,18 @@
   color: #7a452a;
   font-size: 0.82rem;
   font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
   transition:
     transform 120ms ease,
     background 160ms ease,
     border-color 160ms ease,
     box-shadow 160ms ease;
+}
+
+.button-options .tab-count {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.92;
 }
 
 .button-options .tab-active {
@@ -164,7 +176,7 @@
     border-color 150ms ease,
     transform 120ms ease,
     box-shadow 160ms ease;
-  }
+}
 
 .contact-select {
   flex: 1;
@@ -484,6 +496,73 @@
 
   .discover-email,
   .req-email {
-    max-width: 180px;
+    max-width: min(180px, 42vw);
+  }
+}
+
+@media (max-width: 768px) {
+  .contacts-header {
+    padding-left: max(18px, env(safe-area-inset-left, 0px));
+    padding-right: max(18px, env(safe-area-inset-right, 0px));
+    padding-top: max(14px, env(safe-area-inset-top, 0px));
+  }
+
+  .button-options {
+    padding-left: max(12px, env(safe-area-inset-left, 0px));
+    padding-right: max(12px, env(safe-area-inset-right, 0px));
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .search_bar {
+    padding-left: max(14px, env(safe-area-inset-left, 0px));
+    padding-right: max(14px, env(safe-area-inset-right, 0px));
+  }
+
+  .contacts-list,
+  .discover-list,
+  .requests-list,
+  .blocked-list {
+    padding-left: max(12px, env(safe-area-inset-left, 0px));
+    padding-right: max(12px, env(safe-area-inset-right, 0px));
+    padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  }
+
+  .discover-email,
+  .req-email {
+    max-width: 100%;
+  }
+
+  .block-confirm-backdrop {
+    padding-left: max(12px, env(safe-area-inset-left, 0px));
+    padding-right: max(12px, env(safe-area-inset-right, 0px));
+    padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (max-width: 480px) {
+  .button-options button {
+    padding: 8px 8px;
+    font-size: 0.76rem;
+  }
+
+  .discover-item,
+  .request-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .discover-item .request-btn,
+  .request-container .req-button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .request-container .req-button {
+    flex-direction: column;
+  }
+
+  .request-container .req-button button {
+    width: 100%;
   }
 }
