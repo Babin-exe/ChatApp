@@ -12,6 +12,18 @@ export const SocketContextProvider = ({ children }) => {
   const [retryCount, setRetryCount] = useState(0);
   const reconnectTimeoutRef = useRef(null);
 
+  const shouldReconnectRef = useRef(true);
+
+  const stopClearingOnlineUsersRef = useRef(null);
+  /*
+   set a Timeout in ws.close()
+   make sure to get rid of that timer if we connect on time in ws.onopen()
+   remove the setTimeout reference from stopClearingOnlineUserRef.current once the function runs successfully so we dont have the old id after the fn runs
+when the component unmounting happens we will clear the timeout and make the reference null
+
+
+  */
+
   const refreshAuthUser = useCallback(async () => {
     try {
       const res = await api.get("/api/auth/me");
@@ -34,6 +46,8 @@ export const SocketContextProvider = ({ children }) => {
   useEffect(() => {
     if (!authUser) return;
 
+    shouldReconnectRef.current = true;
+
     if (socketRef.current) return;
 
     const ws = new WebSocket(import.meta.env.VITE_SOCKET_URL);
@@ -46,6 +60,12 @@ export const SocketContextProvider = ({ children }) => {
       setRetryCount(0);
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+
+      if (stopClearingOnlineUsersRef.current) {
+        clearTimeout(stopClearingOnlineUsersRef.current);
+        stopClearingOnlineUsersRef.current = null;
       }
     };
 
@@ -104,11 +124,20 @@ export const SocketContextProvider = ({ children }) => {
 
     ws.onclose = () => {
       if (socketRef.current !== ws) return;
+      if (!shouldReconnectRef.current) return;
 
       console.log(`Socket closed for user: ${authUser.id}`);
-      setOnlineUsers(new Set());
+
       setSocket(null);
       socketRef.current = null;
+
+      if (!stopClearingOnlineUsersRef.current) {
+        stopClearingOnlineUsersRef.current = setTimeout(() => {
+          console.log("we are clearing the online users");
+          setOnlineUsers(new Set());
+          stopClearingOnlineUsersRef.current = null;
+        }, 10000);
+      }
 
       if (reconnectTimeoutRef.current) return;
 
@@ -122,14 +151,24 @@ export const SocketContextProvider = ({ children }) => {
 
     ws.onerror = () => {
       console.log(`Socket error for user: ${authUser.id}`);
+      ws.close();
     };
 
     return () => {
-      ws.close();
+      shouldReconnectRef.current = false;
+
       socketRef.current = null;
+      ws.close();
       setSocket(null);
+
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+
+      if (stopClearingOnlineUsersRef.current) {
+        clearTimeout(stopClearingOnlineUsersRef.current);
+        stopClearingOnlineUsersRef.current = null;
       }
     };
   }, [authUser, retryCount]);
@@ -140,8 +179,13 @@ export const SocketContextProvider = ({ children }) => {
       setOnlineUsers(new Set());
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
-        reconnectTimeoutRef.curremt = null;
+        reconnectTimeoutRef.current = null;
       }
+      if (stopClearingOnlineUsersRef.current) {
+        clearTimeout(stopClearingOnlineUsersRef.current);
+        stopClearingOnlineUsersRef.current = null;
+      }
+
     }
   }, [authUser]);
 
