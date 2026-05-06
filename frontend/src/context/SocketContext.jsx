@@ -1,3 +1,16 @@
+/*
+We need to keep track of few stuffs 
+
+1) What was the last time some stuff happended (Last activity tracker)
+2) Periodic Health check 
+3) If some kind of network change is detected force the browser to re-connect 
+4) I need better socket creation guard 
+5) Activity will reset on events : Message arrives or Connection opened -> (lastSocketEventRef = now )
+6) Cleanup of the health system : stop interval , clear timers , clear sockets 
+
+
+ */
+
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import api from "../lib/api.js";
 import { SocketContext } from "./socketContext.js";
@@ -15,13 +28,16 @@ export const SocketContextProvider = ({ children }) => {
   const shouldReconnectRef = useRef(true);
 
   const stopClearingOnlineUsersRef = useRef(null);
+
+  const lastSocketEventRef = useRef(Date.now());
+
+  const socketHealthIntervalRef = useRef(null);
+
   /*
    set a Timeout in ws.close()
    make sure to get rid of that timer if we connect on time in ws.onopen()
    remove the setTimeout reference from stopClearingOnlineUserRef.current once the function runs successfully so we dont have the old id after the fn runs
 when the component unmounting happens we will clear the timeout and make the reference null
-
-
   */
 
   const refreshAuthUser = useCallback(async () => {
@@ -40,6 +56,17 @@ when the component unmounting happens we will clear the timeout and make the ref
   }, []);
 
   useEffect(() => {
+    const handleOnline = () => {
+      socketRef.current?.close();
+      socketRef.current = null;
+      setSocket(null);
+      setRetryCount((prev) => prev + 1);
+    };
+    window.addEventListener("online", handleOnline);
+    return () => window.removeEventListener("online", handleOnline);
+  }, []);
+
+  useEffect(() => {
     refreshAuthUser();
   }, [refreshAuthUser]);
 
@@ -48,16 +75,38 @@ when the component unmounting happens we will clear the timeout and make the ref
 
     shouldReconnectRef.current = true;
 
-    if (socketRef.current) return;
+    if (
+      socketRef.current &&
+      (socketRef.current?.readyState === WebSocket.OPEN ||
+        socketRef.current?.readyState === WebSocket.CONNECTING)
+    )
+      return;
 
     const ws = new WebSocket(import.meta.env.VITE_SOCKET_URL);
 
     socketRef.current = ws;
-    setSocket(ws);
 
     ws.onopen = () => {
       console.log(`Socket connected for user: ${authUser.id}`);
+      setSocket(ws);
       setRetryCount(0);
+      lastSocketEventRef.current = Date.now();
+
+      socketHealthIntervalRef.current = setInterval(() => {
+        const st = socketRef.current;
+        if (!st || st.readyState !== WebSocket.OPEN) return;
+
+        const timeSinceLastEvent = Date.now() - lastSocketEventRef.current;
+
+        if (timeSinceLastEvent > 40000) {
+          st.send(JSON.stringify({ type: "ping" }));
+        }
+
+        if (timeSinceLastEvent > 45000) {
+          st.close();
+        }
+      }, 5000);
+
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;
@@ -73,7 +122,10 @@ when the component unmounting happens we will clear the timeout and make the ref
       if (ws !== socketRef.current) return;
 
       try {
+        lastSocketEventRef.current = Date.now();
         const payload = JSON.parse(event.data);
+
+        if (payload?.type === "pong") return;
         if (
           payload?.type === "message" &&
           (payload?.data?._id || payload?.data?.id)
@@ -147,6 +199,11 @@ when the component unmounting happens we will clear the timeout and make the ref
         reconnectTimeoutRef.current = null;
         setRetryCount((prev) => prev + 1);
       }, delay);
+
+      if (socketHealthIntervalRef.current) {
+        clearInterval(socketHealthIntervalRef.current);
+        socketHealthIntervalRef.current = null;
+      }
     };
 
     ws.onerror = () => {
@@ -170,6 +227,11 @@ when the component unmounting happens we will clear the timeout and make the ref
         clearTimeout(stopClearingOnlineUsersRef.current);
         stopClearingOnlineUsersRef.current = null;
       }
+
+      if (socketHealthIntervalRef.current) {
+        clearInterval(socketHealthIntervalRef.current);
+        socketHealthIntervalRef.current = null;
+      }
     };
   }, [authUser, retryCount]);
 
@@ -186,6 +248,10 @@ when the component unmounting happens we will clear the timeout and make the ref
         stopClearingOnlineUsersRef.current = null;
       }
 
+      if (socketHealthIntervalRef.current) {
+        clearInterval(socketHealthIntervalRef.current);
+        socketHealthIntervalRef.current = null;
+      }
     }
   }, [authUser]);
 

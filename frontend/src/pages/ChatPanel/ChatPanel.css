@@ -52,6 +52,41 @@
   white-space: nowrap;
 }
 
+.chat-subtitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.chat-subtitle .chat-email {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-subtitle-sep {
+  opacity: 0.7;
+}
+
+.presence-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  display: inline-block;
+  flex: 0 0 auto;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.85) inset;
+}
+
+.presence-dot.is-online {
+  background: #24a148;
+}
+
+.presence-dot.is-offline {
+  background: rgba(122, 126, 135, 0.55);
+}
+
 .chat-back-btn {
   flex: 0 0 auto;
   border: 1px solid rgba(228, 200, 173, 0.95);

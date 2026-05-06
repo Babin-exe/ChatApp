@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import "./ContactsPanel.css";
+import { UseSocketContext } from "../context/socketContext";
 
 const ContactsPanel = ({
   contacts,
@@ -21,6 +22,7 @@ const ContactsPanel = ({
   onBlockUser,
   onUnblockUser,
 }) => {
+  const { onlineUsers } = UseSocketContext();
   const [activeTab, setActiveTab] = useState("discover");
   const [openMenuContactId, setOpenMenuContactId] = useState(null);
   const [blockTarget, setBlockTarget] = useState(null);
@@ -165,6 +167,7 @@ const ContactsPanel = ({
           {contacts.map((c) => {
             const isActive = selectedContact && selectedContact._id === c._id;
             const isMenuOpen = openMenuContactId === c._id;
+            const isOnline = onlineUsers?.has(String(c?._id));
 
             return (
               <div
@@ -177,6 +180,11 @@ const ContactsPanel = ({
                   onClick={() => selectContact(c)}
                 >
                   <div className="contact-name">
+                    <span
+                      className={`presence-dot ${isOnline ? "is-online" : "is-offline"}`}
+                      aria-label={isOnline ? "Online" : "Offline"}
+                      role="img"
+                    />
                     {c.name}
                     {!c.canMessage && (
                       <span className="contact-badge">

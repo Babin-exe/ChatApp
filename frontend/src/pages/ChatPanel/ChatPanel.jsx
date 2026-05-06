@@ -19,7 +19,7 @@ const ChatPanel = ({
   blockedUsers = [],
   onBack,
 }) => {
-  const { authUser, lastMessage } = UseSocketContext();
+  const { authUser, lastMessage, onlineUsers } = UseSocketContext();
 
   const normalizeId = (value) => {
     if (!value) return "";
@@ -50,6 +50,9 @@ const ChatPanel = ({
   const activeMessagesContactIdRef = useRef(null);
   const myUserId = normalizeId(authUser);
   const selectedContactId = selectedContact?._id;
+  const selectedContactIsOnline = Boolean(
+    selectedContactId && onlineUsers?.has(String(selectedContactId)),
+  );
 
   const getSenderId = (message) => {
     if (!message?.senderId) return "";
@@ -379,7 +382,17 @@ const ChatPanel = ({
         )}
         <div className="chat-header-text">
           <h2>{selectedContact.name}</h2>
-          <p>{selectedContact.email}</p>
+          <p className="chat-subtitle">
+            <span
+              className={`presence-dot ${selectedContactIsOnline ? "is-online" : "is-offline"}`}
+              aria-hidden="true"
+            />
+            <span>{selectedContactIsOnline ? "Online" : "Offline"}</span>
+            <span className="chat-subtitle-sep" aria-hidden="true">
+              •
+            </span>
+            <span className="chat-email">{selectedContact.email}</span>
+          </p>
         </div>
 
         <span className="header-unblock">
