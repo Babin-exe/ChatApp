@@ -421,19 +421,55 @@ wss.on("connection", async (ws, req) => {
       lastSeen.set(userId, Date.now());
     });
 
-    ws.on("message", (message) => {
+    ws.on("message", async (message) => {
       try {
+
         const data = JSON.parse(message.toString());
         console.log(`User ${userId}`, data);
         lastSeen.set(userId, Date.now());
-      } catch {
-        console.log(`Raw message from user ${userId}`, message.toString());
 
+
+        const type = data?.type;
+
+        if (type !== "typing:start" && type !== "typing:stop") return;
+
+
+        const toUserId = String(data?.data?.toUserId || "");
+        if (!toUserId || toUserId === userId) return;
+
+        const chat = await Chat.findOne({
+          members: { $all: [userId, toUserId] },
+          status: "accepted"
+        }).select("_id");
+
+        if (!chat) return;
+
+        const [blockedByMe, blockedMe] = await Promise.all([
+          Blocked.exists({ blocker: userId, blocked: toUserId }),
+          Blocked.exists({ blocker: toUserId, blocked: userId })
+        ]);
+
+
+        if (blockedByMe || blockedMe) return;
+
+        sendToUser(toUserId, {
+          type: "typing:update",
+           data: {
+            fromUserId: userId,
+            isTyping: type === "typing:start",
+            at: Date.now()
+          }
+        });
+
+
+
+      } catch (error) {
+        console.error("ws message handler error", error);
       }
     });
 
     ws.on("error", (error) => {
-      console.error(`Socket error for user ${userId}: ${error}`);
+      console.error(`Socket error for user ${userId}: ${error} `);
     });
 
     ws.on("close", () => {

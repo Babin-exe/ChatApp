@@ -33,6 +33,12 @@ export const SocketContextProvider = ({ children }) => {
 
   const socketHealthIntervalRef = useRef(null);
 
+  //Expreimental
+
+  const [typingUsers, setTypingUsers] = useState(new Map());
+
+  //
+
   /*
    set a Timeout in ws.close()
    make sure to get rid of that timer if we connect on time in ws.onopen()
@@ -64,6 +70,23 @@ when the component unmounting happens we will clear the timeout and make the ref
     };
     window.addEventListener("online", handleOnline);
     return () => window.removeEventListener("online", handleOnline);
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = Date.now();
+      setTypingUsers((prev) => {
+        const next = new Map(prev);
+        for (const [userId, timestamp] of next.entries()) {
+          if (now - timestamp > 3000) {
+            next.delete(userId);
+          }
+        }
+        return next;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -168,6 +191,20 @@ when the component unmounting happens we will clear the timeout and make the ref
           });
         }
 
+        if (payload?.type === "typing:update") {
+          const fromUserId = String(payload?.data?.fromUserId || "");
+          const isTyping = payload?.data?.isTyping;
+
+          if (!fromUserId || typeof isTyping !== "boolean") return;
+
+          setTypingUsers((prev) => {
+            const next = new Map(prev);
+            if (isTyping) next.set(fromUserId, Date.now());
+            else next.delete(fromUserId);
+            return next;
+          });
+        }
+
         ///////////////////////////////////////////////////////////////////////////////////////////////
       } catch {
         console.log("Non-JSON socket payload:", event.data);
@@ -204,6 +241,8 @@ when the component unmounting happens we will clear the timeout and make the ref
         clearInterval(socketHealthIntervalRef.current);
         socketHealthIntervalRef.current = null;
       }
+
+      setTypingUsers(new Map());
     };
 
     ws.onerror = () => {
@@ -252,6 +291,8 @@ when the component unmounting happens we will clear the timeout and make the ref
         clearInterval(socketHealthIntervalRef.current);
         socketHealthIntervalRef.current = null;
       }
+
+      setTypingUsers(new Map());
     }
   }, [authUser]);
 
@@ -262,8 +303,9 @@ when the component unmounting happens we will clear the timeout and make the ref
       lastMessage,
       refreshAuthUser,
       onlineUsers,
+      typingUsers,
     }),
-    [socket, authUser, lastMessage, refreshAuthUser, onlineUsers],
+    [socket, authUser, lastMessage, refreshAuthUser, onlineUsers, typingUsers],
   );
   return (
     <SocketContext.Provider value={value}>{children}</SocketContext.Provider>
