@@ -19,7 +19,8 @@ const ChatPanel = ({
   blockedUsers = [],
   onBack,
 }) => {
-  const { authUser, lastMessage, onlineUsers } = UseSocketContext();
+  const { authUser, lastMessage, onlineUsers, typingUsers, socket } =
+    UseSocketContext();
 
   const normalizeId = (value) => {
     if (!value) return "";
@@ -37,6 +38,31 @@ const ChatPanel = ({
   const [nextCursor, setNextCursor] = useState(null);
   const [loadingOlder, setLoadingOlder] = useState(false);
 
+  const isTypingRef = useRef(false);
+  const typingIdleTimeoutRef = useRef(null);
+  const TYPING_IDLE_MS = 1200;
+
+  /*
+  
+
+
+  what do i want 
+
+  when the we detect some changes in the input tag 
+
+  we will try to send some ws event to the server 
+  but doing it in every key stroke will make the server over load 
+  so how do we prevent that , lets try to do something like :
+
+  when an event comes check if there is already typing emitted if it is then 
+  we must knwo one timer is already started which will emit stop after lets say x second 
+  so our job is to just reset the timer 
+  but if it is the first time we are emitting we will now create a fresh timer event that will 
+  in some x time send stop signal through the socket 
+
+  
+  */
+
   const [chatStatus, setChatStatus] = useState({
     blockedByMe: false,
     blockedMe: false,
@@ -46,7 +72,6 @@ const ChatPanel = ({
   const [statusLoading, setStatusLoading] = useState(false);
   const chatStreamRef = useRef(null);
   const isInitialLoadDone = useRef(false);
-  /** Messages / pagination responses must match this id or they are ignored (fast contact switching). */
   const activeMessagesContactIdRef = useRef(null);
   const myUserId = normalizeId(authUser);
   const selectedContactId = selectedContact?._id;
@@ -154,6 +179,72 @@ const ChatPanel = ({
       fetchOlderMessages();
     }
   }, [nextCursor, loadingOlder, fetchOlderMessages]);
+
+  const safeSend = useCallback(
+    (payload) => {
+      if (!socket) return;
+      if (socket.readyState !== WebSocket.OPEN) return;
+      socket.send(JSON.stringify(payload));
+    },
+    [socket],
+  );
+
+  const clearTypingTimer = () => {
+    if (typingIdleTimeoutRef.current) {
+      clearTimeout(typingIdleTimeoutRef.current);
+      typingIdleTimeoutRef.current = null;
+    }
+  };
+
+  /* 
+  
+  what should be done here is debouncing is what i want to do here ...  
+
+  if a user is typing for the first time i want to emit a web socket event and then 
+  start a timer that will expire in x amount of time and tell the ui or what ever to stop
+  if typing already started we dont send anything just restart the timer which 
+  is responsible for stopping the typing
+
+  so this is the core idea of our stuff 
+
+ 
+  */
+
+  const stopTyping = useCallback(() => {
+    if (!selectedContactId) return;
+    if (!isTypingRef.current) return;
+    const contactId = selectedContactId;
+
+    safeSend({ type: "typing:stop", data: { to: contactId } });
+
+    isTypingRef.current = false;
+
+    clearTypingTimer();
+  }, [selectedContactId, safeSend]);
+
+  const handleTyping = useCallback(
+    (value) => {
+      if (!selectedContactId) return;
+
+      const isEmpty = value.trim() === "";
+      if (isEmpty) {
+        stopTyping();
+        return;
+      }
+
+      if (!isTypingRef.current) {
+        safeSend({ type: "typing:start", data: { to: selectedContactId } });
+        isTypingRef.current = true;
+      }
+
+      clearTypingTimer();
+
+      typingIdleTimeoutRef.current = setTimeout(() => {
+        stopTyping();
+      }, TYPING_IDLE_MS);
+    },
+    [stopTyping, selectedContactId, safeSend],
+  );
 
   const defaultStatusFromBlockedList = useMemo(() => {
     const isBlockedByMe = blockedUsers.some(
@@ -275,6 +366,21 @@ const ChatPanel = ({
     }, 30);
   }, [lastMessage, selectedContact, myUserId]);
 
+  useEffect(() => {
+    return () => {
+      if (typingIdleTimeoutRef.current) {
+        clearTimeout(typingIdleTimeoutRef.current);
+        typingIdleTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      stopTyping();
+    };
+  }, [selectedContactId, stopTyping]);
+
   const sendCurrentMessage = async (contentToSend) => {
     if (!selectedContact || !contentToSend.trim()) return;
     if (!chatStatus.canMessage) {
@@ -336,6 +442,7 @@ const ChatPanel = ({
     const content = newMessage.trim();
     if (!content) return;
 
+    stopTyping();
     await sendCurrentMessage(content);
   };
 
@@ -464,7 +571,10 @@ const ChatPanel = ({
         <input
           type="text"
           value={newMessage}
-          onChange={(e) => setNewMessage(e.target.value)}
+          onChange={(e) => {
+            setNewMessage(e.target.value);
+            handleTyping(e.target.value);
+          }}
           className="chat-input"
           disabled={!canMessage || sending}
           placeholder={`Message ${selectedContact.name}`}

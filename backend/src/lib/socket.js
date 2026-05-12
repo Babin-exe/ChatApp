@@ -431,6 +431,15 @@ wss.on("connection", async (ws, req) => {
 
         const type = data?.type;
 
+
+
+        // safeSend({
+        //   type: "typing:start",
+        //   data: {
+        //     toUserId,
+        //   },
+        // });
+
         if (type !== "typing:start" && type !== "typing:stop") return;
 
 
@@ -454,7 +463,7 @@ wss.on("connection", async (ws, req) => {
 
         sendToUser(toUserId, {
           type: "typing:update",
-           data: {
+          data: {
             fromUserId: userId,
             isTyping: type === "typing:start",
             at: Date.now()
