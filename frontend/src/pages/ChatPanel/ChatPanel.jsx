@@ -78,6 +78,7 @@ const ChatPanel = ({
   const selectedContactIsOnline = Boolean(
     selectedContactId && onlineUsers?.has(String(selectedContactId)),
   );
+  const lastTypedUserRef = useRef(null);
 
   const getSenderId = (message) => {
     if (!message?.senderId) return "";
@@ -189,12 +190,12 @@ const ChatPanel = ({
     [socket],
   );
 
-  const clearTypingTimer = () => {
+  const clearTypingTimer = useCallback(() => {
     if (typingIdleTimeoutRef.current) {
       clearTimeout(typingIdleTimeoutRef.current);
       typingIdleTimeoutRef.current = null;
     }
-  };
+  });
 
   /* 
   
@@ -211,13 +212,15 @@ const ChatPanel = ({
   */
 
   const stopTyping = useCallback(() => {
-    if (!selectedContactId) return;
-    if (!isTypingRef.current) return;
-    const contactId = selectedContactId;
+    const targetUserId = lastTypedUserRef.current;
 
-    safeSend({ type: "typing:stop", data: { to: contactId } });
+    if (!targetUserId) return;
+    if (!isTypingRef.current) return;
+
+    safeSend({ type: "typing:stop", data: { to: targetUserId } });
 
     isTypingRef.current = false;
+    lastTypedUserRef.current = null;
 
     clearTypingTimer();
   }, [selectedContactId, safeSend]);
@@ -235,6 +238,7 @@ const ChatPanel = ({
       if (!isTypingRef.current) {
         safeSend({ type: "typing:start", data: { to: selectedContactId } });
         isTypingRef.current = true;
+        lastTypedUserRef.current = selectedContactId;
       }
 
       clearTypingTimer();
@@ -575,6 +579,7 @@ const ChatPanel = ({
             setNewMessage(e.target.value);
             handleTyping(e.target.value);
           }}
+          onBlur={() => stopTyping()}
           className="chat-input"
           disabled={!canMessage || sending}
           placeholder={`Message ${selectedContact.name}`}
