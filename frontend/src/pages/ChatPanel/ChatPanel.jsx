@@ -19,7 +19,8 @@ const ChatPanel = ({
   blockedUsers = [],
   onBack,
 }) => {
-  const { authUser, lastMessage, onlineUsers, socket } = UseSocketContext();
+  const { authUser, lastMessage, onlineUsers, socket, typingUsers } =
+    UseSocketContext();
 
   const normalizeId = (value) => {
     if (!value) return "";
@@ -39,7 +40,7 @@ const ChatPanel = ({
 
   const isTypingRef = useRef(false);
   const typingIdleTimeoutRef = useRef(null);
-  const TYPING_IDLE_MS = 1200;
+  const TYPING_IDLE_MS = 1500;
 
   /*
   
@@ -194,7 +195,7 @@ const ChatPanel = ({
       clearTimeout(typingIdleTimeoutRef.current);
       typingIdleTimeoutRef.current = null;
     }
-  });
+  }, []);
 
   /* 
   
@@ -216,13 +217,13 @@ const ChatPanel = ({
     if (!targetUserId) return;
     if (!isTypingRef.current) return;
 
-    safeSend({ type: "typing:stop", data: { to: targetUserId } });
+    safeSend({ type: "typing:stop", data: { toUserId: targetUserId } });
 
     isTypingRef.current = false;
     lastTypedUserRef.current = null;
 
     clearTypingTimer();
-  }, [selectedContactId, safeSend]);
+  }, [safeSend, clearTypingTimer]);
 
   const handleTyping = useCallback(
     (value) => {
@@ -242,7 +243,10 @@ const ChatPanel = ({
       }
 
       if (!isTypingRef.current) {
-        safeSend({ type: "typing:start", data: { to: selectedContactId } });
+        safeSend({
+          type: "typing:start",
+          data: { toUserId: selectedContactId },
+        });
         isTypingRef.current = true;
         lastTypedUserRef.current = selectedContactId;
       }
@@ -253,7 +257,7 @@ const ChatPanel = ({
         stopTyping();
       }, TYPING_IDLE_MS);
     },
-    [stopTyping, selectedContactId, safeSend],
+    [stopTyping, selectedContactId, safeSend, clearTypingTimer],
   );
 
   const defaultStatusFromBlockedList = useMemo(() => {
@@ -499,6 +503,9 @@ const ChatPanel = ({
         )}
         <div className="chat-header-text">
           <h2>{selectedContact.name}</h2>
+
+          {typingUsers.has(String(selectedContactId)) && <div>Typing...</div>}
+
           <p className="chat-subtitle">
             <span
               className={`presence-dot ${selectedContactIsOnline ? "is-online" : "is-offline"}`}
