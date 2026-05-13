@@ -235,6 +235,13 @@ const ChatPanel = ({
         return;
       }
 
+      if (
+        lastTypedUserRef.current &&
+        lastTypedUserRef.current !== selectedContactId
+      ) {
+        stopTyping();
+      }
+
       if (!isTypingRef.current) {
         safeSend({ type: "typing:start", data: { to: selectedContactId } });
         isTypingRef.current = true;
@@ -383,7 +390,7 @@ const ChatPanel = ({
     return () => {
       stopTyping();
     };
-  }, [selectedContactId, stopTyping]);
+  }, [stopTyping]);
 
   const sendCurrentMessage = async (contentToSend) => {
     if (!selectedContact || !contentToSend.trim()) return;
