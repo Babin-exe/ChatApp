@@ -19,8 +19,7 @@ const ChatPanel = ({
   blockedUsers = [],
   onBack,
 }) => {
-  const { authUser, lastMessage, onlineUsers, typingUsers, socket } =
-    UseSocketContext();
+  const { authUser, lastMessage, onlineUsers, socket } = UseSocketContext();
 
   const normalizeId = (value) => {
     if (!value) return "";
