@@ -80,6 +80,51 @@ const ChatPanel = ({
   );
   const lastTypedUserRef = useRef(null);
 
+  const typingAudioRef = useRef(null);
+
+
+
+  useEffect(() => {
+
+    if (!typingAudioRef.current) {
+
+      const audio = new Audio("/typing.wav");
+      audio.loop = true;
+      audio.volume = 0.25;
+      typingAudioRef.current = audio;
+    }
+
+    const audio = typingAudioRef.current;
+
+    const isSelectedUserTyping = typingUsers?.has(String(selectedContactId));
+
+    if (isSelectedUserTyping) {
+      if (audio.pause) {
+        audio.play().catch((error) => { console.log("Audio Error :", error) });
+      }
+    }
+    else {
+
+
+      if (!audio.pause) {
+        audio.pause();
+        audio.currentTime = 0;
+      }
+
+    }
+
+
+    return () => {
+      if (typingAudioRef.current) {
+        typingAudioRef.current.pause();
+        typingAudioRef.current.currentTime = 0;
+      }
+    }
+
+  }, [selectedContact, typingUsers]);
+
+
+
   const getSenderId = (message) => {
     if (!message?.senderId) return "";
     return typeof message.senderId === "string"
@@ -504,7 +549,18 @@ const ChatPanel = ({
         <div className="chat-header-text">
           <h2>{selectedContact.name}</h2>
 
-          {typingUsers.has(String(selectedContactId)) && <div>Typing...</div>}
+          {typingUsers.has(String(selectedContactId)) && (
+            <div className="typing-indicator-wrapper">
+              <div className="typing-dots">
+                <span />
+                <span />
+                <span />
+              </div>
+              <span className="typing-text">
+                {selectedContact.name} is typing...
+              </span>
+            </div>
+          )}
 
           <p className="chat-subtitle">
             <span
@@ -571,9 +627,8 @@ const ChatPanel = ({
         {messages.map((m) => (
           <div
             key={m._id}
-            className={`chat-message-row ${
-              getSenderId(m) === selectedContact._id ? "incoming" : "outgoing"
-            }`}
+            className={`chat-message-row ${getSenderId(m) === selectedContact._id ? "incoming" : "outgoing"
+              }`}
           >
             <div className="chat-message-bubble">{m.content}</div>
           </div>

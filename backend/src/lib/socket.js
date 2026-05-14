@@ -8,7 +8,6 @@ import Chat from "../models/Chat.js";
 import Blocked from "../models/Block.js";
 
 dotenv.config();
-
 export const app = express();
 export const server = http.createServer(app);
 export const wss = new WebSocketServer({ server, maxPayload: 64 * 1024 });
@@ -16,11 +15,6 @@ const userSocket = new Map();
 const contactsByUser = new Map();
 const watchersByUser = new Map();
 const lastSeen = new Map();
-
-
-
-
-
 
 const fetchContacts = async (userId) => {
   const userIdString = userId.toString();
@@ -78,26 +72,18 @@ const isAllowedOrigin = (origin) => {
 };
 
 const addSocket = (userId, ws) => {
-
   let set = userSocket.get(userId);
-
-
   if (!set) {
     set = new Set();
     userSocket.set(userId, set);
   }
-
   set.add(ws);
-
-
 };
 
 const removeSocket = (userId, ws) => {
   const set = userSocket.get(userId);
   if (!set) return;
-
   set.delete(ws);
-
   if (set.size === 0) {
     userSocket.delete(userId);
   }
@@ -425,7 +411,7 @@ wss.on("connection", async (ws, req) => {
       try {
 
         const data = JSON.parse(message.toString());
-        console.log(`User ${userId}`, data);
+        // console.log(`User ${userId}`, data);
         lastSeen.set(userId, Date.now());
 
 
