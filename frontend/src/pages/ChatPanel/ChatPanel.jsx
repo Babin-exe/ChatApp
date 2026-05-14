@@ -274,9 +274,13 @@ const ChatPanel = ({
     (value) => {
       if (!selectedContactId) return;
 
+      clearTypingTimer();
+
       const isEmpty = value.trim() === "";
       if (isEmpty) {
-        stopTyping();
+        typingIdleTimeoutRef.current = setTimeout(() => {
+          stopTyping();
+        }, TYPING_IDLE_MS);
         return;
       }
 
@@ -295,8 +299,6 @@ const ChatPanel = ({
         isTypingRef.current = true;
         lastTypedUserRef.current = selectedContactId;
       }
-
-      clearTypingTimer();
 
       typingIdleTimeoutRef.current = setTimeout(() => {
         stopTyping();
