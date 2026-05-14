@@ -99,14 +99,12 @@ const ChatPanel = ({
     const isSelectedUserTyping = typingUsers?.has(String(selectedContactId));
 
     if (isSelectedUserTyping) {
-      if (audio.pause) {
+      if (audio.paused) {
         audio.play().catch((error) => { console.log("Audio Error :", error) });
       }
     }
     else {
-
-
-      if (!audio.pause) {
+      if (!audio.paused) {
         audio.pause();
         audio.currentTime = 0;
       }

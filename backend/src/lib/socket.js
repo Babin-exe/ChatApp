@@ -135,6 +135,7 @@ export const cleanupUserGraph = (userId) => {
 
   if (!contacts) {
     contactsByUser.delete(userId);
+    watchersByUser.delete(userId);
     return;
   }
 
@@ -155,6 +156,7 @@ export const cleanupUserGraph = (userId) => {
     }
   }
   contactsByUser.delete(userId);
+  watchersByUser.delete(userId);
 };
 
 
@@ -354,18 +356,13 @@ wss.on("connection", async (ws, req) => {
 
       }
     }
-
+    
     const contacts = contactsByUser.get(userId) ?? new Set();
     const onlineContacts = [...contacts].filter(isUserOnline);
 
-
     console.log(`A user is connected to the socket server: ${userId}`);
 
-
     lastSeen.set(userId, Date.now());
-
-
-
 
     ws.send(
       JSON.stringify({
@@ -376,8 +373,6 @@ wss.on("connection", async (ws, req) => {
         },
       }),
     );
-
-
 
     ws.send(
       JSON.stringify({
@@ -411,41 +406,23 @@ wss.on("connection", async (ws, req) => {
       try {
 
         const data = JSON.parse(message.toString());
-        // console.log(`User ${userId}`, data);
         lastSeen.set(userId, Date.now());
-
 
         const type = data?.type;
 
 
-
-        // safeSend({
-        //   type: "typing:start",
-        //   data: {
-        //     toUserId,
-        //   },
-        // });
+        if (type === "ping") {
+          ws.send(JSON.stringify({ type: "pong" }));
+          return;
+        }
 
         if (type !== "typing:start" && type !== "typing:stop") return;
-
 
         const toUserId = String(data?.data?.toUserId || "");
         if (!toUserId || toUserId === userId) return;
 
-        const chat = await Chat.findOne({
-          members: { $all: [userId, toUserId] },
-          status: "accepted"
-        }).select("_id");
-
-        if (!chat) return;
-
-        const [blockedByMe, blockedMe] = await Promise.all([
-          Blocked.exists({ blocker: userId, blocked: toUserId }),
-          Blocked.exists({ blocker: toUserId, blocked: userId })
-        ]);
-
-
-        if (blockedByMe || blockedMe) return;
+        const contacts = contactsByUser.get(userId);
+        if (!contacts || !contacts.has(toUserId)) return;
 
         sendToUser(toUserId, {
           type: "typing:update",
@@ -455,8 +432,6 @@ wss.on("connection", async (ws, req) => {
             at: Date.now()
           }
         });
-
-
 
       } catch (error) {
         console.error("ws message handler error", error);

@@ -72,17 +72,25 @@ when the component unmounting happens we will clear the timeout and make the ref
     return () => window.removeEventListener("online", handleOnline);
   }, []);
 
+
+
   useEffect(() => {
     const interval = setInterval(() => {
       const now = Date.now();
+
       setTypingUsers((prev) => {
+
+        if (prev.size === 0) return prev;
+
+        let changed = false;
         const next = new Map(prev);
-        for (const [userId, timestamp] of next.entries()) {
+        for (const [userId, timestamp] of prev.entries()) {
           if (now - timestamp > 3000) {
             next.delete(userId);
+            changed = true;
           }
         }
-        return next;
+        return changed ? next : prev;
       });
     }, 1000);
 
@@ -154,14 +162,30 @@ when the component unmounting happens we will clear the timeout and make the ref
           (payload?.data?._id || payload?.data?.id)
         ) {
           setLastMessage(payload.data);
+
+          const senderId = String(payload.data.senderId || "");
+          if (senderId) {
+            setOnlineUsers((prev) => {
+              if (!prev.has(senderId)) {
+                const next = new Set(prev);
+                next.add(senderId);
+                return next;
+              }
+              return prev;
+            });
+          }
         }
         ///////////////////////////////////////////////////////////////////////////////////////////////
         if (payload?.type === "presence:initial") {
           if (!Array.isArray(payload.data?.onlineUserIds)) return;
 
-          setOnlineUsers(
-            new Set((payload.data.onlineUserIds ?? []).map(String)),
-          );
+          setOnlineUsers((prev) => {
+            const next = new Set(prev);
+            for (const id of payload.data.onlineUserIds) {
+              next.add(String(id));
+            }
+            return next;
+          });
         }
 
         if (
@@ -196,6 +220,15 @@ when the component unmounting happens we will clear the timeout and make the ref
           const isTyping = payload?.data?.isTyping;
 
           if (!fromUserId || typeof isTyping !== "boolean") return;
+
+          setOnlineUsers((prev) => {
+            if (!prev.has(fromUserId)) {
+              const next = new Set(prev);
+              next.add(fromUserId);
+              return next;
+            }
+            return prev;
+          });
 
           setTypingUsers((prev) => {
             const next = new Map(prev);
