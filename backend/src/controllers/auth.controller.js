@@ -5,7 +5,9 @@ import {
   loginService,
   logoutService,
   updateProfileService,
+  googleAuthService
 } from "../services/auth.service.js";
+
 
 export const signup = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body ? req.body : "";
@@ -88,5 +90,26 @@ export const updateProfile = asyncHandler(async (req, res) => {
     message: "Profile updated successfully",
     user: updatedUser,
   });
+
+});
+
+
+const cookieOptions = {
+  httpOnly: true,
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+  sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+  secure: process.env.NODE_ENV === "production",
+};
+
+
+export const googleAuth = asyncHandler(async (req, res) => {
+
+  const { credential } = req.body;
+
+  const { user, token } = await googleAuthService(credential);
+
+  res.cookie("token", token, cookieOptions);
+
+  return res.status(200).json({ success: true, message: "Login Successful!", user });
 
 });

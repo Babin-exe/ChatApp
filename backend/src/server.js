@@ -13,8 +13,6 @@ import cleanExpiredSessions from "./cron/cleanExpiredSessions.cron.js";
 import blockRoutes from "./routes/block.route.js";
 
 dotenv.config();
-
-
 const __dirname = path.resolve();
 
 app.use(
@@ -24,12 +22,8 @@ app.use(
   }),
 );
 
-
 app.use(cookieParser());
 app.use(express.json());
-
-
-
 
 app.use("/api/auth", authRoutes);
 app.use("/api/chats", chatRoutes);

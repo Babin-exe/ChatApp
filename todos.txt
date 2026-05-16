@@ -1,0 +1,29 @@
+ High-Impact Features
+1. Read Receipts / Message Status You already have status in your Message model (sent, delivered, read etc.) but it's not being used in the UI. You could:
+
+Show ✓ (sent), ✓✓ (delivered), blue ✓✓ (read) like WhatsApp
+Send a message:read WebSocket event when the user opens a chat
+2. Image / File Sharing You already have Cloudinary set up in your backend dependencies. Your Message model has a type field with different message types. Wiring up image uploads in the chat would be a big UX win.
+
+3. Reply to Messages Your Message model already has a replyToMessageId field — it's just not wired up in the frontend yet. Adding a "swipe to reply" or a reply button that quotes the original message would make conversations feel much more natural.
+
+ Reliability & UX
+4. Optimistic UI for Sending Messages Right now when you send a message, the UI waits for the server to respond before showing it. You could immediately show the message with a "sending..." state, then update it once confirmed — makes the app feel instant.
+
+5. New Message Notification Sound You added a typing sound — you could also add a notification sound when a new message arrives (especially if the chat tab is in the background or a different contact is selected). You can use the same Audio pattern.
+
+6. Unread Message Count Show a badge on each contact in the sidebar with the number of unread messages. This is a standard chat feature and you already have the lastMessage field on the Chat model to build on.
+
+ Polish
+7. "Last Seen" Display You're already tracking lastSeen on the backend. Instead of just "Offline", you could show "Last seen 5 min ago" which is much more informative.
+
+8. Profile Pictures / Avatars Your User model has a profilePic field. Showing avatars next to contacts and in the chat header would make the UI feel much more polished.
+
+9. Message Timestamps Your messages have createdAt from Mongoose but you're not showing them in the chat bubbles. Even a subtle "2:30 PM" under each message goes a long way.
+
+ Code Quality
+10. Wire Up Those Disabled Buttons In ContactsPanel.jsx, "View profile" and "Mute notifications" are disabled placeholder buttons. Either implement them or remove them to avoid confusing users.
+
+11. Message Edit / Delete Your Message model already has an edited field. Adding edit and delete functionality would complete the model.
+
+What catches your eye? I can help you implement any of these!

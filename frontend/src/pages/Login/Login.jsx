@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
+import { GoogleLogin } from "@react-oauth/google";
 import api from "../../lib/api.js";
 import { UseSocketContext } from "../../context/socketContext.js";
+
 
 const Login = () => {
   const { refreshAuthUser } = UseSocketContext();
@@ -13,6 +15,9 @@ const Login = () => {
   const handleChange = (e) => {
     setData((prev) => ({ ...prev, [e.target.id]: e.target.value }));
   };
+
+
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -57,7 +62,12 @@ const Login = () => {
           <p className="auth-subtitle">Login to continue your conversations.</p>
         </div>
 
-        <form className="auth-form" onSubmit={handleSubmit}>
+
+        <div>
+          <GoogleLogin></GoogleLogin>
+        </div>
+
+        {/* <form className="auth-form" onSubmit={handleSubmit}>
           <input
             id="email"
             onChange={handleChange}
@@ -86,7 +96,7 @@ const Login = () => {
           <p className="auth-footer">
             New here? <Link to="/signup">Create account</Link>
           </p>
-        </form>
+        </form> */}
       </div>
     </div>
   );

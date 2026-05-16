@@ -82,12 +82,8 @@ const ChatPanel = ({
 
   const typingAudioRef = useRef(null);
 
-
-
   useEffect(() => {
-
     if (!typingAudioRef.current) {
-
       const audio = new Audio("/typing.wav");
       audio.loop = true;
       audio.volume = 0.25;
@@ -100,28 +96,24 @@ const ChatPanel = ({
 
     if (isSelectedUserTyping) {
       if (audio.paused) {
-        audio.play().catch((error) => { console.log("Audio Error :", error) });
+        audio.play().catch((error) => {
+          console.log("Audio Error :", error);
+        });
       }
-    }
-    else {
+    } else {
       if (!audio.paused) {
         audio.pause();
         audio.currentTime = 0;
       }
-
     }
-
 
     return () => {
       if (typingAudioRef.current) {
         typingAudioRef.current.pause();
         typingAudioRef.current.currentTime = 0;
       }
-    }
-
+    };
   }, [selectedContact, typingUsers]);
-
-
 
   const getSenderId = (message) => {
     if (!message?.senderId) return "";
@@ -627,8 +619,9 @@ const ChatPanel = ({
         {messages.map((m) => (
           <div
             key={m._id}
-            className={`chat-message-row ${getSenderId(m) === selectedContact._id ? "incoming" : "outgoing"
-              }`}
+            className={`chat-message-row ${
+              getSenderId(m) === selectedContact._id ? "incoming" : "outgoing"
+            }`}
           >
             <div className="chat-message-bubble">{m.content}</div>
           </div>

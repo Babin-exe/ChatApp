@@ -16,12 +16,18 @@ const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
+
+
+
+
+    googleSub: { type: String, sparse: true, unique: true },
+    authProvider: { type: String, enum: ["google", "local"], default: "google", required: true },
+
+
     isVerified: { type: Boolean, default: false },
-    verificationToken: { type: String },
-    verificationTokenExpires: { type: Date },
     sessions: [sessionSchema],
     profilePic: { type: String },
+    
     nameSearch: { type: String, default: "" },
     emailSearch: { type: String, default: "" },
 

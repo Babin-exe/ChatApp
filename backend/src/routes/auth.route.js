@@ -6,6 +6,7 @@ import {
   verifyEmail,
   getMe,
   updateProfile,
+  googleAuth,
 } from "../controllers/auth.controller.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
 import { arcjetProtection } from "../middleware/arcjet.middleware.js";
@@ -14,6 +15,7 @@ import {
   loginSchema,
   signupSchema,
   updateProfileSchema,
+  googleAuthSchema,
 } from "../validation/auth.validation.js";
 
 const router = express.Router();
@@ -22,6 +24,9 @@ router.use(arcjetProtection);
 
 router.post("/signup", validate(signupSchema), signup);
 router.post("/login", validate(loginSchema), login);
+
+router.post("/google", validate(googleAuthSchema), googleAuth);
+
 router.post("/logout", protectRoute, logout);
 router.get("/me", protectRoute, getMe);
 router.get("/verify/:token", verifyEmail);

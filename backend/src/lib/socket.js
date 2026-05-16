@@ -356,7 +356,7 @@ wss.on("connection", async (ws, req) => {
 
       }
     }
-    
+
     const contacts = contactsByUser.get(userId) ?? new Set();
     const onlineContacts = [...contacts].filter(isUserOnline);
 
@@ -432,6 +432,13 @@ wss.on("connection", async (ws, req) => {
             at: Date.now()
           }
         });
+
+
+
+        //Experimental
+        sendToUser(userId, { type: "message:sent", data: { toUserId } });
+        //Experimental
+
 
       } catch (error) {
         console.error("ws message handler error", error);

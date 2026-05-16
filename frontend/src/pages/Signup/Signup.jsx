@@ -3,8 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 
 import api from "../../lib/api.js";
+import { UseSocketContext } from "../../context/socketContext.js";
 
 const Signup = () => {
+  const { refreshAuthUser } = UseSocketContext();
   const [data, setData] = useState({ name: "", email: "", password: "" });
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -14,6 +16,8 @@ const Signup = () => {
     const value = e.target.value;
     setData((prev) => ({ ...prev, [item]: value }));
   };
+
+
 
   const handleSignin = async (e) => {
     e.preventDefault();
@@ -43,6 +47,9 @@ const Signup = () => {
             Sign up once and start chatting in seconds.
           </p>
         </div>
+
+
+
         <form onSubmit={handleSignin} className="auth-form">
           <input
             id="name"

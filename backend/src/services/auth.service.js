@@ -1,11 +1,26 @@
-import bcrypt from "bcrypt";
+// import bcrypt from "bcrypt";
 import crypto from "crypto";
 import User from "../models/user.model.js";
 import sendEmail from "../utils/sendEmail.js";
 import HttpError from "../utils/HttpError.js";
 import jwt from "jsonwebtoken";
-import cloudinary from "../lib/cloudinary.js";
-import asyncHandler from "../utils/asyncHandler.js";
+// import cloudinary from "../lib/cloudinary.js";
+import { OAuth2Client } from "google-auth-library";
+
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_AUTH_CLIENT_ID);
+
+
+const createUserSession = (user) => {
+
+  return jwt.sign(
+    { id: user._id, email: user.email },
+    process.env.JWT_SECRET,
+    { expiresIn: "7d" });
+
+};
+
+
 
 export const signupService = async ({ name, email, password }) => {
   if (!name || !email || !password) {
@@ -165,4 +180,79 @@ export const updateProfileService = async (userId, profilePic) => {
     email: updatedUser.email,
     profilePic: updatedUser.profilePic,
   };
+};
+
+
+export const googleAuthService = async (credential) => {
+
+
+  if (!credential) {
+    throw new HttpError("Invalid Google token", 401
+    );
+  }
+  let payload;
+  try {
+    const ticket = await googleClient.verifyIdToken({ idToken: credential, audience: process.env.GOOGLE_AUTH_CLIENT_ID });
+    payload = ticket.getPayload();
+  } catch (error) {
+    throw new HttpError("Invalid Google credential", 401);
+  }
+
+  const { sub, email, name, picture, email_verified } = payload;
+
+  if (!sub || !email) {
+    throw new HttpError("Google account is missing required profile data", 400);
+  }
+
+  if (!email_verified) {
+    throw new HttpError("Please verify your Google email address", 403);
+  }
+
+
+
+  let user = await User.findOne({
+    googleSub: sub,
+  });
+
+  if (!user) {
+    user = await User.findOne({ email });
+  }
+
+
+  if (!user) {
+    user = await User.create({
+      name: name || email.split("@")[0],
+      email: email,
+      googleSub: sub,
+      profilePic: picture || "",
+      isVerified: email_verified,
+      authProvider: "google"
+    });
+  } else {
+    user.googleSub = user.googleSub || sub;
+    user.authProvider = "google";
+    user.isVerified = true;
+    if (name && user.name != name) user.name = name;
+    if (picture && user.profilePic != picture) user.profilePic = picture;
+
+
+
+  }
+
+
+  const now = new Date();
+  user.sessions = user.sessions.filter((s) => s.expiresAt > now);
+
+  const token = createUserSession(user);
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+
+  user.sessions.push({ token, expiresAt });
+  await user.save();
+
+  return {
+    user:
+      { id: user._id, name: user.name, email: user.email, profilePic: user.profilePic },
+    token
+  };
+
 };
