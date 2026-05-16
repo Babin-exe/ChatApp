@@ -113,7 +113,7 @@ const ChatPanel = ({
         typingAudioRef.current.currentTime = 0;
       }
     };
-  }, [selectedContact, typingUsers]);
+  }, [selectedContactId, typingUsers]);
 
   const getSenderId = (message) => {
     if (!message?.senderId) return "";

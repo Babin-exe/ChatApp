@@ -1,135 +1,17 @@
-// import bcrypt from "bcrypt";
-import crypto from "crypto";
 import User from "../models/user.model.js";
-import sendEmail from "../utils/sendEmail.js";
 import HttpError from "../utils/HttpError.js";
 import jwt from "jsonwebtoken";
-// import cloudinary from "../lib/cloudinary.js";
 import { OAuth2Client } from "google-auth-library";
+import cloudinary from "../lib/cloudinary.js";
 
-
-const googleClient = new OAuth2Client(process.env.GOOGLE_AUTH_CLIENT_ID);
-
+const googleClient = new OAuth2Client();
 
 const createUserSession = (user) => {
-
   return jwt.sign(
-    { id: user._id, email: user.email },
-    process.env.JWT_SECRET,
-    { expiresIn: "7d" });
-
-};
-
-
-
-export const signupService = async ({ name, email, password }) => {
-  if (!name || !email || !password) {
-    throw new HttpError("Not enough info to create an account", 400);
-  }
-
-  if (password.length < 8) {
-    throw new HttpError(
-      "Enter password length greater or equal to Eight(8)",
-      400,
-    );
-  }
-
-  const existingUser = await User.findOne({ email });
-  if (existingUser) {
-    throw new HttpError("Email is already in use", 409);
-  }
-
-  // Hash password
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  // Generate verification token
-  const token = crypto.randomBytes(32).toString("hex");
-  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
-
-  // Create user
-  const user = await User.create({
-    name,
-    email,
-    password: hashedPassword,
-    profilePic: "",
-    verificationToken: hashedToken,
-    verificationTokenExpires: Date.now() + 24 * 60 * 60 * 1000, // 24h
-  });
-
-  // Send verification email
-  try {
-    const verifyUrl = `${process.env.BACKEND_URL}/api/auth/verify/${token}`;
-    await sendEmail(
-      email,
-      "Verify Your Email",
-      `<p>Click the link below to verify your email:</p>
-          <a href="${verifyUrl}">Verify Email</a>`,
-    );
-  } catch (err) {
-    console.error("Email sending failed:", err);
-  }
-
-  return { id: user._id, name: user.name, email: user.email };
-};
-
-export const verifyEmailService = async (token) => {
-  // Hash the token from params
-  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
-
-  // Find user with valid token
-  const user = await User.findOne({
-    verificationToken: hashedToken,
-    verificationTokenExpires: { $gt: Date.now() },
-  });
-
-  if (!user) {
-    console.log("Verification token failed: invalid or expired token");
-    return false;
-  }
-
-  // Mark user as verified
-  user.isVerified = true;
-  user.verificationToken = undefined;
-  user.verificationTokenExpires = undefined;
-  await user.save();
-  return true;
-};
-
-export const loginService = async ({ email, password }) => {
-  const user = await User.findOne({ email });
-  if (!user) {
-    throw new HttpError("Invalid credentials", 401);
-  }
-
-  if (!user.isVerified) {
-    throw new HttpError("Please verify your email before logging in", 403);
-  }
-
-  const isPasswordCorrect = await bcrypt.compare(password, user.password);
-  if (!isPasswordCorrect) {
-    throw new HttpError("Invalid credentials", 401);
-  }
-
-  // Remove expired sessions
-  const now = new Date();
-  user.sessions = user.sessions.filter((session) => session.expiresAt > now);
-
-  // Generate JWT
-  const token = jwt.sign(
     { id: user._id, email: user.email },
     process.env.JWT_SECRET,
     { expiresIn: "7d" },
   );
-
-  // Add new session
-  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-  user.sessions.push({ token, expiresAt });
-  await user.save();
-
-  return {
-    user: { id: user._id, name: user.name, email: user.email },
-    token,
-  };
 };
 
 export const logoutService = async (token) => {
@@ -137,14 +19,11 @@ export const logoutService = async (token) => {
     throw new HttpError("No active session", 400);
   }
 
-  // Remove session containing this token
   await User.updateOne(
     { "sessions.token": token },
     { $pull: { sessions: { token } } },
   );
 };
-
-
 
 export const updateProfileService = async (userId, profilePic) => {
   if (!userId) {
@@ -182,19 +61,24 @@ export const updateProfileService = async (userId, profilePic) => {
   };
 };
 
-
 export const googleAuthService = async (credential) => {
-
-
   if (!credential) {
-    throw new HttpError("Invalid Google token", 401
-    );
+    throw new HttpError("Google credential is required", 400);
   }
+
+  const googleClientId = process.env.GOOGLE_AUTH_CLIENT_ID;
+  if (!googleClientId) {
+    throw new HttpError("Google authentication is not configured", 500);
+  }
+
   let payload;
   try {
-    const ticket = await googleClient.verifyIdToken({ idToken: credential, audience: process.env.GOOGLE_AUTH_CLIENT_ID });
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: googleClientId,
+    });
     payload = ticket.getPayload();
-  } catch (error) {
+  } catch {
     throw new HttpError("Invalid Google credential", 401);
   }
 
@@ -208,11 +92,7 @@ export const googleAuthService = async (credential) => {
     throw new HttpError("Please verify your Google email address", 403);
   }
 
-
-
-  let user = await User.findOne({
-    googleSub: sub,
-  });
+  let user = await User.findOne({ googleSub: sub });
 
   if (!user) {
     user = await User.findOne({ email });
@@ -222,23 +102,19 @@ export const googleAuthService = async (credential) => {
   if (!user) {
     user = await User.create({
       name: name || email.split("@")[0],
-      email: email,
+      email,
       googleSub: sub,
       profilePic: picture || "",
-      isVerified: email_verified,
-      authProvider: "google"
+      isVerified: true,
+      authProvider: "google",
     });
   } else {
     user.googleSub = user.googleSub || sub;
     user.authProvider = "google";
     user.isVerified = true;
-    if (name && user.name != name) user.name = name;
-    if (picture && user.profilePic != picture) user.profilePic = picture;
-
-
-
+    if (name && user.name !== name) user.name = name;
+    if (picture && user.profilePic !== picture) user.profilePic = picture;
   }
-
 
   const now = new Date();
   user.sessions = user.sessions.filter((s) => s.expiresAt > now);
@@ -250,9 +126,12 @@ export const googleAuthService = async (credential) => {
   await user.save();
 
   return {
-    user:
-      { id: user._id, name: user.name, email: user.email, profilePic: user.profilePic },
-    token
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      profilePic: user.profilePic,
+    },
+    token,
   };
-
 };

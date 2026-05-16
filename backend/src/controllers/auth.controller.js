@@ -1,56 +1,16 @@
 import asyncHandler from "../utils/asyncHandler.js";
 import {
-  signupService,
-  verifyEmailService,
-  loginService,
   logoutService,
   updateProfileService,
-  googleAuthService
+  googleAuthService,
 } from "../services/auth.service.js";
 
-
-export const signup = asyncHandler(async (req, res) => {
-  const { name, email, password } = req.body ? req.body : "";
-
-  const user = await signupService({ name, email, password });
-
-  return res.status(201).json({
-    success: true,
-    message: "Verification email sent",
-    user,
-  });
-});
-
-export const verifyEmail = asyncHandler(async (req, res) => {
-  const { token } = req.params;
-
-  const success = await verifyEmailService(token);
-
-  if (!success) {
-    return res.redirect(`${process.env.FRONTEND_URL}/verification-failed`);
-  }
-
-  return res.redirect(`${process.env.FRONTEND_URL}/login?verified=true`);
-});
-
-export const login = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
-
-  const { user, token } = await loginService({ email, password });
-
-  res.cookie("token", token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
-
-  return res.status(200).json({
-    success: true,
-    message: "Login successful",
-    user,
-  });
-});
+const sessionCookieOptions = {
+  httpOnly: true,
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+  sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+  secure: process.env.NODE_ENV === "production",
+};
 
 export const logout = asyncHandler(async (req, res) => {
   const token = req.cookies.token;
@@ -58,9 +18,9 @@ export const logout = asyncHandler(async (req, res) => {
   await logoutService(token);
 
   res.clearCookie("token", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+    httpOnly: sessionCookieOptions.httpOnly,
+    secure: sessionCookieOptions.secure,
+    sameSite: sessionCookieOptions.sameSite,
   });
 
   return res.status(200).json({
@@ -74,7 +34,12 @@ export const getMe = asyncHandler(async (req, res) => {
 
   return res.status(200).json({
     success: true,
-    user: { id: user._id, name: user.name, email: user.email },
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      profilePic: user.profilePic,
+    },
   });
 });
 
@@ -93,23 +58,16 @@ export const updateProfile = asyncHandler(async (req, res) => {
 
 });
 
-
-const cookieOptions = {
-  httpOnly: true,
-  maxAge: 7 * 24 * 60 * 60 * 1000,
-  sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
-  secure: process.env.NODE_ENV === "production",
-};
-
-
 export const googleAuth = asyncHandler(async (req, res) => {
-
   const { credential } = req.body;
 
   const { user, token } = await googleAuthService(credential);
 
-  res.cookie("token", token, cookieOptions);
+  res.cookie("token", token, sessionCookieOptions);
 
-  return res.status(200).json({ success: true, message: "Login Successful!", user });
-
+  return res.status(200).json({
+    success: true,
+    message: "Login successful",
+    user,
+  });
 });

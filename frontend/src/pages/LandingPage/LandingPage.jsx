@@ -10,17 +10,17 @@ const LandingPage = () => {
           Talk Faster On <span>ChatApplication</span>
         </h1>
         <p className="hero-subtitle">
-          A clean chat workspace for quick, private conversations with smooth
-          login and instant messaging.
+          A clean chat workspace for quick, private conversations with one
+          Google sign-in and instant messaging.
         </p>
 
         <div className="hero-actions">
-          <Link to="/signup" className="ui-btn ui-btn-primary">
-            Create Account
+          <Link to="/auth" className="ui-btn ui-btn-primary">
+            Continue With Google
           </Link>
 
-          <Link to="/login" className="ui-btn ui-btn-outline">
-            I Have An Account
+          <Link to="/auth" className="ui-btn ui-btn-outline">
+            Sign In
           </Link>
         </div>
       </div>

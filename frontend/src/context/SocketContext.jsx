@@ -18,6 +18,7 @@ import { SocketContext } from "./socketContext.js";
 export const SocketContextProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const [authUser, setAuthUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [lastMessage, setLastMessage] = useState(null);
   const socketRef = useRef(null);
   const [onlineUsers, setOnlineUsers] = useState(new Set());
@@ -58,6 +59,8 @@ when the component unmounting happens we will clear the timeout and make the ref
     } catch {
       setAuthUser(null);
       return null;
+    } finally {
+      setAuthLoading(false);
     }
   }, []);
 
@@ -333,12 +336,21 @@ when the component unmounting happens we will clear the timeout and make the ref
     () => ({
       socket,
       authUser,
+      authLoading,
       lastMessage,
       refreshAuthUser,
       onlineUsers,
       typingUsers,
     }),
-    [socket, authUser, lastMessage, refreshAuthUser, onlineUsers, typingUsers],
+    [
+      socket,
+      authUser,
+      authLoading,
+      lastMessage,
+      refreshAuthUser,
+      onlineUsers,
+      typingUsers,
+    ],
   );
   return (
     <SocketContext.Provider value={value}>{children}</SocketContext.Provider>
