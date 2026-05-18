@@ -189,6 +189,20 @@ export const sendMessageController = asyncHandler(async (req, res) => {
   const { content, type } = req.body;
   const { receiverId } = req.params;
 
+  let image;
+
+  //All i have to check is does the file exist
+  if (req.file) {
+
+
+    //what is it that you want to do ?
+
+    //We want to upload this iamge to cloudinary 
+    // and what ever the function returns us is goind to be used to form the image : 
+    // Put that in the 
+  }
+
+
   const message = await sendMessage({
     senderId,
     receiverId,
