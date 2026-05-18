@@ -619,9 +619,8 @@ const ChatPanel = ({
         {messages.map((m) => (
           <div
             key={m._id}
-            className={`chat-message-row ${
-              getSenderId(m) === selectedContact._id ? "incoming" : "outgoing"
-            }`}
+            className={`chat-message-row ${getSenderId(m) === selectedContact._id ? "incoming" : "outgoing"
+              }`}
           >
             <div className="chat-message-bubble">{m.content}</div>
           </div>
@@ -645,6 +644,13 @@ const ChatPanel = ({
           disabled={!canMessage || sending}
           placeholder={`Message ${selectedContact.name}`}
         />
+
+        <input type="file" accept="image/*" />
+
+
+
+
+
         <button
           type="submit"
           disabled={sending || !newMessage.trim() || !canMessage}

@@ -25,7 +25,7 @@ const messageSchema = new mongoose.Schema(
     },
     content: {
       type: String,
-      required: true,
+      default: "",
       trim: true,
     },
     type: {
@@ -33,6 +33,14 @@ const messageSchema = new mongoose.Schema(
       required: true,
       default: DEFAULT_MESSAGE_TYPE,
       enum: MESSAGE_TYPES,
+    },
+    image: {
+      url: String,
+      height: Number,
+      width: Number,
+      publicId: String,
+      format: String,
+      bytes: Number,
     },
 
     status: {
