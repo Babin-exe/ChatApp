@@ -434,8 +434,9 @@ const ChatPanel = ({
     };
   }, [stopTyping]);
 
-  const sendCurrentMessage = async (contentToSend) => {
-    if (!selectedContact || !contentToSend.trim()) return;
+  const sendCurrentMessage = async (contentToSend, imageToSend) => {
+    if (!selectedContact || (!contentToSend.trim() && !imageToSend)) return;
+
     if (!chatStatus.canMessage) {
       toast.error("You can't message this user");
       return;
@@ -447,10 +448,19 @@ const ChatPanel = ({
       setSending(true);
       setSendError("");
 
-      const res = await api.post(`/api/messages/send/${contactId}`, {
-        content: contentToSend,
-        type: "text",
-      });
+      const formData = new FormData();
+      formData.append("content", contentToSend || "");
+
+      if (imageToSend) {
+        formData.append("image", imageToSend);
+      }
+
+      const res = await api.post(
+        `/api/messages/send/${contactId}`,
+        formData,
+        // content: contentToSend,
+        // type: "text",
+      );
 
       const savedMessage = res.data.messageData;
       if (!savedMessage?._id) {
@@ -493,10 +503,13 @@ const ChatPanel = ({
   const handleSendMessage = async (e) => {
     e.preventDefault();
     const content = newMessage.trim();
-    if (!content) return;
+    if (!content && !selectedImage) return;
 
     stopTyping();
-    await sendCurrentMessage(content);
+    await sendCurrentMessage(content, selectedImage);
+
+    setNewMessage("");
+    setSelectedImage(null);
   };
 
   if (!selectedContact) {
@@ -625,7 +638,20 @@ const ChatPanel = ({
               getSenderId(m) === selectedContact._id ? "incoming" : "outgoing"
             }`}
           >
-            <div className="chat-message-bubble">{m.content}</div>
+            <div className="chat-message-bubble">
+              {m.type === "image" ? (
+                <>
+                  <img
+                    src={m.image?.url}
+                    alt="sent attachment"
+                    className="chat-image-message"
+                  />
+                  {m.content && <p>{m.content}</p>}
+                </>
+              ) : (
+                m.content
+              )}
+            </div>
           </div>
         ))}
 
@@ -664,7 +690,9 @@ const ChatPanel = ({
 
         <button
           type="submit"
-          disabled={sending || !newMessage.trim() || !canMessage}
+          disabled={
+            sending || (!newMessage.trim() && !selectedImage) || !canMessage
+          }
           className="ui-btn ui-btn-primary chat-send-btn"
         >
           {sending ? "Sending..." : "Send"}

@@ -269,7 +269,7 @@ export const sendMessage = async ({
     chatId: chat._id,
     content: trimmedContent,
     type,
-    image: type === "image" ? image : "",
+    image: type === "image" ? image : undefined,
     status: DEFAULT_MESSAGE_STATUS,
   });
 
