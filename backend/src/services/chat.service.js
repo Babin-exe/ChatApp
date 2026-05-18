@@ -13,8 +13,6 @@ import isBlocked from "../utils/blockChecker.js";
 import Blocked from "../models/Block.js";
 
 
-
-
 const ALLOWED_STATUS = ["declined", "accepted"];
 
 export const updateChatStatus = async ({
@@ -174,7 +172,6 @@ export const createNewChatRequest = async ({ senderId, receiverId }) => {
   return populatedChat;
 };
 
-
 export const getMessagesByChatParticipants = async ({
   senderId,
   receiverId,
@@ -184,21 +181,16 @@ export const getMessagesByChatParticipants = async ({
 
   const parsedLimit = Math.min(Number(limit) || 30, 100);
 
-
   const chat = await Chat.findOne({
     members: { $all: [senderId, receiverId] },
     status: "accepted",
   });
 
-
   if (!chat) {
     throw new HttpError("Active chat not found or request not accepted", 404);
   }
 
-
   const query = { chatId: chat._id };
-
-
 
   const cursorDate = cursor ? new Date(cursor) : null;
 
@@ -245,15 +237,13 @@ export const sendMessage = async ({
   validateObjectId(receiverId, "receiverId");
 
 
-
-
   const trimmedContent = String(content ?? "").trim();
-  if (type == "text" && !trimmedContent) {
+  if (type === "text" && !trimmedContent) {
     throw new HttpError("Message content is required", 400);
   }
 
 
-  if (type == "image" && !image?.url) {
+  if (type === "image" && !image?.url) {
     throw new HttpError("Image is required", 400);
   }
 
@@ -277,15 +267,13 @@ export const sendMessage = async ({
     senderId,
     receiverId,
     chatId: chat._id,
-    content: content.trim(),
+    content: trimmedContent,
     type,
-    image,
+    image: type === "image" ? image : "",
     status: DEFAULT_MESSAGE_STATUS,
   });
 
   await Chat.findByIdAndUpdate(chat._id, { lastMessage: message._id });
-
-
 
   const realtimePayload = {
     type: "message",
@@ -294,12 +282,8 @@ export const sendMessage = async ({
 
   sendToUser(receiverId.toString(), realtimePayload);
 
-
-
   return message;
 };
-
-
 
 export const getIncomingChatRequest = async ({ userId }) => {
 
@@ -315,13 +299,6 @@ export const getIncomingChatRequest = async ({ userId }) => {
   })
     .populate("initiator", "email name profilePic")
     .sort({ createdAt: -1 });
-
-
-
-
-
-
-
 
   return chats.map((chat) => ({
     chatId: chat._id,
@@ -367,15 +344,12 @@ export const discoverUsersToChat = async ({ userId, q = "" }) => {
     isVerified: { $ne: false }
   };
 
-
-
   if (search) {
     filter.$or = [
       { nameSearch: prefixRange(search) },
       { emailSearch: prefixRange(search) },
     ]
   }
-
 
   return User.find(filter).select("_id name email profilePic")
     .sort({ nameSearch: 1, _id: 1 })

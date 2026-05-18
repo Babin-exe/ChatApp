@@ -82,6 +82,8 @@ const ChatPanel = ({
 
   const typingAudioRef = useRef(null);
 
+  const [selectedImage, setSelectedImage] = useState(null);
+
   useEffect(() => {
     if (!typingAudioRef.current) {
       const audio = new Audio("/typing.wav");
@@ -619,8 +621,9 @@ const ChatPanel = ({
         {messages.map((m) => (
           <div
             key={m._id}
-            className={`chat-message-row ${getSenderId(m) === selectedContact._id ? "incoming" : "outgoing"
-              }`}
+            className={`chat-message-row ${
+              getSenderId(m) === selectedContact._id ? "incoming" : "outgoing"
+            }`}
           >
             <div className="chat-message-bubble">{m.content}</div>
           </div>
@@ -644,12 +647,20 @@ const ChatPanel = ({
           disabled={!canMessage || sending}
           placeholder={`Message ${selectedContact.name}`}
         />
+        {/* /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// */}
 
-        <input type="file" accept="image/*" />
+        <input
+          type="file"
+          accept="image/*"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            setSelectedImage(file);
+            console.log("Image stuff is happening");
+          }}
+        />
 
-
-
-
+        {/* /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// */}
 
         <button
           type="submit"
