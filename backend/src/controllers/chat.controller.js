@@ -10,6 +10,7 @@ import {
 } from "../services/chat.service.js";
 import Blocked from "../models/Block.js";
 import { Types } from "mongoose";
+import { uploadImageToCloudinary } from "../services/cloudinaryUploader.service.js";
 
 export const createChatRequest = asyncHandler(async (req, res) => {
   const senderId = req.user._id;
@@ -194,12 +195,7 @@ export const sendMessageController = asyncHandler(async (req, res) => {
   //All i have to check is does the file exist
   if (req.file) {
 
-
-    //what is it that you want to do ?
-
-    //We want to upload this iamge to cloudinary 
-    // and what ever the function returns us is goind to be used to form the image : 
-    // Put that in the 
+    image = await uploadImageToCloudinary(req.file.buffer);
   }
 
 
@@ -207,7 +203,8 @@ export const sendMessageController = asyncHandler(async (req, res) => {
     senderId,
     receiverId,
     content,
-    type: type || "text",
+    image,
+    type: image ? "image" : "text",
   });
 
   return res.status(200).json({

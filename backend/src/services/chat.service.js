@@ -237,6 +237,7 @@ export const sendMessage = async ({
   senderId,
   receiverId,
   content,
+  image,
   type = DEFAULT_MESSAGE_TYPE,
 }) => {
 
@@ -244,10 +245,17 @@ export const sendMessage = async ({
   validateObjectId(receiverId, "receiverId");
 
 
-  if (!content || !content.trim()) {
+
+
+  const trimmedContent = String(content ?? "").trim();
+  if (type == "text" && !trimmedContent) {
     throw new HttpError("Message content is required", 400);
   }
 
+
+  if (type == "image" && !image?.url) {
+    throw new HttpError("Image is required", 400);
+  }
 
   const chat = await Chat.findOne({
     members: { $all: [senderId, receiverId] },
@@ -259,20 +267,11 @@ export const sendMessage = async ({
     throw new HttpError("Active chat not found or request not accepted", 404);
   }
 
-
-
-
   const blocked = await isBlocked(senderId, receiverId);
 
   if (blocked) {
     throw new HttpError("You cannot message this user", 403);
   }
-
-
-
-
-
-
 
   const message = await Message.create({
     senderId,
@@ -280,6 +279,7 @@ export const sendMessage = async ({
     chatId: chat._id,
     content: content.trim(),
     type,
+    image,
     status: DEFAULT_MESSAGE_STATUS,
   });
 
