@@ -34,7 +34,9 @@ const ChatPanel = ({
   const [sending, setSending] = useState(false);
   const [messagesError, setMessagesError] = useState("");
   const [sendError, setSendError] = useState("");
-  const [retryMessage, setRetryMessage] = useState("");
+
+  const [hasFailedMessage, setHasFailedMessage] = useState(false);
+
   const [nextCursor, setNextCursor] = useState(null);
   const [loadingOlder, setLoadingOlder] = useState(false);
 
@@ -320,7 +322,7 @@ const ChatPanel = ({
       setMessages([]);
       setMessagesError("");
       setSendError("");
-      setRetryMessage("");
+      // setRetryPayload(null);
       setNextCursor(null);
       setChatStatus({
         blockedByMe: false,
@@ -338,7 +340,7 @@ const ChatPanel = ({
     setNextCursor(null);
     setMessagesError("");
     setSendError("");
-    setRetryMessage("");
+    // setRetryPayload(null);
     isInitialLoadDone.current = false;
     setChatStatus(defaultStatusFromBlockedList);
 
@@ -453,13 +455,25 @@ const ChatPanel = ({
     };
   }, [selectedImage]);
 
+  const handleRetrySend = async () => {
+    const content = newMessage.trim();
+    if (!content && !selectedImage) return;
+
+    const sent = await sendCurrentMessage(content, selectedImage);
+
+    if (!sent) return;
+
+    setNewMessage("");
+    clearSelectedImage();
+  };
+
   const clearSelectedImage = useCallback(() => {
     setSelectedImage(null);
     setImagePreviewUrl(null);
 
-    // if (fileInputRef.current) {
-    //   fileInputRef.current = null;
-    // }
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   }, []);
 
   const sendCurrentMessage = async (contentToSend, imageToSend) => {
@@ -511,19 +525,17 @@ const ChatPanel = ({
         }
       }, 50);
 
-      setRetryMessage("");
-
-      if (newMessage.trim() === contentToSend) {
-        setNewMessage("");
-      }
+      setHasFailedMessage(false);
 
       return true;
     } catch (error) {
       const message =
         error.response?.data?.message ||
         "Failed to send message. Please retry.";
+
       setSendError(message);
-      setRetryMessage(contentToSend);
+      // setRetryPayload({ content: contentToSend, image: imageToSend });
+      setHasFailedMessage(true);
       toast.error(message);
 
       return false;
@@ -735,6 +747,7 @@ const ChatPanel = ({
                 className="chat-attachment-remove"
                 onClick={clearSelectedImage}
                 disabled={sending}
+                aria-label="Remove selected image"
               >
                 X
               </button>
@@ -745,7 +758,6 @@ const ChatPanel = ({
               className="chat-attachment-picker"
               disabled={!canMessage || sending}
               onClick={() => {
-                console.log("Plus icon clicked", fileInputRef.current);
                 fileInputRef.current?.click();
               }}
             >
@@ -767,12 +779,12 @@ const ChatPanel = ({
         </button>
       </form>
 
-      {sendError && retryMessage && (
+      {sendError && hasFailedMessage && (
         <div className="chat-alert inline">
           <p>{sendError}</p>
           <button
             type="button"
-            onClick={() => sendCurrentMessage(retryMessage)}
+            onClick={handleRetrySend}
             disabled={sending}
             className="chat-link-btn"
           >
