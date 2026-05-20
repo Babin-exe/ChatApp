@@ -42,9 +42,10 @@ const ChatPanel = ({
   const typingIdleTimeoutRef = useRef(null);
   const TYPING_IDLE_MS = 1500;
 
+  const fileInputRef = useRef(null);
+
   /*
   
-
 
   what do i want 
 
@@ -83,6 +84,8 @@ const ChatPanel = ({
   const typingAudioRef = useRef(null);
 
   const [selectedImage, setSelectedImage] = useState(null);
+
+  const [imagePreviewUrl, setImagePreviewUrl] = useState(null);
 
   useEffect(() => {
     if (!typingAudioRef.current) {
@@ -434,6 +437,31 @@ const ChatPanel = ({
     };
   }, [stopTyping]);
 
+  useEffect(() => {
+    //Okay what to do here is check if we have any selected iamge or not
+
+    if (!selectedImage) {
+      setImagePreviewUrl(null);
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(selectedImage);
+    setImagePreviewUrl(objectUrl);
+
+    return () => {
+      URL.revokeObjectURL(objectUrl);
+    };
+  }, [selectedImage]);
+
+  const clearSelectedImage = useCallback(() => {
+    setSelectedImage(null);
+    setImagePreviewUrl(null);
+
+    // if (fileInputRef.current) {
+    //   fileInputRef.current = null;
+    // }
+  }, []);
+
   const sendCurrentMessage = async (contentToSend, imageToSend) => {
     if (!selectedContact || (!contentToSend.trim() && !imageToSend)) return;
 
@@ -488,6 +516,8 @@ const ChatPanel = ({
       if (newMessage.trim() === contentToSend) {
         setNewMessage("");
       }
+
+      return true;
     } catch (error) {
       const message =
         error.response?.data?.message ||
@@ -495,6 +525,8 @@ const ChatPanel = ({
       setSendError(message);
       setRetryMessage(contentToSend);
       toast.error(message);
+
+      return false;
     } finally {
       setSending(false);
     }
@@ -506,10 +538,14 @@ const ChatPanel = ({
     if (!content && !selectedImage) return;
 
     stopTyping();
-    await sendCurrentMessage(content, selectedImage);
+
+    const sent = await sendCurrentMessage(content, selectedImage);
+
+    if (!sent) return;
 
     setNewMessage("");
-    setSelectedImage(null);
+
+    clearSelectedImage();
   };
 
   if (!selectedContact) {
@@ -675,16 +711,48 @@ const ChatPanel = ({
         />
         {/* /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// */}
 
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (!file) return;
-            setSelectedImage(file);
-            console.log("Image stuff is happening");
-          }}
-        />
+        <div className="chat-attachment-outer">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            disabled={!canMessage || sending}
+            className="chat-input-file"
+            onChange={(e) => {
+              const file = e.target.files?.[0] || null;
+              setSelectedImage(file);
+            }}
+          />
+
+          {selectedImage ? (
+            <div className="chat-attachment-preview">
+              {imagePreviewUrl && (
+                <img src={imagePreviewUrl} alt="Selected attachment Preview " />
+              )}
+
+              <button
+                type="button"
+                className="chat-attachment-remove"
+                onClick={clearSelectedImage}
+                disabled={sending}
+              >
+                X
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="chat-attachment-picker"
+              disabled={!canMessage || sending}
+              onClick={() => {
+                console.log("Plus icon clicked", fileInputRef.current);
+                fileInputRef.current?.click();
+              }}
+            >
+              <img src="/upload_image.png" alt="plus" />
+            </button>
+          )}
+        </div>
 
         {/* /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// */}
 
