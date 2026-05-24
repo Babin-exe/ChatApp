@@ -4,13 +4,17 @@ import {
   updateChatStatus,
   getMessagesByChatParticipants,
   createNewChatRequest,
-  sendMessage,
   getIncomingChatRequest,
   discoverUsersToChat,
+  validateSendMessage,
+  createMessage,
 } from "../services/chat.service.js";
 import Blocked from "../models/Block.js";
 import { Types } from "mongoose";
-import { uploadImageToCloudinary } from "../services/cloudinaryUploader.service.js";
+import {
+  uploadImageToCloudinary,
+  deleteCloudinaryImage,
+} from "../services/cloudinaryUploader.service.js";
 
 export const createChatRequest = asyncHandler(async (req, res) => {
   const senderId = req.user._id;
@@ -184,34 +188,51 @@ export const getUserMessage = asyncHandler(async (req, res) => {
 });
 
 export const sendMessageController = asyncHandler(async (req, res) => {
-  // Get all the required data here
-
   const senderId = req.user._id;
-  const { content, type } = req.body;
+  const { content } = req.body;
   const { receiverId } = req.params;
 
-  let image;
+  const type = req.file ? "image" : "text";
 
-  //All i have to check is does the file exist
-  if (req.file) {
-
-    image = await uploadImageToCloudinary(req.file.buffer);
-  }
-
-
-  const message = await sendMessage({
+  const { trimmedContent, chat } = await validateSendMessage({
     senderId,
     receiverId,
     content,
-    image,
-    type: image ? "image" : "text",
+    type,
+    hasImage: Boolean(req.file),
   });
 
-  return res.status(200).json({
-    success: true,
-    message: "Message sent successfully",
-    messageData: message,
-  });
+  let image;
+
+  try {
+    if (req.file) {
+      image = await uploadImageToCloudinary(req.file.buffer);
+    }
+
+    const message = await createMessage({
+      senderId,
+      receiverId,
+      chatId: chat._id,
+      content: trimmedContent,
+      image,
+      type,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Message sent successfully",
+      messageData: message,
+    });
+  } catch (err) {
+    if (image?.publicId) {
+      try {
+        await deleteCloudinaryImage(image.publicId);
+      } catch (cleanupErr) {
+        console.error("Cloudinary cleanup failed:", cleanupErr);
+      }
+    }
+    throw err;
+  }
 });
 
 export const getIncomingRequests = asyncHandler(async (req, res) => {

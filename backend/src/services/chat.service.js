@@ -225,25 +225,28 @@ export const getMessagesByChatParticipants = async ({
   return { messages, nextCursor, chatId: chat._id };
 };
 
-export const sendMessage = async ({
+/**
+ * Run before Cloudinary upload so a failed chat/block check does not leave orphans.
+ * @param {{ hasImage?: boolean }} options - pass hasImage: true when req.file is present (pre-upload).
+ */
+export const validateSendMessage = async ({
   senderId,
   receiverId,
   content,
   image,
   type = DEFAULT_MESSAGE_TYPE,
+  hasImage = false,
 }) => {
-
   validateObjectId(senderId, "senderId");
   validateObjectId(receiverId, "receiverId");
 
-
   const trimmedContent = String(content ?? "").trim();
+
   if (type === "text" && !trimmedContent) {
     throw new HttpError("Message content is required", 400);
   }
 
-
-  if (type === "image" && !image?.url) {
+  if (type === "image" && !hasImage && !image?.url) {
     throw new HttpError("Image is required", 400);
   }
 
@@ -251,7 +254,6 @@ export const sendMessage = async ({
     members: { $all: [senderId, receiverId] },
     status: "accepted",
   });
-
 
   if (!chat) {
     throw new HttpError("Active chat not found or request not accepted", 404);
@@ -263,17 +265,28 @@ export const sendMessage = async ({
     throw new HttpError("You cannot message this user", 403);
   }
 
+  return { trimmedContent, chat };
+};
+
+export const createMessage = async ({
+  senderId,
+  receiverId,
+  chatId,
+  content,
+  image,
+  type,
+}) => {
   const message = await Message.create({
     senderId,
     receiverId,
-    chatId: chat._id,
-    content: trimmedContent,
+    chatId,
+    content,
     type,
     image: type === "image" ? image : undefined,
     status: DEFAULT_MESSAGE_STATUS,
   });
 
-  await Chat.findByIdAndUpdate(chat._id, { lastMessage: message._id });
+  await Chat.findByIdAndUpdate(chatId, { lastMessage: message._id });
 
   const realtimePayload = {
     type: "message",
@@ -283,6 +296,34 @@ export const sendMessage = async ({
   sendToUser(receiverId.toString(), realtimePayload);
 
   return message;
+};
+
+export const sendMessage = async ({
+  senderId,
+  receiverId,
+  content,
+  image,
+  type = DEFAULT_MESSAGE_TYPE,
+}) => {
+  const hasImage = type === "image" && Boolean(image?.url);
+
+  const { trimmedContent, chat } = await validateSendMessage({
+    senderId,
+    receiverId,
+    content,
+    image,
+    type,
+    hasImage,
+  });
+
+  return createMessage({
+    senderId,
+    receiverId,
+    chatId: chat._id,
+    content: trimmedContent,
+    image,
+    type,
+  });
 };
 
 export const getIncomingChatRequest = async ({ userId }) => {

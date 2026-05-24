@@ -505,6 +505,7 @@ const ChatPanel = ({
       );
 
       const savedMessage = res.data.messageData;
+      
       if (!savedMessage?._id) {
         throw new Error("Invalid send response");
       }
