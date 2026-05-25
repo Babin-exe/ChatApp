@@ -25,7 +25,7 @@ export const messageQuerySchema = z.object({
     .pipe(z.number().int().min(1).max(100).optional()),
 });
 
-export const sendMessageSchema = z.object({
-  content: z.string().trim().min(1, "Message content is required"),
-  type: z.enum(MESSAGE_TYPES).optional(),
-});
+// export const sendMessageSchema = z.object({
+//   content: z.string().trim().min(1, "Message content is required"),
+//   type: z.enum(MESSAGE_TYPES).optional(),
+// });

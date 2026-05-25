@@ -492,6 +492,7 @@ const ChatPanel = ({
       setSendError("");
 
       const formData = new FormData();
+      
       formData.append("content", contentToSend || "");
 
 
