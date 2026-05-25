@@ -188,6 +188,7 @@ export const getUserMessage = asyncHandler(async (req, res) => {
 });
 
 export const sendMessageController = asyncHandler(async (req, res) => {
+
   const senderId = req.user._id;
   const { content } = req.body;
   const { receiverId } = req.params;
@@ -223,6 +224,7 @@ export const sendMessageController = asyncHandler(async (req, res) => {
       message: "Message sent successfully",
       messageData: message,
     });
+    
   } catch (err) {
     if (image?.publicId) {
       try {

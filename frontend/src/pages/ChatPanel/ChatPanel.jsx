@@ -477,6 +477,7 @@ const ChatPanel = ({
   }, []);
 
   const sendCurrentMessage = async (contentToSend, imageToSend) => {
+
     if (!selectedContact || (!contentToSend.trim() && !imageToSend)) return;
 
     if (!chatStatus.canMessage) {
@@ -493,6 +494,10 @@ const ChatPanel = ({
       const formData = new FormData();
       formData.append("content", contentToSend || "");
 
+
+
+      
+
       if (imageToSend) {
         formData.append("image", imageToSend);
       }
@@ -505,7 +510,7 @@ const ChatPanel = ({
       );
 
       const savedMessage = res.data.messageData;
-      
+
       if (!savedMessage?._id) {
         throw new Error("Invalid send response");
       }
