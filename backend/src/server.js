@@ -11,7 +11,8 @@ import chatRoutes from "./routes/chat.route.js";
 import errorHandler from "./middleware/errorHandler.js";
 import cleanExpiredSessions from "./cron/cleanExpiredSessions.cron.js";
 import blockRoutes from "./routes/block.route.js";
-import { multerErrorHandler } from "./middleware/handleMulterError.js";
+
+
 
 dotenv.config();
 const __dirname = path.resolve();
@@ -25,6 +26,8 @@ app.use(
 
 app.use(cookieParser());
 app.use(express.json({ limit: "10mb" }));
+
+
 
 app.use("/api/auth", authRoutes);
 app.use("/api/chats", chatRoutes);
@@ -41,7 +44,8 @@ if (process.env.NODE_ENV === "production") {
 }
 
 
-app.use(multerErrorHandler);
+
+
 app.use(errorHandler);
 
 const port = process.env.PORT || 4000;
