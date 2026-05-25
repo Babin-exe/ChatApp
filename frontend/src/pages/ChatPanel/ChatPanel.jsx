@@ -12,6 +12,28 @@ const isRequestCanceled = (err) =>
   err?.name === "CanceledError" ||
   err?.name === "AbortError";
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+const ALLOWED_MIME_TYPES = new Set([
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "image/gif",
+  "image/webp",
+]);
+
+function validateImageFile(file) {
+  if (!ALLOWED_MIME_TYPES.has(file)) {
+    return "Use PNG , JPEG , JPG , GIF  or Webp";
+  }
+
+  if (file.size > MAX_FILE_SIZE) {
+    return "Image size too large";
+  }
+
+  return null;
+}
+
 const ChatPanel = ({
   selectedContact,
   onUnblockUser,
@@ -477,12 +499,19 @@ const ChatPanel = ({
   }, []);
 
   const sendCurrentMessage = async (contentToSend, imageToSend) => {
-
     if (!selectedContact || (!contentToSend.trim() && !imageToSend)) return;
 
     if (!chatStatus.canMessage) {
       toast.error("You can't message this user");
       return;
+    }
+
+    if (imageToSend) {
+      const error = validateImageFile(imageToSend);
+      if (error) {
+        toast(error);
+        return false;
+      }
     }
 
     const contactId = selectedContact._id;
@@ -492,12 +521,8 @@ const ChatPanel = ({
       setSendError("");
 
       const formData = new FormData();
-      
+
       formData.append("content", contentToSend || "");
-
-
-
-      
 
       if (imageToSend) {
         formData.append("image", imageToSend);
@@ -553,6 +578,7 @@ const ChatPanel = ({
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
+
     const content = newMessage.trim();
     if (!content && !selectedImage) return;
 
@@ -739,6 +765,13 @@ const ChatPanel = ({
             className="chat-input-file"
             onChange={(e) => {
               const file = e.target.files?.[0] || null;
+              if (!file) return;
+              const err = validateImageFile(file);
+              if (err) {
+                toast.error(err);
+                e.target.value = "";
+                return;
+              }
               setSelectedImage(file);
             }}
           />
