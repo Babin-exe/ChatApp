@@ -16,7 +16,7 @@ export const validateSendMessageBody = (req, res, next) => {
 
 
     if (!content && !hasFile) {
-        return res(new HttpError("Message must contain text or image", 400));
+        return next(new HttpError("Message must contain text or image", 400));
     }
 
     req.body.content = content;
