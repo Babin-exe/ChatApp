@@ -18,7 +18,7 @@ const fileFilter = (req, file, cb) => {
 
 export const uploadImage = multer({
     storage,
-    limits: { fileSize: MAX_FILE_SIZE, files: 1, fields: 1, fieldSize: 4 * 1024, parts: 2 },
+    limits: { fileSize: MAX_FILE_SIZE, files: 1, fields: 1, fieldSize: 4 * 1024 },
     fileFilter
 }).single("image");
 

@@ -5,6 +5,7 @@ import { validate } from "../middleware/validate.middleware.js";
 import { receiverParamsSchema } from "../validation/chat.validation.js";
 import { uploadImage } from "../middleware/upload.middleware.js";
 import { validateSendMessageBody } from "../middleware/validateSendMessageBody.middleware.js";
+import { validateUploadedImageFile } from "../middleware/ValidateImage.middleware.js";
 const router = express.Router();
 
 router.post(
@@ -15,10 +16,10 @@ router.post(
 
   uploadImage,
 
-  // req.body and req.file is populated here 
 
-  //If i can put a validation here it would be good 
-  //before sending the message with image and text
+  //One image validation here would be nice 
+
+  validateUploadedImageFile,
 
   validateSendMessageBody,
 

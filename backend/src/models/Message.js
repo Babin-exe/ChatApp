@@ -66,6 +66,23 @@ const messageSchema = new mongoose.Schema(
 
 messageSchema.index({ chatId: 1, createdAt: -1 });
 
+
+messageSchema.pre("validate", function (next) {
+
+  if (this.type === "image") {
+
+    if (!this.image?.url) {
+      this.invalidate("image.url", "Image URL is required for image messages");
+    }
+
+    if (!this.image?.publicId) {
+      this.invalidate("image.publicId", "Image publicId is required for image messages");
+    }
+  }
+  next();
+
+})
+
 const Message = mongoose.model("Message", messageSchema);
 
 export default Message;
