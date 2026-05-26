@@ -23,7 +23,7 @@ const ALLOWED_MIME_TYPES = new Set([
 ]);
 
 function validateImageFile(file) {
-  if (!ALLOWED_MIME_TYPES.has(file)) {
+  if (!ALLOWED_MIME_TYPES.has(file.type)) {
     return "Use PNG , JPEG , JPG , GIF  or Webp";
   }
 
@@ -528,12 +528,15 @@ const ChatPanel = ({
         formData.append("image", imageToSend);
       }
 
-      const res = await api.post(
-        `/api/messages/send/${contactId}`,
-        formData,
-        // content: contentToSend,
-        // type: "text",
-      );
+      /*{
+          url,
+          data,
+          {configs }
+         }*/
+
+      const res = await api.post(`/api/messages/send/${contactId}`, formData, {
+        timeout: imageToSend ? 60000 : 20000,
+      });
 
       const savedMessage = res.data.messageData;
 
