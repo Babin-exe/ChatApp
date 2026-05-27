@@ -34,6 +34,29 @@ function validateImageFile(file) {
   return null;
 }
 
+function formatTimeAgo(dateInput) {
+  if (!dateInput) return;
+
+  const info = new Date(dateInput).getTime();
+  const now = Date.now();
+  const diff = now - info;
+
+  const units = [
+    { label: "y", ms: 365 * 24 * 60 * 60 * 1000 },
+    { label: "mo", ms: 30 * 24 * 60 * 60 * 1000 },
+    { label: "d", ms: 24 * 60 * 60 * 1000 },
+    { label: "h", ms: 60 * 60 * 1000 },
+    { label: "m", ms: 60 * 1000 },
+    { label: "s", ms: 1000 },
+  ];
+
+  for (const unit of units) {
+    const value = Math.floor(diff / unit.ms);
+    if (value > 0) return `${value}${unit.label} ago`;
+  }
+  return "just now";
+}
+
 const ChatPanel = ({
   selectedContact,
   onUnblockUser,
@@ -51,6 +74,7 @@ const ChatPanel = ({
   };
 
   const [messages, setMessages] = useState([]);
+
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
@@ -110,6 +134,8 @@ const ChatPanel = ({
   const [selectedImage, setSelectedImage] = useState(null);
 
   const [imagePreviewUrl, setImagePreviewUrl] = useState(null);
+
+  const [tick, setNowTick] = useState(0);
 
   useEffect(() => {
     if (!typingAudioRef.current) {
@@ -477,6 +503,31 @@ const ChatPanel = ({
     };
   }, [selectedImage]);
 
+  useEffect(() => {
+    const id = setInterval(() => setNowTick((e) => e + 1), 30000);
+    return () => clearInterval(id);
+  }, []);
+
+  const lastOutgoingIndex = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (normalizeId(messages[i].senderId) === myUserId) {
+        return i;
+      }
+    }
+    return -1;
+  }, [messages, myUserId]);
+
+  const lastOutgoingTimeAgo = useMemo(() => {
+    if (!messages.length || !myUserId) return null;
+
+    const latest = messages[messages.length - 1];
+    const senderId = normalizeId(latest.senderId);
+
+    if (myUserId !== senderId) return null;
+
+    return formatTimeAgo(latest.createdAt);
+  }, [messages, tick, myUserId]);
+
   const handleRetrySend = async () => {
     const content = newMessage.trim();
     if (!content && !selectedImage) return;
@@ -715,29 +766,33 @@ const ChatPanel = ({
           <p className="chat-meta">Loading messages...</p>
         )}
 
-        {messages.map((m) => (
-          <div
-            key={m._id}
-            className={`chat-message-row ${
-              getSenderId(m) === selectedContact._id ? "incoming" : "outgoing"
-            }`}
-          >
-            <div className="chat-message-bubble">
-              {m.type === "image" ? (
-                <>
-                  <img
-                    src={m.image?.url}
-                    alt="sent attachment"
-                    className="chat-image-message"
-                  />
-                  {m.content && <p>{m.content}</p>}
-                </>
-              ) : (
-                m.content
-              )}
+        {messages.map((m, idx) => {
+          const isLastOutgoing = idx === lastOutgoingIndex;
+          return (
+            <div
+              key={m._id}
+              className={`chat-message-row ${
+                getSenderId(m) === selectedContact._id ? "incoming" : "outgoing"
+              }`}
+            >
+              <div className="chat-message-bubble">
+                {m.type === "image" ? (
+                  <>
+                    <img
+                      src={m.image?.url}
+                      alt="sent attachment"
+                      className="chat-image-message"
+                    />
+                    {m.content && <p>{m.content}</p>}
+                  </>
+                ) : (
+                  m.content
+                )}
+              </div>
+              {isLastOutgoing && <p>{lastOutgoingTimeAgo}</p>}
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {!loadingMessages && messages.length === 0 && (
           <p className="chat-meta">No messages yet.</p>
