@@ -775,21 +775,26 @@ const ChatPanel = ({
                 getSenderId(m) === selectedContact._id ? "incoming" : "outgoing"
               }`}
             >
-              <div className="chat-message-bubble">
-                {m.type === "image" ? (
-                  <>
-                    <img
-                      src={m.image?.url}
-                      alt="sent attachment"
-                      className="chat-image-message"
-                    />
-                    {m.content && <p>{m.content}</p>}
-                  </>
-                ) : (
-                  m.content
+              <div className="chat-message-content">
+                <div className="chat-message-bubble">
+                  {m.type === "image" ? (
+                    <>
+                      <img
+                        src={m.image?.url}
+                        alt="sent attachment"
+                        className="chat-image-message"
+                      />
+                      {m.content && <p>{m.content}</p>}
+                    </>
+                  ) : (
+                    m.content
+                  )}
+                </div>
+
+                {isLastOutgoing && (
+                  <span className="latest-sent">{lastOutgoingTimeAgo}</span>
                 )}
               </div>
-              {isLastOutgoing && <p>{lastOutgoingTimeAgo}</p>}
             </div>
           );
         })}

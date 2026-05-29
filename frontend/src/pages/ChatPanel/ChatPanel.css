@@ -202,6 +202,17 @@
   min-width: 0;
 }
 
+.chat-message-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.latest-sent {
+  align-self: flex-end;
+  font-size: 12px;
+  margin-top: 6px;
+  opacity: 0.8;
+}
 .chat-message-row.incoming {
   justify-content: flex-start;
 }
@@ -214,7 +225,6 @@
   box-sizing: border-box;
   flex: 0 1 auto;
   min-width: 0;
-  max-width: min(78%, 580px, 100%);
   border-radius: 14px;
   padding: 8px 12px;
   line-height: 1.45;
