@@ -6,6 +6,7 @@ import verifyJwt from "../utils/verifyJwt.js";
 import User from "../models/user.model.js";
 import Chat from "../models/Chat.js";
 import Blocked from "../models/Block.js";
+import Message from "../models/Message.js";
 
 dotenv.config();
 export const app = express();
@@ -418,6 +419,40 @@ wss.on("connection", async (ws, req) => {
 
         if (type === "message:delivered") {
           console.log("Delivered stuff");
+
+
+          //before anything make the db save first 
+
+
+
+          // if (!success) return;
+
+          const data = JSON.parse(message);
+          console.log(data);
+
+          const _id = data?.data?._id;
+
+          console.log(_id);
+
+          const success = await Message.findByIdAndUpdate(_id, { status: "Delivered" });
+
+          console.log(success);
+
+
+          if (!success) return;
+
+
+
+          const receiver = String(data?.to || "");
+          const sender = String(data?.from || "");
+
+          sendToUser(receiver, JSON.stringify({
+            type: "message:delivered",
+            data: {
+              fromUserId: sender,
+              toUserId: receiver
+            }
+          }));
         }
 
         if (type !== "typing:start" && type !== "typing:stop") return;

@@ -52,7 +52,6 @@ when the component unmounting happens we will clear the timeout and make the ref
       const res = await api.get("/api/auth/me");
       if (res.data.success) {
         setAuthUser(res.data.user);
-
         return res.data.user;
       }
       setAuthUser(null);
@@ -164,6 +163,8 @@ when the component unmounting happens we will clear the timeout and make the ref
         ) {
           setLastMessage(payload.data);
 
+          console.log(payload.data);
+
           const senderId = String(payload.data.senderId || "");
 
           if (senderId) {
@@ -183,8 +184,9 @@ when the component unmounting happens we will clear the timeout and make the ref
               JSON.stringify({
                 type: "message:delivered",
                 data: {
-                  from: authUser._id,
+                  from: authUser.id,
                   to: senderId,
+                  _id: payload?.data._id,
                 },
               }),
             );
@@ -254,6 +256,12 @@ when the component unmounting happens we will clear the timeout and make the ref
             else next.delete(fromUserId);
             return next;
           });
+        }
+
+        if (payload?.type === "message:delivered") {
+          console.log("Update the status to delivered please ");
+
+          //I guess we haeve to update the db also ??
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////////
