@@ -289,11 +289,12 @@ const ChatPanel = ({
     }
   }, []);
 
-  const showStatus = () => {
+  const showMessageStatus = useMemo(() => {
     if (!messages.length) return false;
     const last = messages[messages.length - 1];
-    return normalizeId(last.senderId) == myUserId;
-  };
+    const lastId = normalizeId(last.senderId);
+    return lastId == myUserId;
+  }, [messages, myUserId]);
 
   /* 
   
@@ -800,10 +801,14 @@ const ChatPanel = ({
                 </div>
 
                 {/* //////////////////////////////////////////////////////////////////////////////////////////////////////////////// */}
-                {isLastOutgoing && (
-                  <span className="latest-sent">{lastOutgoingTimeAgo}</span>
-                )}
-                {isLastOutgoing && showStatus() && <span>{m.status}</span>}
+                <div className="message-status-time-info">
+                  {isLastOutgoing && showMessageStatus && (
+                    <span className="latest-status">{m.status}</span>
+                  )}
+                  {isLastOutgoing && (
+                    <span className="latest-sent">{lastOutgoingTimeAgo}</span>
+                  )}
+                </div>
               </div>
             </div>
           );

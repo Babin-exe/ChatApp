@@ -52,6 +52,7 @@ when the component unmounting happens we will clear the timeout and make the ref
       const res = await api.get("/api/auth/me");
       if (res.data.success) {
         setAuthUser(res.data.user);
+
         return res.data.user;
       }
       setAuthUser(null);
@@ -75,14 +76,11 @@ when the component unmounting happens we will clear the timeout and make the ref
     return () => window.removeEventListener("online", handleOnline);
   }, []);
 
-
-
   useEffect(() => {
     const interval = setInterval(() => {
       const now = Date.now();
 
       setTypingUsers((prev) => {
-
         if (prev.size === 0) return prev;
 
         let changed = false;
@@ -167,6 +165,7 @@ when the component unmounting happens we will clear the timeout and make the ref
           setLastMessage(payload.data);
 
           const senderId = String(payload.data.senderId || "");
+
           if (senderId) {
             setOnlineUsers((prev) => {
               if (!prev.has(senderId)) {
@@ -176,8 +175,24 @@ when the component unmounting happens we will clear the timeout and make the ref
               }
               return prev;
             });
+
+            //so here when a message arrives we update stuff , and this is the place where we are sure
+            //that a message has come to us for sure so from here we can acknowledge the sender of this message
+
+            ws.send(
+              JSON.stringify({
+                type: "message:delivered",
+                data: {
+                  from: authUser._id,
+                  to: senderId,
+                },
+              }),
+            );
+
+            /////////////////////////////////////////////////////////////////////////////////
           }
         }
+
         ///////////////////////////////////////////////////////////////////////////////////////////////
         if (payload?.type === "presence:initial") {
           if (!Array.isArray(payload.data?.onlineUserIds)) return;

@@ -416,6 +416,10 @@ wss.on("connection", async (ws, req) => {
           return;
         }
 
+        if (type === "message:delivered") {
+          console.log("Delivered stuff");
+        }
+
         if (type !== "typing:start" && type !== "typing:stop") return;
 
         const toUserId = String(data?.data?.toUserId || "");
@@ -434,10 +438,6 @@ wss.on("connection", async (ws, req) => {
         });
 
 
-
-        //Experimental
-        sendToUser(userId, { type: "message:sent", data: { toUserId } });
-        //Experimental
 
 
       } catch (error) {

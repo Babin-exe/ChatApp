@@ -213,6 +213,12 @@
   margin-top: 6px;
   opacity: 0.8;
 }
+
+.latest-status {
+  font-size: 12px;
+  margin-right: 5px;
+}
+
 .chat-message-row.incoming {
   justify-content: flex-start;
 }
@@ -326,6 +332,15 @@
   opacity: 0.7;
   cursor: not-allowed;
 }
+
+/* /////////////////////////////////////////////////////// */
+.message-status-time-info {
+  width: 50%px;
+  margin: 10px;
+  gap: 10px;
+}
+
+/* /////////////////////////////////////////////////////// */
 
 @media (max-width: 640px) {
   .chat-header {
