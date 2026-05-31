@@ -64,8 +64,14 @@ const ChatPanel = ({
   blockedUsers = [],
   onBack,
 }) => {
-  const { authUser, lastMessage, onlineUsers, socket, typingUsers } =
-    UseSocketContext();
+  const {
+    authUser,
+    lastMessage,
+    onlineUsers,
+    socket,
+    typingUsers,
+    lastMessageStatus,
+  } = UseSocketContext();
 
   const normalizeId = (value) => {
     if (!value) return "";
@@ -291,6 +297,7 @@ const ChatPanel = ({
 
   const showMessageStatus = useMemo(() => {
     if (!messages.length) return false;
+
     const last = messages[messages.length - 1];
     const lastId = normalizeId(last.senderId);
     return lastId == myUserId;
@@ -511,6 +518,26 @@ const ChatPanel = ({
       URL.revokeObjectURL(objectUrl);
     };
   }, [selectedImage]);
+
+  // //DO some stuff here
+  useEffect(() => {
+    if (!lastMessageStatus?.messageId) return;
+  
+    setMessages((prev) =>
+      prev.map((message) => {
+        if (message._id !== lastMessageStatus.messageId) return message;
+  
+        return {
+          ...message,
+          status: lastMessageStatus.status,
+          deliveredAt: lastMessageStatus.deliveredAt ?? message.deliveredAt,
+          seenAt: lastMessageStatus.seenAt ?? message.seenAt,
+        };
+      }),
+    );
+  }, [lastMessageStatus]);
+
+  //Boundary value
 
   useEffect(() => {
     const id = setInterval(() => setNowTick((e) => e + 1), 30000);

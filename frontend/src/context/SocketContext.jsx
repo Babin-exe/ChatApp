@@ -7,11 +7,10 @@ We need to keep track of few stuffs
 4) I need better socket creation guard 
 5) Activity will reset on events : Message arrives or Connection opened -> (lastSocketEventRef = now )
 6) Cleanup of the health system : stop interval , clear timers , clear sockets 
-
-
  */
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+
 import api from "../lib/api.js";
 import { SocketContext } from "./socketContext.js";
 
@@ -34,9 +33,9 @@ export const SocketContextProvider = ({ children }) => {
 
   const socketHealthIntervalRef = useRef(null);
 
-  //Expreimental
-
   const [typingUsers, setTypingUsers] = useState(new Map());
+
+  const [lastMessageStatus, setLastMessageStatus] = useState(null);
 
   //
 
@@ -163,8 +162,6 @@ when the component unmounting happens we will clear the timeout and make the ref
         ) {
           setLastMessage(payload.data);
 
-          console.log(payload.data);
-
           const senderId = String(payload.data.senderId || "");
 
           if (senderId) {
@@ -258,10 +255,23 @@ when the component unmounting happens we will clear the timeout and make the ref
           });
         }
 
-        if (payload?.type === "message:delivered") {
+        if (payload?.type === "message:status") {
           console.log("Update the status to delivered please ");
 
-          //I guess we haeve to update the db also ??
+          // Now we shoudl update the message array , and that too the one which has the message id of what the response came as and also make that
+          //record status to be delivered that would cause the message array to be re rendered and i am done i guess
+
+          //How do you update this stuff is what i have to figure it out
+
+          console.log("Update stuff okay");
+
+          console.log(payload);
+          setLastMessageStatus({
+            messageId: payload.data.messageId,
+            status: payload.data.status,
+            deliveredAt: payload.data.deliveredAt,
+            eventId: crypto.randomUUID(),
+          });
         }
 
         ///////////////////////////////////////////////////////////////////////////////////////////////
@@ -364,6 +374,7 @@ when the component unmounting happens we will clear the timeout and make the ref
       refreshAuthUser,
       onlineUsers,
       typingUsers,
+      lastMessageStatus,
     }),
     [
       socket,
@@ -373,6 +384,7 @@ when the component unmounting happens we will clear the timeout and make the ref
       refreshAuthUser,
       onlineUsers,
       typingUsers,
+      lastMessageStatus,
     ],
   );
   return (

@@ -416,43 +416,34 @@ wss.on("connection", async (ws, req) => {
           ws.send(JSON.stringify({ type: "pong" }));
           return;
         }
-
         if (type === "message:delivered") {
-          console.log("Delivered stuff");
+          const messageId = data?.data?._id;
 
+          const messageDoc = await Message.findOneAndUpdate(
+            {
+              _id: messageId,
+              receiverId: userId,
+              status: "sent",
+            },
+            {
+              status: "delivered",
+              deliveredAt: new Date(),
+            },
+            { new: true },
+          );
 
-          //before anything make the db save first 
+          if (!messageDoc) return;
 
-
-
-          // if (!success) return;
-
-          const data = JSON.parse(message);
-          console.log(data);
-
-          const _id = data?.data?._id;
-
-          console.log(_id);
-
-          const success = await Message.findByIdAndUpdate(_id, { status: "Delivered" });
-
-          console.log(success);
-
-
-          if (!success) return;
-
-
-
-          const receiver = String(data?.to || "");
-          const sender = String(data?.from || "");
-
-          sendToUser(receiver, JSON.stringify({
-            type: "message:delivered",
+          sendToUser(messageDoc.senderId.toString(), {
+            type: "message:status",
             data: {
-              fromUserId: sender,
-              toUserId: receiver
-            }
-          }));
+              messageId: messageDoc._id.toString(),
+              status: messageDoc.status,
+              deliveredAt: messageDoc.deliveredAt,
+            },
+          });
+
+          return;
         }
 
         if (type !== "typing:start" && type !== "typing:stop") return;
@@ -471,10 +462,6 @@ wss.on("connection", async (ws, req) => {
             at: Date.now()
           }
         });
-
-
-
-
       } catch (error) {
         console.error("ws message handler error", error);
       }
@@ -499,11 +486,8 @@ wss.on("connection", async (ws, req) => {
             isOnline: false
           }
         });
-
         contactsByUser.delete(userId);
-
       }
-
     });
 
   } catch (error) {
