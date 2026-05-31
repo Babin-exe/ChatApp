@@ -92,6 +92,8 @@ const ChatPanel = ({
 
   const fileInputRef = useRef(null);
 
+  // const messageStatus = useRef(null);
+
   /*
   
 
@@ -286,6 +288,12 @@ const ChatPanel = ({
       typingIdleTimeoutRef.current = null;
     }
   }, []);
+
+  const showStatus = () => {
+    if (!messages.length) return false;
+    const last = messages[messages.length - 1];
+    return normalizeId(last.senderId) == myUserId;
+  };
 
   /* 
   
@@ -613,7 +621,7 @@ const ChatPanel = ({
 
       setHasFailedMessage(false);
 
-      return true;
+      return res;
     } catch (error) {
       const message =
         error.response?.data?.message ||
@@ -791,9 +799,11 @@ const ChatPanel = ({
                   )}
                 </div>
 
+                {/* //////////////////////////////////////////////////////////////////////////////////////////////////////////////// */}
                 {isLastOutgoing && (
                   <span className="latest-sent">{lastOutgoingTimeAgo}</span>
                 )}
+                {isLastOutgoing && showStatus() && <span>{m.status}</span>}
               </div>
             </div>
           );

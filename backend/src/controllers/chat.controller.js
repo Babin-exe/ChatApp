@@ -15,6 +15,7 @@ import {
   uploadImageToCloudinary,
   deleteCloudinaryImage,
 } from "../services/cloudinaryUploader.service.js";
+import { sendToUser } from "../lib/socket.js";
 
 export const createChatRequest = asyncHandler(async (req, res) => {
   const senderId = req.user._id;
@@ -219,14 +220,16 @@ export const sendMessageController = asyncHandler(async (req, res) => {
       type,
     });
 
+
+
     return res.status(200).json({
       success: true,
       message: "Message sent successfully",
       messageData: message,
     });
 
-    
-    
+
+
   } catch (err) {
     if (image?.publicId) {
       try {
