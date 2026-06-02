@@ -53,10 +53,9 @@ export const SocketContextProvider = ({ children }) => {
 when the component unmounting happens we will clear the timeout and make the reference null
   */
 
-  //Hope this works
   const selectedContactRef = useRef(null);
 
-  const setSelectedContactInContext = (selectedContact) => {
+  const setSelectedContactInContext = useCallback((selectedContact) => {
     console.log(
       "setSelectedContactInContext is running to put : ",
       selectedContact
@@ -68,9 +67,7 @@ when the component unmounting happens we will clear the timeout and make the ref
         : null;
       console.log("We have just put selected contact in ref ");
     }
-  };
-
-  //Hopium
+  }, []);
 
   const refreshAuthUser = useCallback(async () => {
     try {

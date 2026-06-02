@@ -421,16 +421,18 @@ wss.on("connection", async (ws, req) => {
             {
               _id: data?.data?._id,
               senderId: data?.data?.to,
-              receiverId: data?.data?.from,
+              receiverId: userId,
               status: { $ne: "seen" },
             },
             {
               status: "seen",
               seenAt: Date.now(),
             },
-            {new: true}
+            { new: true }
           );
           console.log("Database updated i guess :", messageDoc);
+
+          if (!messageDoc) return;
 
           sendToUser(messageDoc.senderId.toString(), {
             type: "message:status",
