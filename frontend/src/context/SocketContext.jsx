@@ -9,6 +9,13 @@ We need to keep track of few stuffs
 6) Cleanup of the health system : stop interval , clear timers , clear sockets 
  */
 
+/*
+
+I left everything in delivered status 
+also remember when user goes offlien and comes online it is not working so fix that and move forward
+
+*/
+
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 
 import api from "../lib/api.js";
@@ -45,6 +52,25 @@ export const SocketContextProvider = ({ children }) => {
    remove the setTimeout reference from stopClearingOnlineUserRef.current once the function runs successfully so we dont have the old id after the fn runs
 when the component unmounting happens we will clear the timeout and make the reference null
   */
+
+  //Hope this works
+  const selectedContactRef = useRef(null);
+
+  const setSelectedContactInContext = (selectedContact) => {
+    console.log(
+      "setSelectedContactInContext is running to put : ",
+      selectedContact
+    );
+
+    if (selectedContact) {
+      selectedContactRef.current = selectedContact
+        ? String(selectedContact || "")
+        : null;
+      console.log("We have just put selected contact in ref ");
+    }
+  };
+
+  //Hopium
 
   const refreshAuthUser = useCallback(async () => {
     try {
@@ -174,9 +200,6 @@ when the component unmounting happens we will clear the timeout and make the ref
               return prev;
             });
 
-            //so here when a message arrives we update stuff , and this is the place where we are sure
-            //that a message has come to us for sure so from here we can acknowledge the sender of this message
-
             ws.send(
               JSON.stringify({
                 type: "message:delivered",
@@ -185,10 +208,29 @@ when the component unmounting happens we will clear the timeout and make the ref
                   to: senderId,
                   _id: payload?.data._id,
                 },
-              }),
+              })
             );
 
-            /////////////////////////////////////////////////////////////////////////////////
+            //This means who ever sent this is also selected person so  do :
+            //Update the db(for this record now bulk ) , emit the seen status
+            // Let all of this happen on server only don't do this in frontend
+
+            console.log(selectedContactRef.current);
+
+            if (senderId === String(selectedContactRef.current || "")) {
+              console.log("Is this running??");
+
+              ws.send(
+                JSON.stringify({
+                  type: "message:seen-instant",
+                  data: {
+                    from: authUser.id,
+                    to: senderId,
+                    _id: payload?.data?._id,
+                  },
+                })
+              );
+            }
           }
         }
 
@@ -257,15 +299,9 @@ when the component unmounting happens we will clear the timeout and make the ref
 
         if (payload?.type === "message:status") {
           console.log("Update the status to delivered please ");
-
-          // Now we shoudl update the message array , and that too the one which has the message id of what the response came as and also make that
-          //record status to be delivered that would cause the message array to be re rendered and i am done i guess
-
-          //How do you update this stuff is what i have to figure it out
-
           console.log("Update stuff okay");
-
           console.log(payload);
+
           setLastMessageStatus({
             messageId: payload.data.messageId,
             status: payload.data.status,
@@ -375,6 +411,8 @@ when the component unmounting happens we will clear the timeout and make the ref
       onlineUsers,
       typingUsers,
       lastMessageStatus,
+      //Not really  i guess
+      setSelectedContactInContext,
     }),
     [
       socket,
@@ -385,7 +423,9 @@ when the component unmounting happens we will clear the timeout and make the ref
       onlineUsers,
       typingUsers,
       lastMessageStatus,
-    ],
+      //Confused about this
+      setSelectedContactInContext,
+    ]
   );
   return (
     <SocketContext.Provider value={value}>{children}</SocketContext.Provider>

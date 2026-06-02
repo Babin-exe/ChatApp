@@ -31,13 +31,18 @@ const ContactsPanel = ({
   const blockingTarget = actionLoadingId === blockTargetKey;
 
   const selectContact = (contact) => {
+    console.log("This is what we are putting");
+
+    console.log(contact);
+
     setOpenMenuContactId(null);
+
     onSelectContact(contact);
   };
 
   const toggleContactMenu = (contactId) => {
     setOpenMenuContactId((current) =>
-      current === contactId ? null : contactId,
+      current === contactId ? null : contactId
     );
   };
 
@@ -177,11 +182,16 @@ const ContactsPanel = ({
                 <button
                   type="button"
                   className="contact-select"
-                  onClick={() => selectContact(c)}
+                  onClick={() => {
+                    //update this to only c if anything breaks
+                    selectContact(c);
+                  }}
                 >
                   <div className="contact-name">
                     <span
-                      className={`presence-dot ${isOnline ? "is-online" : "is-offline"}`}
+                      className={`presence-dot ${
+                        isOnline ? "is-online" : "is-offline"
+                      }`}
                       aria-label={isOnline ? "Online" : "Offline"}
                       role="img"
                     />

@@ -51,7 +51,6 @@ const fetchContacts = async (userId) => {
   return contacts;
 };
 
-
 const parseCookies = (cookieHeader = "") => {
   return cookieHeader.split(";").reduce((acc, part) => {
     if (!part) return acc;
@@ -91,13 +90,11 @@ const removeSocket = (userId, ws) => {
 };
 
 export const sendToUser = (userId, payload) => {
-
   const set = userSocket.get(userId);
 
   if (!set) return;
 
   const data = JSON.stringify(payload);
-
 
   for (const ws of [...set]) {
     if (ws.readyState !== WebSocket.OPEN) {
@@ -110,7 +107,6 @@ export const sendToUser = (userId, payload) => {
   if (set.size === 0) {
     userSocket.delete(userId);
   }
-
 };
 
 export const isUserOnline = (userId) => {
@@ -131,7 +127,6 @@ export const notifyWatchers = (userId, payload) => {
 };
 
 export const cleanupUserGraph = (userId) => {
-
   const contacts = contactsByUser.get(userId);
 
   if (!contacts) {
@@ -160,19 +155,14 @@ export const cleanupUserGraph = (userId) => {
   watchersByUser.delete(userId);
 };
 
-
 export const onChatAccepted = (userIdA, userIdB) => {
-
   const a = String(userIdA);
   const b = String(userIdB);
 
-
   const linkPresence = (ownerId, contactId) => {
-
     if (!contactsByUser.has(ownerId)) {
       contactsByUser.set(ownerId, new Set());
     }
-
 
     contactsByUser.get(ownerId).add(contactId);
     if (!watchersByUser.has(contactId)) {
@@ -200,16 +190,13 @@ export const onChatAccepted = (userIdA, userIdB) => {
 };
 
 export const onChatRelationRemoved = (userIdA, userIdB) => {
-
   const a = String(userIdA);
   const b = String(userIdB);
 
-
-  const hadRelation = contactsByUser.get(a)?.has(b) ||
-    contactsByUser.get(b)?.has(a);
+  const hadRelation =
+    contactsByUser.get(a)?.has(b) || contactsByUser.get(b)?.has(a);
 
   const unlinkPresence = (ownerId, contactId) => {
-
     const contacts = contactsByUser.get(ownerId);
 
     if (contacts) {
@@ -229,26 +216,20 @@ export const onChatRelationRemoved = (userIdA, userIdB) => {
         watchersByUser.delete(contactId);
       }
     }
-
-  }
+  };
 
   unlinkPresence(a, b);
   unlinkPresence(b, a);
 
-
   if (!hadRelation) return;
 
-
-
   if (isUserOnline(a)) {
-
     sendToUser(a, {
       type: "presence:remove",
       data: {
         userId: b,
-      }
+      },
     });
-
   }
 
   if (isUserOnline(b)) {
@@ -256,12 +237,10 @@ export const onChatRelationRemoved = (userIdA, userIdB) => {
       type: "presence:remove",
       data: {
         userId: a,
-      }
+      },
     });
   }
-
 };
-
 
 const interval = setInterval(() => {
   wss.clients.forEach((ws) => {
@@ -271,9 +250,8 @@ const interval = setInterval(() => {
     }
     ws.isAlive = false;
     try {
-
       ws.ping();
-    } catch { }
+    } catch {}
   });
 }, 30000);
 
@@ -286,9 +264,7 @@ setInterval(() => {
 setInterval(() => {
   const now = Date.now();
 
-
   for (const [id, time] of [...lastSeen.entries()]) {
-
     if (userSocket.has(id)) continue;
 
     if (now - time > 30 * 60 * 1000) {
@@ -296,11 +272,11 @@ setInterval(() => {
       lastSeen.delete(id);
     }
   }
+}, 10 * 60 * 1000);
 
-}, 10 * 60 * 1000)
-
-
-wss.on("close", () => { clearInterval(interval) });
+wss.on("close", () => {
+  clearInterval(interval);
+});
 
 wss.on("connection", async (ws, req) => {
   try {
@@ -328,7 +304,7 @@ wss.on("connection", async (ws, req) => {
 
     const user = await User.findOne({
       _id: decode.id,
-      sessions: { $elemMatch: { token, expiresAt: { $gt: now } } }
+      sessions: { $elemMatch: { token, expiresAt: { $gt: now } } },
     });
 
     if (!user) {
@@ -340,7 +316,6 @@ wss.on("connection", async (ws, req) => {
     addSocket(userId, ws);
 
     if (!contactsByUser.has(userId)) {
-
       const contacts = await fetchContacts(userId);
       contactsByUser.set(userId, contacts);
 
@@ -352,9 +327,7 @@ wss.on("connection", async (ws, req) => {
           watchersByUser.set(contactId, watchers);
         }
 
-        if (!watchers.has(userId))
-          watchers.add(userId);
-
+        if (!watchers.has(userId)) watchers.add(userId);
       }
     }
 
@@ -372,7 +345,7 @@ wss.on("connection", async (ws, req) => {
           _id: userId,
           message: "Welcome user",
         },
-      }),
+      })
     );
 
     ws.send(
@@ -381,7 +354,7 @@ wss.on("connection", async (ws, req) => {
         data: {
           onlineUserIds: onlineContacts,
         },
-      }),
+      })
     );
 
     const sockets = userSocket.get(userId);
@@ -405,12 +378,11 @@ wss.on("connection", async (ws, req) => {
 
     ws.on("message", async (message) => {
       try {
-
         const data = JSON.parse(message.toString());
+
         lastSeen.set(userId, Date.now());
 
         const type = data?.type;
-
 
         if (type === "ping") {
           ws.send(JSON.stringify({ type: "pong" }));
@@ -429,7 +401,7 @@ wss.on("connection", async (ws, req) => {
               status: "delivered",
               deliveredAt: new Date(),
             },
-            { new: true },
+            { new: true }
           );
 
           if (!messageDoc) return;
@@ -442,8 +414,32 @@ wss.on("connection", async (ws, req) => {
               deliveredAt: messageDoc.deliveredAt,
             },
           });
+        }
 
-          return;
+        if (type === "message:seen-instant") {
+          const messageDoc = await Message.findOneAndUpdate(
+            {
+              _id: data?.data?._id,
+              senderId: data?.data?.to,
+              receiverId: data?.data?.from,
+              status: { $ne: "seen" },
+            },
+            {
+              status: "seen",
+              seenAt: Date.now(),
+            },
+            {new: true}
+          );
+          console.log("Database updated i guess :", messageDoc);
+
+          sendToUser(messageDoc.senderId.toString(), {
+            type: "message:status",
+            data: {
+              messageId: messageDoc?._id.toString(),
+              status: messageDoc.status,
+              seenAt: messageDoc.seenAt,
+            },
+          });
         }
 
         if (type !== "typing:start" && type !== "typing:stop") return;
@@ -459,8 +455,8 @@ wss.on("connection", async (ws, req) => {
           data: {
             fromUserId: userId,
             isTyping: type === "typing:start",
-            at: Date.now()
-          }
+            at: Date.now(),
+          },
         });
       } catch (error) {
         console.error("ws message handler error", error);
@@ -483,16 +479,14 @@ wss.on("connection", async (ws, req) => {
           type: "presence:update",
           data: {
             userId,
-            isOnline: false
-          }
+            isOnline: false,
+          },
         });
         contactsByUser.delete(userId);
       }
     });
-
   } catch (error) {
     console.error("WebSocket Connection Error : ", error);
     ws.close(1011, "Internal error");
   }
 });
-

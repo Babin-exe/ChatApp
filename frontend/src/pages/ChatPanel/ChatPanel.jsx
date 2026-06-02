@@ -133,7 +133,7 @@ const ChatPanel = ({
   const myUserId = normalizeId(authUser);
   const selectedContactId = selectedContact?._id;
   const selectedContactIsOnline = Boolean(
-    selectedContactId && onlineUsers?.has(String(selectedContactId)),
+    selectedContactId && onlineUsers?.has(String(selectedContactId))
   );
   const lastTypedUserRef = useRef(null);
 
@@ -237,7 +237,7 @@ const ChatPanel = ({
       const el = chatStreamRef.current;
       const prevScrollHeight = el ? el.scrollHeight : 0;
       const res = await api.get(
-        `/api/chats/messages/${contactId}?cursor=${nextCursor}`,
+        `/api/chats/messages/${contactId}?cursor=${nextCursor}`
       );
 
       if (activeMessagesContactIdRef.current !== contactId) return;
@@ -247,7 +247,7 @@ const ChatPanel = ({
       setMessages((prev) => {
         const seen = new Set(prev.map((message) => message._id));
         const uniqueOlder = olderMessages.filter(
-          (message) => !seen.has(message._id),
+          (message) => !seen.has(message._id)
         );
         return [...uniqueOlder, ...prev];
       });
@@ -285,7 +285,7 @@ const ChatPanel = ({
       if (socket.readyState !== WebSocket.OPEN) return;
       socket.send(JSON.stringify(payload));
     },
-    [socket],
+    [socket]
   );
 
   const clearTypingTimer = useCallback(() => {
@@ -365,12 +365,12 @@ const ChatPanel = ({
         stopTyping();
       }, TYPING_IDLE_MS);
     },
-    [stopTyping, selectedContactId, safeSend, clearTypingTimer],
+    [stopTyping, selectedContactId, safeSend, clearTypingTimer]
   );
 
   const defaultStatusFromBlockedList = useMemo(() => {
     const isBlockedByMe = blockedUsers.some(
-      (entry) => entry?.blocked?._id === selectedContact?._id,
+      (entry) => entry?.blocked?._id === selectedContact?._id
     );
 
     return {
@@ -522,18 +522,18 @@ const ChatPanel = ({
   // //DO some stuff here
   useEffect(() => {
     if (!lastMessageStatus?.messageId) return;
-  
+
     setMessages((prev) =>
       prev.map((message) => {
         if (message._id !== lastMessageStatus.messageId) return message;
-  
+
         return {
           ...message,
           status: lastMessageStatus.status,
           deliveredAt: lastMessageStatus.deliveredAt ?? message.deliveredAt,
           seenAt: lastMessageStatus.seenAt ?? message.seenAt,
         };
-      }),
+      })
     );
   }, [lastMessageStatus]);
 
@@ -742,7 +742,9 @@ const ChatPanel = ({
 
           <p className="chat-subtitle">
             <span
-              className={`presence-dot ${selectedContactIsOnline ? "is-online" : "is-offline"}`}
+              className={`presence-dot ${
+                selectedContactIsOnline ? "is-online" : "is-offline"
+              }`}
               aria-hidden="true"
             />
             <span>{selectedContactIsOnline ? "Online" : "Offline"}</span>

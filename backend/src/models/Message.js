@@ -3,7 +3,7 @@ import {
   MESSAGE_TYPES,
   MESSAGE_STATUS,
   DEFAULT_MESSAGE_STATUS,
-  DEFAULT_MESSAGE_TYPE
+  DEFAULT_MESSAGE_TYPE,
 } from "../constants/message.constants.js";
 
 const messageSchema = new mongoose.Schema(
@@ -61,29 +61,28 @@ const messageSchema = new mongoose.Schema(
       default: false,
     },
     deliveredAt: { type: Date, default: null },
-    seenAt: { type: Date, default: null }
+    seenAt: { type: Date, default: null },
   },
   { timestamps: true }
 );
 
 messageSchema.index({ chatId: 1, createdAt: -1 });
 
-
 messageSchema.pre("validate", function (next) {
-
   if (this.type === "image") {
-
     if (!this.image?.url) {
       this.invalidate("image.url", "Image URL is required for image messages");
     }
 
     if (!this.image?.publicId) {
-      this.invalidate("image.publicId", "Image publicId is required for image messages");
+      this.invalidate(
+        "image.publicId",
+        "Image publicId is required for image messages"
+      );
     }
   }
   next();
-
-})
+});
 
 const Message = mongoose.model("Message", messageSchema);
 

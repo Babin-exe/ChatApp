@@ -5,13 +5,16 @@ import ChatPanel from "./ChatPanel/ChatPanel.jsx";
 import { toast } from "react-hot-toast";
 import api from "../lib/api.js";
 import { useMediaQuery } from "../hooks/useMediaQuery.js";
+import { UseSocketContext } from "../context/socketContext.js";
 
 const MOBILE_BREAKPOINT = "(max-width: 768px)";
 
 const Messages = () => {
   const isMobileLayout = useMediaQuery(MOBILE_BREAKPOINT);
   const [contacts, setContacts] = useState([]);
+
   const [selectedContact, setSelectedContact] = useState(null);
+
   const [loadingContacts, setLoadingContacts] = useState(true);
   const [contactsError, setContactsError] = useState("");
   const [incomingRequests, setIncomingRequest] = useState([]);
@@ -22,6 +25,8 @@ const Messages = () => {
   const [actionLoadingId, setActionLoadingId] = useState("");
   const [blockedUsers, setBlockedUsers] = useState([]);
   const [blockedLoading, setBlockedLoading] = useState(false);
+
+  const { setSelectedContactInContext } = UseSocketContext();
 
   const fetchContacts = useCallback(async () => {
     try {
@@ -47,7 +52,7 @@ const Messages = () => {
       setIncomingRequest(res.data.requests || []);
     } catch (error) {
       toast.error(
-        error.response?.data?.message || "Failed to load incoming request",
+        error.response?.data?.message || "Failed to load incoming request"
       );
     } finally {
       setRequestsLoading(false);
@@ -58,7 +63,7 @@ const Messages = () => {
     try {
       setDiscoverLoading(true);
       const res = await api.get(
-        `/api/chats/discover?q=${encodeURIComponent(q)}`,
+        `/api/chats/discover?q=${encodeURIComponent(q)}`
       );
       setDiscoverUsers(res.data.users || []);
     } catch (error) {
@@ -75,7 +80,7 @@ const Messages = () => {
       setBlockedUsers(res.data?.blockedUsers || []);
     } catch (error) {
       toast.error(
-        error.response?.data?.message || "Failed to load blocked users",
+        error.response?.data?.message || "Failed to load blocked users"
       );
     } finally {
       setBlockedLoading(false);
@@ -95,6 +100,15 @@ const Messages = () => {
     fetchDiscoverUsers,
     fetchBlockedUsers,
   ]);
+
+  useEffect(() => {
+    console.log("I have to put somethign in the ref variable ");
+
+    setSelectedContactInContext(selectedContact?._id);
+
+    console.log("Selected Contact is chaned in the messages");
+    
+  }, [selectedContact]);
 
   const handleSendRequest = async (receiverId) => {
     const key = `request-${receiverId}`;
@@ -147,7 +161,7 @@ const Messages = () => {
       toast.success("User blocked successfully");
 
       setSelectedContact((current) =>
-        current?._id === blockedId ? null : current,
+        current?._id === blockedId ? null : current
       );
 
       await Promise.all([
@@ -184,7 +198,7 @@ const Messages = () => {
       return true;
     } catch (error) {
       toast.error(
-        error.response?.data?.message || "Failed to unblock the user",
+        error.response?.data?.message || "Failed to unblock the user"
       );
       return false;
     } finally {
