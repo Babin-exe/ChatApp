@@ -1,3 +1,8 @@
+/* Todo:
+Complete the delivered and see when user comes back after some time case 
+Scenario 2 : 
+*/
+
 import express from "express";
 import http from "http";
 import WebSocket, { WebSocketServer } from "ws";
@@ -49,6 +54,37 @@ const fetchContacts = async (userId) => {
   }
 
   return contacts;
+};
+
+const syncDeliveredOnConnect = async (receiverId) => {
+
+
+  const pending = await Message.find({
+    receiverId: receiverId,
+    status: "sent",
+  }).select("_id senderId");
+
+  if (pending.length === 0) return;
+
+  const deliveredAt = new Date();
+
+  const messageIds = pending.map((p) => p._id);
+
+  await Message.updateMany(
+    { _id: { $in: messageIds } },
+    { $set: { status: "delivered", deliveredAt: deliveredAt } }
+  );
+
+  for (const p of pending) {
+    sendToUser(p.senderId.toString(), {
+      type: "message:status",
+      data: {
+        messageId: p._id.toString(),
+        status: "delivered",
+        deliveredAt: deliveredAt,
+      },
+    });
+  }
 };
 
 const parseCookies = (cookieHeader = "") => {
@@ -337,6 +373,11 @@ wss.on("connection", async (ws, req) => {
     console.log(`A user is connected to the socket server: ${userId}`);
 
     lastSeen.set(userId, Date.now());
+
+    //Call the function as soon as the user connects
+    syncDeliveredOnConnect(userId);
+
+    //Experimental still hope this works
 
     ws.send(
       JSON.stringify({

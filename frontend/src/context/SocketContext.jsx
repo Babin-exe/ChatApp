@@ -145,6 +145,10 @@ when the component unmounting happens we will clear the timeout and make the ref
       setRetryCount(0);
       lastSocketEventRef.current = Date.now();
 
+      //Here i have to do the delivery stuff
+
+      
+
       socketHealthIntervalRef.current = setInterval(() => {
         const st = socketRef.current;
         if (!st || st.readyState !== WebSocket.OPEN) return;

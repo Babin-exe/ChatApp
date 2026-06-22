@@ -11,20 +11,11 @@ const router = express.Router();
 router.post(
   "/send/:receiverId",
   protectRoute,
-
   validate(receiverParamsSchema, "params"),
-
   uploadImage,
-
-
-  //One image validation here would be nice 
-
   validateUploadedImageFile,
-
   validateSendMessageBody,
-
   sendMessageController
-
 );
 
 export default router;
