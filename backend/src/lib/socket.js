@@ -57,8 +57,6 @@ const fetchContacts = async (userId) => {
 };
 
 const syncDeliveredOnConnect = async (receiverId) => {
-
-
   const pending = await Message.find({
     receiverId: receiverId,
     status: "sent",
@@ -375,9 +373,7 @@ wss.on("connection", async (ws, req) => {
     lastSeen.set(userId, Date.now());
 
     //Call the function as soon as the user connects
-    syncDeliveredOnConnect(userId);
-
-    //Experimental still hope this works
+    await syncDeliveredOnConnect(userId);
 
     ws.send(
       JSON.stringify({
@@ -484,6 +480,51 @@ wss.on("connection", async (ws, req) => {
             },
           });
         }
+
+        if (type === "message:seen-late") {
+          console.log("Seen is partially working");
+
+          const pending = await Message.find({
+            senderId: data.data.contactId,
+            receiverId: user._id,
+            status: { $ne: "seen" },
+          }).select("_id");
+
+          const t = new Date();
+          await Message.updateMany(
+            {
+              senderId: data.data.contactId,
+              receiverId: user._id,
+              status: { $ne: "seen" },
+            },
+            [
+              {
+                $set: {
+                  status: "seen",
+                  seenAt: t,
+                  deliveredAt: {
+                    $ifNull: ["$deliveredAt", t],
+                  },
+                },
+              },
+            ]
+          );
+
+
+          for (const p of pending) {
+            sendToUser(data.data.contactId.toString(), {
+              type: "message:status",
+              data: {
+                messageId: p._id,
+                status: "seen",
+                seenAt: t,
+              },
+            });
+          }
+          console.log("Database updated");
+        }
+
+        //Dooooooo it make it correct or you are gone
 
         if (type !== "typing:start" && type !== "typing:stop") return;
 

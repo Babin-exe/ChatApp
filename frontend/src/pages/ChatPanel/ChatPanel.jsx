@@ -71,6 +71,7 @@ const ChatPanel = ({
     socket,
     typingUsers,
     lastMessageStatus,
+    openConversation,
   } = UseSocketContext();
 
   const normalizeId = (value) => {
@@ -131,7 +132,9 @@ const ChatPanel = ({
   const isInitialLoadDone = useRef(false);
   const activeMessagesContactIdRef = useRef(null);
   const myUserId = normalizeId(authUser);
+
   const selectedContactId = selectedContact?._id;
+
   const selectedContactIsOnline = Boolean(
     selectedContactId && onlineUsers?.has(String(selectedContactId))
   );
@@ -496,6 +499,13 @@ const ChatPanel = ({
       }
     };
   }, []);
+
+  //I have to do some stuff over here okay
+  useEffect(() => {
+    openConversation(selectedContactId);
+  }, [selectedContactId]);
+
+  // lets gogogogoogo
 
   useEffect(() => {
     return () => {

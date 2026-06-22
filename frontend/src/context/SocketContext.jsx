@@ -44,7 +44,17 @@ export const SocketContextProvider = ({ children }) => {
 
   const [lastMessageStatus, setLastMessageStatus] = useState(null);
 
-  //
+  const openConversation = useCallback((selectedContactId) => {
+    const normalizeId = selectedContactId ? String(selectedContactId) : null;
+    const ws = socketRef.current;
+    if (ws?.readyState !== ws.OPEN) return;
+    ws.send(
+      JSON.stringify({
+        type: "message:seen-late",
+        data: { contactId: normalizeId },
+      })
+    );
+  }, []);
 
   /*
    set a Timeout in ws.close()
@@ -145,10 +155,6 @@ when the component unmounting happens we will clear the timeout and make the ref
       setRetryCount(0);
       lastSocketEventRef.current = Date.now();
 
-      //Here i have to do the delivery stuff
-
-      
-
       socketHealthIntervalRef.current = setInterval(() => {
         const st = socketRef.current;
         if (!st || st.readyState !== WebSocket.OPEN) return;
@@ -235,7 +241,6 @@ when the component unmounting happens we will clear the timeout and make the ref
           }
         }
 
-        ///////////////////////////////////////////////////////////////////////////////////////////////
         if (payload?.type === "presence:initial") {
           if (!Array.isArray(payload.data?.onlineUserIds)) return;
 
@@ -310,8 +315,6 @@ when the component unmounting happens we will clear the timeout and make the ref
             eventId: crypto.randomUUID(),
           });
         }
-
-        ///////////////////////////////////////////////////////////////////////////////////////////////
       } catch {
         console.log("Non-JSON socket payload:", event.data);
       }
@@ -412,7 +415,7 @@ when the component unmounting happens we will clear the timeout and make the ref
       onlineUsers,
       typingUsers,
       lastMessageStatus,
-      //Not really  i guess
+      openConversation,
       setSelectedContactInContext,
     }),
     [
@@ -424,8 +427,8 @@ when the component unmounting happens we will clear the timeout and make the ref
       onlineUsers,
       typingUsers,
       lastMessageStatus,
-      //Confused about this
       setSelectedContactInContext,
+      openConversation,
     ]
   );
   return (
