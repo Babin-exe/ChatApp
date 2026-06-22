@@ -43,6 +43,26 @@ const messageSchema = new mongoose.Schema(
       bytes: Number,
     },
 
+    reactions: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        emoji: {
+          type: String,
+          required: true,
+          maxlength: 16,
+          trim: true,
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now(),
+        },
+      },
+    ],
+
     status: {
       type: String,
       enum: MESSAGE_STATUS,
