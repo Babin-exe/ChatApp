@@ -1,5 +1,8 @@
 import express from "express";
-import { sendMessageController } from "../controllers/chat.controller.js";
+import {
+  messageReactionController,
+  sendMessageController,
+} from "../controllers/chat.controller.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
 import { receiverParamsSchema } from "../validation/chat.validation.js";
@@ -17,5 +20,7 @@ router.post(
   validateSendMessageBody,
   sendMessageController
 );
+
+router.post("/:messageId/reactions", protectRoute, messageReactionController);
 
 export default router;

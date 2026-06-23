@@ -8,6 +8,7 @@ import {
   discoverUsersToChat,
   validateSendMessage,
   createMessage,
+  messageReactionService,
 } from "../services/chat.service.js";
 import Blocked from "../models/Block.js";
 import { Types } from "mongoose";
@@ -16,6 +17,7 @@ import {
   deleteCloudinaryImage,
 } from "../services/cloudinaryUploader.service.js";
 import { sendToUser } from "../lib/socket.js";
+import Message from "../models/Message.js";
 
 export const createChatRequest = asyncHandler(async (req, res) => {
   const senderId = req.user._id;
@@ -266,4 +268,34 @@ export const getChatAccessStatus = asyncHandler(async (req, res) => {
       canMessage: !(blockedByMe || blockedMe),
     },
   });
+});
+
+export const messageReactionController = asyncHandler(async (req, res) => {
+  console.log("Lets do the emoji stuff");
+  const { messageId } = req.params;
+  const userId = req.user._id;
+  const { emoji } = req.body.emoji;
+
+  const message = await Message.findById(messageId);
+
+  if (!message) {
+    return res.status(404).json({
+      success: false,
+      message: "Message doesn't exists",
+    });
+  }
+
+  const isUserAllowed =
+    message.senderId.equals(userId) || message.receiverId.equals(userId);
+
+  if (!isUserAllowed) {
+    return res.status(403).json({
+      success: false,
+      message: "You are not allowed to react to this message",
+    });
+  }
+
+  const result = await messageReactionService(userId, messageId, emoji);
+
+  //Some more stuff here
 });

@@ -3,7 +3,11 @@ import Message from "../models/Message.js";
 import HttpError from "../utils/HttpError.js";
 import validateObjectId from "../utils/validation.js";
 import User from "../models/user.model.js";
-import { sendToUser, onChatAccepted, onChatRelationRemoved } from "../lib/socket.js";
+import {
+  sendToUser,
+  onChatAccepted,
+  onChatRelationRemoved,
+} from "../lib/socket.js";
 import mongoose from "mongoose";
 import {
   DEFAULT_MESSAGE_TYPE,
@@ -11,7 +15,6 @@ import {
 } from "../constants/message.constants.js";
 import isBlocked from "../utils/blockChecker.js";
 import Blocked from "../models/Block.js";
-
 
 const ALLOWED_STATUS = ["declined", "accepted"];
 
@@ -28,7 +31,6 @@ export const updateChatStatus = async ({
     throw new HttpError("Invalid chat status", 400);
   }
 
-
   const chat = await Chat.findById(chatId);
 
   if (!chat) throw new HttpError("Chat not found", 404);
@@ -36,18 +38,15 @@ export const updateChatStatus = async ({
   if (chat.status !== "pending") {
     throw new HttpError(
       `Chat is already ${chat.status}, cannot ${status}`,
-      400,
+      400
     );
   }
 
-
   const isMember = chat.members.some(
-    (id) => id.toString() === actorId.toString(),
+    (id) => id.toString() === actorId.toString()
   );
 
   const isNotInitiator = actorId.toString() !== chat.initiator.toString();
-
-
 
   if (status === "accepted" || status === "declined") {
     if (!isMember || !isNotInitiator) {
@@ -55,26 +54,15 @@ export const updateChatStatus = async ({
     }
   }
 
-
-
   const otherMemberId = chat.members.find(
-    (id) => id.toString() !== actorId.toString(),
+    (id) => id.toString() !== actorId.toString()
   );
-
-
 
   const blocked = await isBlocked(actorId, otherMemberId);
 
   if (status === "accepted" && blocked) {
     throw new HttpError("Cannot do stuff with blocked chat request", 403);
   }
-
-
-
-
-
-
-
 
   const newMessage = await Message.create({
     senderId: actorId,
@@ -85,28 +73,28 @@ export const updateChatStatus = async ({
     status: DEFAULT_MESSAGE_STATUS,
   });
 
-
   const updated = await Chat.findOneAndUpdate(
     { _id: chatId, status: "pending" },
     { status, lastMessage: newMessage._id },
-    { new: true },
+    { new: true }
   )
     .populate("members", "name email profilePic")
     .populate("lastMessage", "content");
 
-
   if (!updated) {
     await Message.findByIdAndDelete(newMessage._id);
-    throw new HttpError("Chat status was alredy updated by another request", 409);
+    throw new HttpError(
+      "Chat status was alredy updated by another request",
+      409
+    );
   }
-
 
   if (status === "accepted" && chat.members.length >= 2) {
     const [m0, m1] = chat.members;
     onChatAccepted(m0.toString(), m1.toString());
   }
 
-  if ((status === "declined") && chat.members.length >= 2) {
+  if (status === "declined" && chat.members.length >= 2) {
     const [m0, m1] = chat.members;
     onChatRelationRemoved(m0.toString(), m1.toString());
   }
@@ -127,13 +115,10 @@ export const createNewChatRequest = async ({ senderId, receiverId }) => {
     throw new HttpError("Receiver not found", 404);
   }
 
-
   const blocked = await isBlocked(senderId, receiverId);
   if (blocked) {
     throw new HttpError("You cannot send a request to this user", 403);
   }
-
-
 
   let chat;
   try {
@@ -146,7 +131,7 @@ export const createNewChatRequest = async ({ senderId, receiverId }) => {
     if (err.code === 11000) {
       throw new HttpError(
         "Chat Request (pending or accepted) already exists with this user.",
-        400,
+        400
       );
     }
     throw err;
@@ -164,7 +149,7 @@ export const createNewChatRequest = async ({ senderId, receiverId }) => {
   const populatedChat = await Chat.findByIdAndUpdate(
     chat._id,
     { lastMessage: newMessage._id },
-    { new: true },
+    { new: true }
   )
     .populate("members", "name email profilePic")
     .populate("lastMessage", "content");
@@ -178,7 +163,6 @@ export const getMessagesByChatParticipants = async ({
   cursor,
   limit = 30,
 }) => {
-
   const parsedLimit = Math.min(Number(limit) || 30, 100);
 
   const chat = await Chat.findOne({
@@ -202,7 +186,6 @@ export const getMessagesByChatParticipants = async ({
     query.createdAt = { $lt: cursorDate };
   }
 
-
   const messages = await Message.find(query)
     .sort({ createdAt: -1 })
     .limit(parsedLimit)
@@ -216,11 +199,8 @@ export const getMessagesByChatParticipants = async ({
 
   messages.reverse();
 
-
   const nextCursor =
-    messages.length === parsedLimit
-      ? messages[0].createdAt
-      : null;
+    messages.length === parsedLimit ? messages[0].createdAt : null;
 
   return { messages, nextCursor, chatId: chat._id };
 };
@@ -327,7 +307,6 @@ export const sendMessage = async ({
 };
 
 export const getIncomingChatRequest = async ({ userId }) => {
-
   validateObjectId(userId, "userId");
 
   const blockedByMe = await Blocked.distinct("blocked", { blocker: userId });
@@ -336,7 +315,7 @@ export const getIncomingChatRequest = async ({ userId }) => {
   const chats = await Chat.find({
     members: userId,
     status: "pending",
-    initiator: { $nin: [userId, ...blockedByMe, ...blockedMe] }
+    initiator: { $nin: [userId, ...blockedByMe, ...blockedMe] },
   })
     .populate("initiator", "email name profilePic")
     .sort({ createdAt: -1 });
@@ -348,53 +327,82 @@ export const getIncomingChatRequest = async ({ userId }) => {
   }));
 };
 
-
-
-const toObjectId = (id) => id instanceof mongoose.Types.ObjectId ? id : mongoose.Types.ObjectId.createFromHexString(id);
+const toObjectId = (id) =>
+  id instanceof mongoose.Types.ObjectId
+    ? id
+    : mongoose.Types.ObjectId.createFromHexString(id);
 
 const prefixRange = (prefix) => ({
   $gte: prefix,
-  $lt: `${prefix}\uffff`
+  $lt: `${prefix}\uffff`,
 });
 
 export const discoverUsersToChat = async ({ userId, q = "" }) => {
-
   //Make sure the id is valid
   validateObjectId(userId, "userId");
 
   //Get the id of the user  in proper format
   const uid = toObjectId(userId);
 
-  //Make the search param better 
-  const search = String(q ?? "").trim().toLowerCase().slice(0, 64);
+  //Make the search param better
+  const search = String(q ?? "")
+    .trim()
+    .toLowerCase()
+    .slice(0, 64);
   const blockedByMe = await Blocked.distinct("blocked", { blocker: uid });
   const blockedMe = await Blocked.distinct("blocker", { blocked: uid });
 
+  const excludedUsers = (
+    await Chat.distinct("members", {
+      members: uid,
+      status: { $in: ["accepted", "pending"] },
+    })
+  ).filter((id) => !id.equals(uid));
 
-  const excludedUsers = (await Chat.distinct("members", {
-    members: uid,
-    status: { $in: ["accepted", "pending"] },
-  })).filter(id => !id.equals(uid));
-
-  //These are the ids i want to exclude 
+  //These are the ids i want to exclude
   const excludedIds = [...excludedUsers, ...blockedByMe, ...blockedMe, uid];
 
-  //This is my filter 
+  //This is my filter
   const filter = {
     _id: { $nin: excludedIds },
-    isVerified: { $ne: false }
+    isVerified: { $ne: false },
   };
 
   if (search) {
     filter.$or = [
       { nameSearch: prefixRange(search) },
       { emailSearch: prefixRange(search) },
-    ]
+    ];
   }
 
-  return User.find(filter).select("_id name email profilePic")
+  return User.find(filter)
+    .select("_id name email profilePic")
     .sort({ nameSearch: 1, _id: 1 })
     .limit(20)
-    .lean().exec();
+    .lean()
+    .exec();
 };
 
+export const messageReactionService = async ({ userId, messageId, emoji }) => {
+  const message = await Message.findById(messageId);
+
+  const existingReactions = message.reactions.find((r) =>
+    r.user.equals(userId)
+  );
+
+  if (existingReactions) {
+    if (existingReactions.emoji === emoji) {
+      message.reactions = message.reactions.filter(
+        (r) => !r.user.equals(userId)
+      );
+    } else {
+      existingReactions.emoji = emoji;
+    }
+  } else {
+    message.reactions.push({ user: userId, emoji });
+  }
+
+  const result = await message.save();
+
+  console.log(result);
+};

@@ -836,10 +836,15 @@ const ChatPanel = ({
                     </>
                   ) : (
                     m.content
-                  )}
+                  )}{" "}
                 </div>
 
-                {/* //////////////////////////////////////////////////////////////////////////////////////////////////////////////// */}
+                {/* I have to fix this to let the user select the emoji but will leave this here for now   */}
+
+                <button>Emoji</button>
+
+                {/*  */}
+
                 <div className="message-status-time-info">
                   {isLastOutgoing && showMessageStatus && (
                     <span className="latest-status">{m.status}</span>

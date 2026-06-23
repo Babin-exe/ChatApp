@@ -12,8 +12,6 @@ import errorHandler from "./middleware/errorHandler.js";
 import cleanExpiredSessions from "./cron/cleanExpiredSessions.cron.js";
 import blockRoutes from "./routes/block.route.js";
 
-
-
 dotenv.config();
 const __dirname = path.resolve();
 
@@ -21,20 +19,18 @@ app.use(
   cors({
     origin: process.env.FRONTEND_URL,
     credentials: true,
-  }),
+  })
 );
 
 app.use(cookieParser());
 app.use(express.json({ limit: "10mb" }));
-
-
 
 app.use("/api/auth", authRoutes);
 app.use("/api/chats", chatRoutes);
 app.use("/api/messages", messageRouters);
 app.use("/api/access", blockRoutes);
 
-//Make this production
+
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
@@ -42,9 +38,6 @@ if (process.env.NODE_ENV === "production") {
     res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
   });
 }
-
-
-
 
 app.use(errorHandler);
 
