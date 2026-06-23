@@ -403,6 +403,5 @@ export const messageReactionService = async ({ userId, messageId, emoji }) => {
   }
 
   const result = await message.save();
-
-  console.log(result);
+  return result;
 };

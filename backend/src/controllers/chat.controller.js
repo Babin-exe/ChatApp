@@ -274,7 +274,7 @@ export const messageReactionController = asyncHandler(async (req, res) => {
   console.log("Lets do the emoji stuff");
   const { messageId } = req.params;
   const userId = req.user._id;
-  const { emoji } = req.body.emoji;
+  const { emoji } = req.body;
 
   const message = await Message.findById(messageId);
 
@@ -295,7 +295,15 @@ export const messageReactionController = asyncHandler(async (req, res) => {
     });
   }
 
-  const result = await messageReactionService(userId, messageId, emoji);
+  const result = await messageReactionService({ userId, messageId, emoji });
 
-  //Some more stuff here
+  if (!result) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Failed message here" });
+  }
+
+  return res
+    .status(200)
+    .json({ success: true, message: "Reaction updated ", data: result });
 });
