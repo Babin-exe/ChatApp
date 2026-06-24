@@ -468,7 +468,6 @@ const ChatPanel = ({
     };
   }, []);
 
-
   useEffect(() => {
     openConversation(selectedContactId);
   }, [selectedContactId]);
@@ -641,7 +640,7 @@ const ChatPanel = ({
         "Failed to send message. Please retry.";
 
       setSendError(message);
-      setRetryPayload({ content: contentToSend, image: imageToSend });
+      // setRetryPayload({ content: contentToSend, image: imageToSend });
       setHasFailedMessage(true);
       toast.error(message);
 

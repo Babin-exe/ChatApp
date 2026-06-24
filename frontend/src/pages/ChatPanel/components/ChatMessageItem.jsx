@@ -1,5 +1,6 @@
 import EmojiPicker from "emoji-picker-react";
 import QuickReaction from "./QuickReaction.jsx";
+import api from "../../../lib/api.js";
 
 const ChatMessageItem = ({
   m,
@@ -49,9 +50,12 @@ const ChatMessageItem = ({
               <EmojiPicker
                 onEmojiClick={async (obj) => {
                   console.log(obj.emoji);
-                  await api.post(`/api/messages/${messageId}/reactions`, {
-                    emoji: obj.emoji,
-                  });
+                  await api.post(
+                    `/api/messages/${currentMessageId}/reactions`,
+                    {
+                      emoji: obj.emoji,
+                    }
+                  );
                 }}
               />
             ))}
