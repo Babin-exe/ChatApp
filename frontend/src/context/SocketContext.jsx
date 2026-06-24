@@ -1,23 +1,4 @@
-/*
-We need to keep track of few stuffs 
-
-1) What was the last time some stuff happended (Last activity tracker)
-2) Periodic Health check 
-3) If some kind of network change is detected force the browser to re-connect 
-4) I need better socket creation guard 
-5) Activity will reset on events : Message arrives or Connection opened -> (lastSocketEventRef = now )
-6) Cleanup of the health system : stop interval , clear timers , clear sockets 
- */
-
-/*
-
-I left everything in delivered status 
-also remember when user goes offlien and comes online it is not working so fix that and move forward
-
-*/
-
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-
 import api from "../lib/api.js";
 import { SocketContext } from "./socketContext.js";
 
@@ -55,13 +36,6 @@ export const SocketContextProvider = ({ children }) => {
       })
     );
   }, []);
-
-  /*
-   set a Timeout in ws.close()
-   make sure to get rid of that timer if we connect on time in ws.onopen()
-   remove the setTimeout reference from stopClearingOnlineUserRef.current once the function runs successfully so we dont have the old id after the fn runs
-when the component unmounting happens we will clear the timeout and make the reference null
-  */
 
   const selectedContactRef = useRef(null);
 
@@ -188,132 +162,135 @@ when the component unmounting happens we will clear the timeout and make the ref
         lastSocketEventRef.current = Date.now();
         const payload = JSON.parse(event.data);
 
-        if (payload?.type === "pong") return;
-        if (
-          payload?.type === "message" &&
-          (payload?.data?._id || payload?.data?.id)
-        ) {
-          setLastMessage(payload.data);
+        switch (payload?.type) {
+          case "pong":
+            return;
 
-          const senderId = String(payload.data.senderId || "");
+          case "message": {
+            if (!(payload?.data?._id || payload?.data?.id)) break;
 
-          if (senderId) {
+            setLastMessage(payload.data);
+
+            const senderId = String(payload.data.senderId || "");
+
+            if (senderId) {
+              setOnlineUsers((prev) => {
+                if (!prev.has(senderId)) {
+                  const next = new Set(prev);
+                  next.add(senderId);
+                  return next;
+                }
+                return prev;
+              });
+
+              ws.send(
+                JSON.stringify({
+                  type: "message:delivered",
+                  data: {
+                    from: authUser.id,
+                    to: senderId,
+                    _id: payload?.data._id,
+                  },
+                })
+              );
+
+              if (senderId === String(selectedContactRef.current || "")) {
+                console.log("Is this running??");
+
+                ws.send(
+                  JSON.stringify({
+                    type: "message:seen-instant",
+                    data: {
+                      from: authUser.id,
+                      to: senderId,
+                      _id: payload?.data?._id,
+                    },
+                  })
+                );
+              }
+            }
+            break;
+          }
+
+          case "presence:initial":
+            if (!Array.isArray(payload.data?.onlineUserIds)) return;
+
             setOnlineUsers((prev) => {
-              if (!prev.has(senderId)) {
+              const next = new Set(prev);
+              for (const id of payload.data.onlineUserIds) {
+                next.add(String(id));
+              }
+              return next;
+            });
+            break;
+
+          case "presence:update": {
+            if (typeof payload.data?.isOnline !== "boolean") break;
+
+            const id = String(payload?.data?.userId);
+
+            setOnlineUsers((prev) => {
+              const stuff = new Set(prev);
+
+              if (payload?.data?.isOnline) {
+                stuff.add(id);
+              } else {
+                stuff.delete(id);
+              }
+              return stuff;
+            });
+            break;
+          }
+
+          case "presence:remove": {
+            const id = String(payload?.data?.userId);
+            setOnlineUsers((prev) => {
+              const next = new Set(prev);
+              next.delete(id);
+              return next;
+            });
+            break;
+          }
+
+          case "typing:update": {
+            const fromUserId = String(payload?.data?.fromUserId || "");
+            const isTyping = payload?.data?.isTyping;
+
+            if (!fromUserId || typeof isTyping !== "boolean") return;
+
+            setOnlineUsers((prev) => {
+              if (!prev.has(fromUserId)) {
                 const next = new Set(prev);
-                next.add(senderId);
+                next.add(fromUserId);
                 return next;
               }
               return prev;
             });
 
-            ws.send(
-              JSON.stringify({
-                type: "message:delivered",
-                data: {
-                  from: authUser.id,
-                  to: senderId,
-                  _id: payload?.data._id,
-                },
-              })
-            );
-
-            //This means who ever sent this is also selected person so  do :
-            //Update the db(for this record now bulk ) , emit the seen status
-            // Let all of this happen on server only don't do this in frontend
-
-            console.log(selectedContactRef.current);
-
-            if (senderId === String(selectedContactRef.current || "")) {
-              console.log("Is this running??");
-
-              ws.send(
-                JSON.stringify({
-                  type: "message:seen-instant",
-                  data: {
-                    from: authUser.id,
-                    to: senderId,
-                    _id: payload?.data?._id,
-                  },
-                })
-              );
-            }
-          }
-        }
-
-        if (payload?.type === "presence:initial") {
-          if (!Array.isArray(payload.data?.onlineUserIds)) return;
-
-          setOnlineUsers((prev) => {
-            const next = new Set(prev);
-            for (const id of payload.data.onlineUserIds) {
-              next.add(String(id));
-            }
-            return next;
-          });
-        }
-
-        if (
-          payload?.type === "presence:update" &&
-          typeof payload.data?.isOnline === "boolean"
-        ) {
-          const id = String(payload?.data?.userId);
-
-          setOnlineUsers((prev) => {
-            const stuff = new Set(prev);
-
-            if (payload?.data?.isOnline) {
-              stuff.add(id);
-            } else {
-              stuff.delete(id);
-            }
-            return stuff;
-          });
-        }
-
-        if (payload?.type === "presence:remove") {
-          const id = String(payload?.data?.userId);
-          setOnlineUsers((prev) => {
-            const next = new Set(prev);
-            next.delete(id);
-            return next;
-          });
-        }
-
-        if (payload?.type === "typing:update") {
-          const fromUserId = String(payload?.data?.fromUserId || "");
-          const isTyping = payload?.data?.isTyping;
-
-          if (!fromUserId || typeof isTyping !== "boolean") return;
-
-          setOnlineUsers((prev) => {
-            if (!prev.has(fromUserId)) {
-              const next = new Set(prev);
-              next.add(fromUserId);
+            setTypingUsers((prev) => {
+              const next = new Map(prev);
+              if (isTyping) next.set(fromUserId, Date.now());
+              else next.delete(fromUserId);
               return next;
-            }
-            return prev;
-          });
+            });
+            break;
+          }
 
-          setTypingUsers((prev) => {
-            const next = new Map(prev);
-            if (isTyping) next.set(fromUserId, Date.now());
-            else next.delete(fromUserId);
-            return next;
-          });
-        }
+          case "message:status":
+            console.log("Update the status to delivered please ");
+            console.log("Update stuff okay");
+            console.log(payload);
 
-        if (payload?.type === "message:status") {
-          console.log("Update the status to delivered please ");
-          console.log("Update stuff okay");
-          console.log(payload);
+            setLastMessageStatus({
+              messageId: payload.data.messageId,
+              status: payload.data.status,
+              deliveredAt: payload.data.deliveredAt,
+              eventId: crypto.randomUUID(),
+            });
+            break;
 
-          setLastMessageStatus({
-            messageId: payload.data.messageId,
-            status: payload.data.status,
-            deliveredAt: payload.data.deliveredAt,
-            eventId: crypto.randomUUID(),
-          });
+          default:
+            break;
         }
       } catch {
         console.log("Non-JSON socket payload:", event.data);
