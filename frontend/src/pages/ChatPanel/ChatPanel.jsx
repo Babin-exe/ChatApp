@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import "./ChatPanel.css";
 import api from "../../lib/api.js";
 import axios from "axios";
-import { useRef } from "react";
 import { UseSocketContext } from "../../context/socketContext.js";
+import ChatComposer from "./components/ChatComposer.jsx";
+import ChatHeader from "./components/ChatHeader.jsx";
+import ChatStream from "./components/ChatStream.jsx";
 
 const isRequestCanceled = (err) =>
   axios.isCancel(err) ||
@@ -21,6 +23,11 @@ const ALLOWED_MIME_TYPES = new Set([
   "image/gif",
   "image/webp",
 ]);
+
+const PickerMode = {
+  QUICK: "quick",
+  FULL: "full",
+};
 
 function validateImageFile(file) {
   if (!ALLOWED_MIME_TYPES.has(file.type)) {
@@ -79,48 +86,19 @@ const ChatPanel = ({
     if (typeof value === "string") return value;
     return value._id || value.id || "";
   };
-
   const [messages, setMessages] = useState([]);
-
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [messagesError, setMessagesError] = useState("");
   const [sendError, setSendError] = useState("");
-
   const [hasFailedMessage, setHasFailedMessage] = useState(false);
-
   const [nextCursor, setNextCursor] = useState(null);
   const [loadingOlder, setLoadingOlder] = useState(false);
-
   const isTypingRef = useRef(false);
   const typingIdleTimeoutRef = useRef(null);
   const TYPING_IDLE_MS = 1500;
-
   const fileInputRef = useRef(null);
-
-  // const messageStatus = useRef(null);
-
-  /*
-  
-
-  what do i want 
-
-  when the we detect some changes in the input tag 
-
-  we will try to send some ws event to the server 
-  but doing it in every key stroke will make the server over load 
-  so how do we prevent that , lets try to do something like :
-
-  when an event comes check if there is already typing emitted if it is then 
-  we must knwo one timer is already started which will emit stop after lets say x second 
-  so our job is to just reset the timer 
-  but if it is the first time we are emitting we will now create a fresh timer event that will 
-  in some x time send stop signal through the socket 
-
-  
-  */
-
   const [chatStatus, setChatStatus] = useState({
     blockedByMe: false,
     blockedMe: false,
@@ -147,6 +125,10 @@ const ChatPanel = ({
   const [imagePreviewUrl, setImagePreviewUrl] = useState(null);
 
   const [tick, setNowTick] = useState(0);
+
+  const [currentMessageId, setCurrentMessageId] = useState("");
+
+  const [pickerMode, setPickerMode] = useState(PickerMode.QUICK);
 
   useEffect(() => {
     if (!typingAudioRef.current) {
@@ -305,20 +287,6 @@ const ChatPanel = ({
     const lastId = normalizeId(last.senderId);
     return lastId == myUserId;
   }, [messages, myUserId]);
-
-  /* 
-  
-  what should be done here is debouncing is what i want to do here ...  
-
-  if a user is typing for the first time i want to emit a web socket event and then 
-  start a timer that will expire in x amount of time and tell the ui or what ever to stop
-  if typing already started we dont send anything just restart the timer which 
-  is responsible for stopping the typing
-
-  so this is the core idea of our stuff 
-
- 
-  */
 
   const stopTyping = useCallback(() => {
     const targetUserId = lastTypedUserRef.current;
@@ -500,12 +468,10 @@ const ChatPanel = ({
     };
   }, []);
 
-  //I have to do some stuff over here okay
+
   useEffect(() => {
     openConversation(selectedContactId);
   }, [selectedContactId]);
-
-  // lets gogogogoogo
 
   useEffect(() => {
     return () => {
@@ -529,7 +495,6 @@ const ChatPanel = ({
     };
   }, [selectedImage]);
 
-  // //DO some stuff here
   useEffect(() => {
     if (!lastMessageStatus?.messageId) return;
 
@@ -546,8 +511,6 @@ const ChatPanel = ({
       })
     );
   }, [lastMessageStatus]);
-
-  //Boundary value
 
   useEffect(() => {
     const id = setInterval(() => setNowTick((e) => e + 1), 30000);
@@ -594,6 +557,18 @@ const ChatPanel = ({
       fileInputRef.current.value = "";
     }
   }, []);
+
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0] || null;
+    if (!file) return;
+    const err = validateImageFile(file);
+    if (err) {
+      toast.error(err);
+      e.target.value = "";
+      return;
+    }
+    setSelectedImage(file);
+  };
 
   const sendCurrentMessage = async (contentToSend, imageToSend) => {
     if (!selectedContact || (!contentToSend.trim() && !imageToSend)) return;
@@ -666,7 +641,7 @@ const ChatPanel = ({
         "Failed to send message. Please retry.";
 
       setSendError(message);
-      // setRetryPayload({ content: contentToSend, image: imageToSend });
+      setRetryPayload({ content: contentToSend, image: imageToSend });
       setHasFailedMessage(true);
       toast.error(message);
 
@@ -723,61 +698,17 @@ const ChatPanel = ({
 
   return (
     <section className="chat-panel">
-      <header className="chat-header">
-        {onBack && (
-          <button
-            type="button"
-            className="chat-back-btn"
-            onClick={onBack}
-            aria-label="Back to contacts"
-          >
-            ← Back
-          </button>
-        )}
-        <div className="chat-header-text">
-          <h2>{selectedContact.name}</h2>
-
-          {typingUsers.has(String(selectedContactId)) && (
-            <div className="typing-indicator-wrapper">
-              <div className="typing-dots">
-                <span />
-                <span />
-                <span />
-              </div>
-              <span className="typing-text">
-                {selectedContact.name} is typing...
-              </span>
-            </div>
-          )}
-
-          <p className="chat-subtitle">
-            <span
-              className={`presence-dot ${
-                selectedContactIsOnline ? "is-online" : "is-offline"
-              }`}
-              aria-hidden="true"
-            />
-            <span>{selectedContactIsOnline ? "Online" : "Offline"}</span>
-            <span className="chat-subtitle-sep" aria-hidden="true">
-              •
-            </span>
-            <span className="chat-email">{selectedContact.email}</span>
-          </p>
-        </div>
-
-        <span className="header-unblock">
-          {isBlockedByMe && (
-            <button
-              type="button"
-              className="chat-link-btn"
-              onClick={handleUnblock}
-              disabled={unblocking || statusLoading}
-            >
-              {unblocking ? "Unblocking..." : "Unblock"}
-            </button>
-          )}
-        </span>
-      </header>
+      <ChatHeader
+        onBack={onBack}
+        selectedContact={selectedContact}
+        selectedContactId={selectedContactId}
+        typingUsers={typingUsers}
+        selectedContactIsOnline={selectedContactIsOnline}
+        isBlockedByMe={isBlockedByMe}
+        handleUnblock={handleUnblock}
+        unblocking={unblocking}
+        statusLoading={statusLoading}
+      />
 
       {!canMessage && (
         <div className="chat-alert inline">
@@ -785,161 +716,41 @@ const ChatPanel = ({
         </div>
       )}
 
-      <article
-        className="chat-stream"
-        ref={chatStreamRef}
-        onScroll={handleScroll}
-      >
-        {loadingOlder && (
-          <p className="chat-meta chat-loading-older">
-            Loading older messages...
-          </p>
-        )}
+      <ChatStream
+        chatStreamRef={chatStreamRef}
+        handleScroll={handleScroll}
+        loadingOlder={loadingOlder}
+        messagesError={messagesError}
+        reloadMessages={reloadMessages}
+        loadingMessages={loadingMessages}
+        messages={messages}
+        lastOutgoingIndex={lastOutgoingIndex}
+        getSenderId={getSenderId}
+        selectedContact={selectedContact}
+        currentMessageId={currentMessageId}
+        setCurrentMessageId={setCurrentMessageId}
+        pickerMode={pickerMode}
+        setPickerMode={setPickerMode}
+        PickerMode={PickerMode}
+        showMessageStatus={showMessageStatus}
+        lastOutgoingTimeAgo={lastOutgoingTimeAgo}
+      />
 
-        {messagesError && (
-          <div className="chat-alert">
-            <p>{messagesError}</p>
-            <button
-              type="button"
-              onClick={reloadMessages}
-              disabled={loadingMessages}
-              className="chat-link-btn"
-            >
-              {loadingMessages ? "Retrying..." : "Retry"}
-            </button>
-          </div>
-        )}
-
-        {loadingMessages && messages.length === 0 && (
-          <p className="chat-meta">Loading messages...</p>
-        )}
-
-        {messages.map((m, idx) => {
-          const isLastOutgoing = idx === lastOutgoingIndex;
-          return (
-            <div
-              key={m._id}
-              className={`chat-message-row ${
-                getSenderId(m) === selectedContact._id ? "incoming" : "outgoing"
-              }`}
-            >
-              <div className="chat-message-content">
-                <div className="chat-message-bubble">
-                  {m.type === "image" ? (
-                    <>
-                      <img
-                        src={m.image?.url}
-                        alt="sent attachment"
-                        className="chat-image-message"
-                      />
-                      {m.content && <p>{m.content}</p>}
-                    </>
-                  ) : (
-                    m.content
-                  )}{" "}
-                </div>
-
-                {/* I have to fix this to let the user select the emoji but will leave this here for now   */}
-
-                <button>Emoji</button>
-
-                {/*  */}
-
-                <div className="message-status-time-info">
-                  {isLastOutgoing && showMessageStatus && (
-                    <span className="latest-status">{m.status}</span>
-                  )}
-                  {isLastOutgoing && (
-                    <span className="latest-sent">{lastOutgoingTimeAgo}</span>
-                  )}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-
-        {!loadingMessages && messages.length === 0 && (
-          <p className="chat-meta">No messages yet.</p>
-        )}
-      </article>
-
-      <form className="chat-composer" onSubmit={handleSendMessage}>
-        <input
-          type="text"
-          value={newMessage}
-          onChange={(e) => {
-            setNewMessage(e.target.value);
-            handleTyping(e.target.value);
-          }}
-          onBlur={() => stopTyping()}
-          className="chat-input"
-          disabled={!canMessage || sending}
-          placeholder={`Message ${selectedContact.name}`}
-        />
-        {/* /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// */}
-
-        <div className="chat-attachment-outer">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            disabled={!canMessage || sending}
-            className="chat-input-file"
-            onChange={(e) => {
-              const file = e.target.files?.[0] || null;
-              if (!file) return;
-              const err = validateImageFile(file);
-              if (err) {
-                toast.error(err);
-                e.target.value = "";
-                return;
-              }
-              setSelectedImage(file);
-            }}
-          />
-
-          {selectedImage ? (
-            <div className="chat-attachment-preview">
-              {imagePreviewUrl && (
-                <img src={imagePreviewUrl} alt="Selected attachment Preview " />
-              )}
-
-              <button
-                type="button"
-                className="chat-attachment-remove"
-                onClick={clearSelectedImage}
-                disabled={sending}
-                aria-label="Remove selected image"
-              >
-                X
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              className="chat-attachment-picker"
-              disabled={!canMessage || sending}
-              onClick={() => {
-                fileInputRef.current?.click();
-              }}
-            >
-              <img src="/upload_image.png" alt="plus" />
-            </button>
-          )}
-        </div>
-
-        {/* /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////// */}
-
-        <button
-          type="submit"
-          disabled={
-            sending || (!newMessage.trim() && !selectedImage) || !canMessage
-          }
-          className="ui-btn ui-btn-primary chat-send-btn"
-        >
-          {sending ? "Sending..." : "Send"}
-        </button>
-      </form>
+      <ChatComposer
+        handleSendMessage={handleSendMessage}
+        newMessage={newMessage}
+        setNewMessage={setNewMessage}
+        handleTyping={handleTyping}
+        stopTyping={stopTyping}
+        canMessage={canMessage}
+        sending={sending}
+        selectedContact={selectedContact}
+        fileInputRef={fileInputRef}
+        handleImageChange={handleImageChange}
+        selectedImage={selectedImage}
+        imagePreviewUrl={imagePreviewUrl}
+        clearSelectedImage={clearSelectedImage}
+      />
 
       {sendError && hasFailedMessage && (
         <div className="chat-alert inline">

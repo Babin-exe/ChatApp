@@ -403,5 +403,19 @@ export const messageReactionService = async ({ userId, messageId, emoji }) => {
   }
 
   const result = await message.save();
+
+  //Web socket emition must be done now
+
+  const payload = {
+    type: "message:reaction_updated",
+    data: {
+      messageId: result._id,
+      reactions: result.reactions,
+    },
+  };
+
+  sendToUser(result.senderId.toString(), payload);
+  sendToUser(result.receiverId.toString(), payload);
+
   return result;
 };
