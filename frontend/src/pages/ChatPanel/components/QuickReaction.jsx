@@ -8,7 +8,7 @@ const PickerMode = {
   FULL: "full",
 };
 
-const QuickReaction = ({ messageId }) => {
+const QuickReaction = ({ messageId, onClose }) => {
   const [pickerMode, setPickerMode] = useState(PickerMode.QUICK);
 
   return (
@@ -27,8 +27,8 @@ const QuickReaction = ({ messageId }) => {
                     emoji: emoji,
                   }
                 );
-
                 console.log(`Result of the function call : ${data}`);
+                onClose();
               }}
             >
               {emoji}
@@ -43,6 +43,7 @@ const QuickReaction = ({ messageId }) => {
             await api.post(`/api/messages/${messageId}/reactions`, {
               emoji: obj.emoji,
             });
+            onClose();
           }}
         />
       )}

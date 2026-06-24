@@ -79,6 +79,7 @@ const ChatPanel = ({
     typingUsers,
     lastMessageStatus,
     openConversation,
+    lastReactionUpdate,
   } = UseSocketContext();
 
   const normalizeId = (value) => {
@@ -281,7 +282,7 @@ const ChatPanel = ({
   }, []);
 
   const showMessageStatus = useMemo(() => {
-    if (!messages.length) return false;
+    if (!messages?.length) return false;
 
     const last = messages[messages.length - 1];
     const lastId = normalizeId(last.senderId);
@@ -515,6 +516,18 @@ const ChatPanel = ({
     const id = setInterval(() => setNowTick((e) => e + 1), 30000);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    if (!lastReactionUpdate) return;
+
+    setMessages((prev) => {
+      return prev.map((message) => {
+        return message._id === lastReactionUpdate.messageId
+          ? { ...message, reactions: lastReactionUpdate.reactions }
+          : message;
+      });
+    });
+  }, [lastReactionUpdate]);
 
   const lastOutgoingIndex = useMemo(() => {
     for (let i = messages.length - 1; i >= 0; i--) {

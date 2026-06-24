@@ -25,6 +25,8 @@ export const SocketContextProvider = ({ children }) => {
 
   const [lastMessageStatus, setLastMessageStatus] = useState(null);
 
+  const [lastReactionUpdate, setLastReactionUpdate] = useState(null);
+
   const openConversation = useCallback((selectedContactId) => {
     const normalizeId = selectedContactId ? String(selectedContactId) : null;
     const ws = socketRef.current;
@@ -289,6 +291,24 @@ export const SocketContextProvider = ({ children }) => {
             });
             break;
 
+          // const payload = {
+          //   type: "message:reaction_updated",
+          //   data: {
+          //     messageId: result._id,
+          //     reactions: result.reactions,
+          //   },
+
+          case "message:reaction_updated": {
+            console.log("Something to do with this payload");
+            console.log(payload.data);
+
+            setLastReactionUpdate(payload.data);
+
+            console.log("I guess stuffs are changed");
+
+            break;
+          }
+
           default:
             break;
         }
@@ -394,6 +414,7 @@ export const SocketContextProvider = ({ children }) => {
       lastMessageStatus,
       openConversation,
       setSelectedContactInContext,
+      lastReactionUpdate,
     }),
     [
       socket,
@@ -406,6 +427,7 @@ export const SocketContextProvider = ({ children }) => {
       lastMessageStatus,
       setSelectedContactInContext,
       openConversation,
+      lastReactionUpdate,
     ]
   );
   return (
