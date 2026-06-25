@@ -271,7 +271,6 @@ export const getChatAccessStatus = asyncHandler(async (req, res) => {
 });
 
 export const messageReactionController = asyncHandler(async (req, res) => {
-  console.log("Lets do the emoji stuff");
   const { messageId } = req.params;
   const userId = req.user._id;
   const { emoji } = req.body;
@@ -281,7 +280,7 @@ export const messageReactionController = asyncHandler(async (req, res) => {
   if (!message) {
     return res.status(404).json({
       success: false,
-      message: "Message doesn't exists",
+      message: "Message doesn't exist",
     });
   }
 

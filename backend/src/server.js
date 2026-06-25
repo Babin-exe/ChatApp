@@ -11,9 +11,15 @@ import chatRoutes from "./routes/chat.route.js";
 import errorHandler from "./middleware/errorHandler.js";
 import cleanExpiredSessions from "./cron/cleanExpiredSessions.cron.js";
 import blockRoutes from "./routes/block.route.js";
+import {
+  csrfOriginGuard,
+  securityHeaders,
+} from "./middleware/security.middleware.js";
 
 dotenv.config();
 const __dirname = path.resolve();
+
+app.use(securityHeaders);
 
 app.use(
   cors({
@@ -23,6 +29,7 @@ app.use(
 );
 
 app.use(cookieParser());
+app.use(csrfOriginGuard);
 app.use(express.json({ limit: "10mb" }));
 
 app.use("/api/auth", authRoutes);

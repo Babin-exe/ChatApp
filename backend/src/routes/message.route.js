@@ -6,6 +6,10 @@ import {
 import { protectRoute } from "../middleware/auth.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
 import { receiverParamsSchema } from "../validation/chat.validation.js";
+import {
+  messageParamsSchema,
+  reactionBodySchema,
+} from "../validation/message.validation.js";
 import { uploadImage } from "../middleware/upload.middleware.js";
 import { validateSendMessageBody } from "../middleware/validateSendMessageBody.middleware.js";
 import { validateUploadedImageFile } from "../middleware/ValidateImage.middleware.js";
@@ -21,6 +25,12 @@ router.post(
   sendMessageController
 );
 
-router.post("/:messageId/reactions", protectRoute, messageReactionController);
+router.post(
+  "/:messageId/reactions",
+  protectRoute,
+  validate(messageParamsSchema, "params"),
+  validate(reactionBodySchema),
+  messageReactionController
+);
 
 export default router;

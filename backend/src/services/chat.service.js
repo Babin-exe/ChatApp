@@ -404,6 +404,7 @@ export const messageReactionService = async ({ userId, messageId, emoji }) => {
   }
 
   const result = await message.save();
+  await result.populate("reactions.user", "name profilePic");
 
   //Web socket emition must be done now
 

@@ -17,7 +17,7 @@ const ChatMessageItem = ({
 }) => {
   const isReactionOpen = m._id === currentMessageId;
 
-  console.log(m);
+
 
   const reactionGroups = Object.values(
     (m.reactions ?? []).reduce((groups, reaction) => {
