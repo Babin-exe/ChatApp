@@ -31,16 +31,8 @@ const ContactsPanel = ({
   const blockingTarget = actionLoadingId === blockTargetKey;
 
   const selectContact = (contact) => {
-    console.log("This is what we are putting");
-
-    console.log(contact);
-
     setOpenMenuContactId(null);
-
     onSelectContact(contact);
-
-
-    
   };
 
   const toggleContactMenu = (contactId) => {

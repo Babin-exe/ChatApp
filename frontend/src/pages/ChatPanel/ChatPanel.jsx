@@ -746,6 +746,7 @@ const ChatPanel = ({
         PickerMode={PickerMode}
         showMessageStatus={showMessageStatus}
         lastOutgoingTimeAgo={lastOutgoingTimeAgo}
+        myUserId={myUserId}
       />
 
       <ChatComposer

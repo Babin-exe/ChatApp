@@ -19,15 +19,13 @@ const QuickReaction = ({ messageId, onClose }) => {
             <button
               key={emoji}
               onClick={async () => {
-                console.log(`clicked : ${emoji}`);
-
                 const data = await api.post(
                   `/api/messages/${messageId}/reactions`,
                   {
                     emoji: emoji,
                   }
                 );
-                console.log(`Result of the function call : ${data}`);
+
                 onClose();
               }}
             >

@@ -102,12 +102,7 @@ const Messages = () => {
   ]);
 
   useEffect(() => {
-    console.log("I have to put somethign in the ref variable ");
-
     setSelectedContactInContext(selectedContact?._id);
-
-    console.log("Selected Contact is chaned in the messages");
-    
   }, [selectedContact]);
 
   const handleSendRequest = async (receiverId) => {

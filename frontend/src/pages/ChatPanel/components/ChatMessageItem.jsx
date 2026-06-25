@@ -13,8 +13,33 @@ const ChatMessageItem = ({
   PickerMode,
   showMessageStatus,
   lastOutgoingTimeAgo,
+  myUserId,
 }) => {
   const isReactionOpen = m._id === currentMessageId;
+
+  console.log(m);
+
+  const reactionGroups = Object.values(
+    (m.reactions ?? []).reduce((groups, reaction) => {
+      const user = reaction.user;
+      const userId = typeof user === "string" ? user : user?._id;
+      const isMine = userId === myUserId;
+
+      groups[reaction.emoji] ??= {
+        emoji: reaction.emoji,
+        users: [],
+      };
+
+      groups[reaction.emoji].users.push({
+        id: userId,
+        name: isMine ? "You" : user?.name ?? "Someone",
+        profilePic: user?.profilePic,
+        isMine,
+      });
+
+      return groups;
+    }, {})
+  );
 
   return (
     <div className={`chat-message-row ${isIncoming ? "incoming" : "outgoing"}`}>
@@ -45,7 +70,6 @@ const ChatMessageItem = ({
               aria-label="Add reaction"
               onClick={() => {
                 setCurrentMessageId((prev) => (m._id === prev ? null : m._id));
-                console.log(m._id);
                 setPickerMode(PickerMode.QUICK);
               }}
             >
@@ -79,10 +103,23 @@ const ChatMessageItem = ({
         </div>
 
         <div className="message-reactions">
-          {m?.reactions?.map((m) => {
-            //I dont know man
-            return <span key={m.emoji}>{m.emoji}</span>;
-          })}
+          <div className="message-reactions">
+            {reactionGroups.map((group) => (
+              <button
+                type="button"
+                className={`reaction-pill ${
+                  group.users.some((user) => user.isMine) ? "mine" : ""
+                }`}
+                key={group.emoji}
+                title={group.users
+                  .map((user) => `${user.name} reacted ${group.emoji}`)
+                  .join("\n")}
+              >
+                <span>{group.emoji}</span>
+                {group.users.length > 1 && <span>{group.users.length}</span>}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="message-status-time-info">

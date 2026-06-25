@@ -18,6 +18,7 @@ const ChatStream = ({
   PickerMode,
   showMessageStatus,
   lastOutgoingTimeAgo,
+  myUserId,
 }) => {
   return (
     <article
@@ -26,7 +27,9 @@ const ChatStream = ({
       onScroll={handleScroll}
     >
       {loadingOlder && (
-        <p className="chat-meta chat-loading-older">Loading older messages...</p>
+        <p className="chat-meta chat-loading-older">
+          Loading older messages...
+        </p>
       )}
 
       {messagesError && (

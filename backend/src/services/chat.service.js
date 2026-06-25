@@ -190,6 +190,7 @@ export const getMessagesByChatParticipants = async ({
     .sort({ createdAt: -1 })
     .limit(parsedLimit)
     .populate("senderId", "name profilePic")
+    .populate("reactions.user", "name profilePic")
     .populate({
       path: "replyToMessageId",
       select: "senderId content type",

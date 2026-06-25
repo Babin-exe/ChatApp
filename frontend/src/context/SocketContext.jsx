@@ -42,16 +42,10 @@ export const SocketContextProvider = ({ children }) => {
   const selectedContactRef = useRef(null);
 
   const setSelectedContactInContext = useCallback((selectedContact) => {
-    console.log(
-      "setSelectedContactInContext is running to put : ",
-      selectedContact
-    );
-
     if (selectedContact) {
       selectedContactRef.current = selectedContact
         ? String(selectedContact || "")
         : null;
-      console.log("We have just put selected contact in ref ");
     }
   }, []);
 
@@ -126,7 +120,6 @@ export const SocketContextProvider = ({ children }) => {
     socketRef.current = ws;
 
     ws.onopen = () => {
-      console.log(`Socket connected for user: ${authUser.id}`);
       setSocket(ws);
       setRetryCount(0);
       lastSocketEventRef.current = Date.now();
@@ -291,21 +284,8 @@ export const SocketContextProvider = ({ children }) => {
             });
             break;
 
-          // const payload = {
-          //   type: "message:reaction_updated",
-          //   data: {
-          //     messageId: result._id,
-          //     reactions: result.reactions,
-          //   },
-
           case "message:reaction_updated": {
-            console.log("Something to do with this payload");
-            console.log(payload.data);
-
             setLastReactionUpdate(payload.data);
-
-            console.log("I guess stuffs are changed");
-
             break;
           }
 
