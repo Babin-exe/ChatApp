@@ -37,7 +37,7 @@ const ContactsPanel = ({
 
   const toggleContactMenu = (contactId) => {
     setOpenMenuContactId((current) =>
-      current === contactId ? null : contactId
+      current === contactId ? null : contactId,
     );
   };
 

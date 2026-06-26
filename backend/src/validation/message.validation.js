@@ -14,3 +14,4 @@ export const messageParamsSchema = z.object({
 export const reactionBodySchema = z.object({
   emoji: z.string().trim().min(1, "Reaction is required").max(16, "Reaction is too long"),
 });
+

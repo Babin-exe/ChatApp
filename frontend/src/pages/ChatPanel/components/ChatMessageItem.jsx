@@ -1,7 +1,7 @@
 import EmojiPicker from "emoji-picker-react";
 import QuickReaction from "./QuickReaction.jsx";
 import api from "../../../lib/api.js";
-import { useState } from "react";
+import toast from "react-hot-toast";
 
 const ChatMessageItem = ({
   m,
@@ -35,14 +35,27 @@ const ChatMessageItem = ({
 
       groups[reaction.emoji].users.push({
         id: userId,
-        name: isMine ? "You" : user?.name ?? "Someone",
+        name: isMine ? "You" : (user?.name ?? "Someone"),
         profilePic: user?.profilePic,
         isMine,
       });
 
       return groups;
-    }, {})
+    }, {}),
   );
+
+  const handleSendEditedMessage = async () => {
+    try {
+      await api.patch(`/api/messages/edit/${m._id}`, {
+        content: editedText,
+      });
+      setEditedText("");
+      setEditingMessageId(null);
+      toast.success("Message edited successfully");
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to edit message");
+    }
+  };
 
   const isEditing = editingMessageId === m._id;
 
@@ -73,9 +86,7 @@ const ChatMessageItem = ({
                       editedText.trim() === m.content
                     }
                     className="send_edited"
-                    onClick={() => {
-                      //I will do something here
-                    }}
+                    onClick={handleSendEditedMessage}
                   >
                     Send
                   </button>
@@ -117,16 +128,18 @@ const ChatMessageItem = ({
               <img src="/emoji_icon.png" height={20} width={20} alt="" />
             </button>
 
-            <div className="edit-button">
-              <button
-                onClick={() => {
-                  setEditingMessageId(m._id);
-                  setEditedText(m.content);
-                }}
-              >
-                hehe
-              </button>
-            </div>
+            {myUserId === m.senderId._id.toString() && (
+              <div className="edit-button">
+                <button
+                  onClick={() => {
+                    setEditingMessageId(m._id);
+                    setEditedText(m.content);
+                  }}
+                >
+                  Edit
+                </button>
+              </div>
+            )}
 
             {isReactionOpen &&
               (pickerMode === PickerMode.QUICK ? (
@@ -145,7 +158,7 @@ const ChatMessageItem = ({
                         `/api/messages/${currentMessageId}/reactions`,
                         {
                           emoji: obj.emoji,
-                        }
+                        },
                       );
                     }}
                   />

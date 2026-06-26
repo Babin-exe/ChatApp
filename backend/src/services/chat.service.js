@@ -421,3 +421,63 @@ export const messageReactionService = async ({ userId, messageId, emoji }) => {
 
   return result;
 };
+
+
+export const sendEditedMessageService = async ({ messageId, userId, content }) => {
+
+  const message = await Message.findById(messageId);
+
+  if (!message) {
+    throw new HttpError("Message not found", 403);
+  }
+
+  if (message.senderId.toString() !== userId) {
+    throw new HttpError("You can only edit your own message", 403);
+  }
+
+
+  if (message.type === "system") {
+    throw new HttpError("Cannot edit system message", 403);
+  }
+
+
+  const cannotMessage = await Blocked.findOne({ $or: [{ blocker: userId, blocked: message.receiverId }, { blocker: message.receiverId, blocked: userId }] });
+
+  if (cannotMessage) {
+    throw new HttpError("Cannot edit message in blocked chat", 403);
+  }
+
+
+  const trimmedContent = String(content || "").trim();
+
+  if (trimmedContent === message.content) {
+    return message;
+  }
+
+  if (message.type === "text" && !trimmedContent) {
+    throw new HttpError("Message content is required", 400);
+  }
+
+  message.content = trimmedContent;
+  message.edited = true;
+  await message.save();
+
+  const payload = {
+    type: "message:updated",
+    data: {
+      messageId: message._id.toString(),
+      content: message.content,
+      edited: message.edited,
+      updatedAt: message.updatedAt,
+      type: message.type,
+      image: message.image,
+    }
+  };
+
+  sendToUser(message.senderId.toString(), payload);
+  sendToUser(message.receiverId.toString(), payload);
+
+
+
+  return message;
+};

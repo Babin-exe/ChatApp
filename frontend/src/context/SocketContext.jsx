@@ -27,6 +27,8 @@ export const SocketContextProvider = ({ children }) => {
 
   const [lastReactionUpdate, setLastReactionUpdate] = useState(null);
 
+  const [editedMessage, setEditedMessage] = useState(null);
+
   const openConversation = useCallback((selectedContactId) => {
     const normalizeId = selectedContactId ? String(selectedContactId) : null;
     const ws = socketRef.current;
@@ -35,7 +37,7 @@ export const SocketContextProvider = ({ children }) => {
       JSON.stringify({
         type: "message:seen-late",
         data: { contactId: normalizeId },
-      })
+      }),
     );
   }, []);
 
@@ -186,7 +188,7 @@ export const SocketContextProvider = ({ children }) => {
                     to: senderId,
                     _id: payload?.data._id,
                   },
-                })
+                }),
               );
 
               if (senderId === String(selectedContactRef.current || "")) {
@@ -200,7 +202,7 @@ export const SocketContextProvider = ({ children }) => {
                       to: senderId,
                       _id: payload?.data?._id,
                     },
-                  })
+                  }),
                 );
               }
             }
@@ -286,6 +288,11 @@ export const SocketContextProvider = ({ children }) => {
 
           case "message:reaction_updated": {
             setLastReactionUpdate(payload.data);
+            break;
+          }
+
+          case "message:updated": {
+            setEditedMessage(payload.data);
             break;
           }
 
@@ -395,6 +402,7 @@ export const SocketContextProvider = ({ children }) => {
       openConversation,
       setSelectedContactInContext,
       lastReactionUpdate,
+      editedMessage,
     }),
     [
       socket,
@@ -408,7 +416,8 @@ export const SocketContextProvider = ({ children }) => {
       setSelectedContactInContext,
       openConversation,
       lastReactionUpdate,
-    ]
+      editedMessage,
+    ],
   );
   return (
     <SocketContext.Provider value={value}>{children}</SocketContext.Provider>

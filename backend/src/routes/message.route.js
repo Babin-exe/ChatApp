@@ -1,6 +1,7 @@
 import express from "express";
 import {
   messageReactionController,
+  sendEditedMessageController,
   sendMessageController,
 } from "../controllers/chat.controller.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
@@ -9,6 +10,7 @@ import { receiverParamsSchema } from "../validation/chat.validation.js";
 import {
   messageParamsSchema,
   reactionBodySchema,
+  sendMessageBodySchema
 } from "../validation/message.validation.js";
 import { uploadImage } from "../middleware/upload.middleware.js";
 import { validateSendMessageBody } from "../middleware/validateSendMessageBody.middleware.js";
@@ -32,5 +34,27 @@ router.post(
   validate(reactionBodySchema),
   messageReactionController
 );
+
+
+
+/*
+Notee : 
+
+Right now i am not writing the image editing so no uploading 
+ validation for image 
+
+ but later something i must like this: 
+   uploadImage , 
+ validateUploadedImage,
+
+ etc etc will be written
+ 
+ */
+router.patch("/edit/:messageId", protectRoute,
+  validate(messageParamsSchema, "params"),
+  validate(sendMessageBodySchema, "body"),
+  sendEditedMessageController,
+);
+
 
 export default router;

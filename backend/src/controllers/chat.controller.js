@@ -9,6 +9,7 @@ import {
   validateSendMessage,
   createMessage,
   messageReactionService,
+  sendEditedMessageService,
 } from "../services/chat.service.js";
 import Blocked from "../models/Block.js";
 import { Types } from "mongoose";
@@ -305,4 +306,14 @@ export const messageReactionController = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json({ success: true, message: "Reaction updated ", data: result });
+});
+
+export const sendEditedMessageController = asyncHandler(async (req, res) => {
+
+  const { messageId } = req.params;
+  const userId = req.user._id.toString();
+  const { content } = req.body;
+
+  const data = await sendEditedMessageService({ messageId, userId, content });
+  return res.status(200).json({ sucess: true, message: "Message updated", data: data });
 });

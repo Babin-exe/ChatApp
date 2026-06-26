@@ -22,6 +22,7 @@ const ChatStream = ({
   setEditingMessageId,
   setEditedText,
   editedText,
+  myUserId,
 }) => {
   return (
     <article
@@ -57,6 +58,7 @@ const ChatStream = ({
         const isLastOutgoing = idx === lastOutgoingIndex;
         return (
           <ChatMessageItem
+            myUserId={myUserId}
             key={m._id}
             m={m}
             isIncoming={getSenderId(m) === selectedContact._id}
