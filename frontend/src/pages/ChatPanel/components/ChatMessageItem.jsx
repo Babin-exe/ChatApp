@@ -1,6 +1,7 @@
 import EmojiPicker from "emoji-picker-react";
 import QuickReaction from "./QuickReaction.jsx";
 import api from "../../../lib/api.js";
+import { useState } from "react";
 
 const ChatMessageItem = ({
   m,
@@ -14,10 +15,12 @@ const ChatMessageItem = ({
   showMessageStatus,
   lastOutgoingTimeAgo,
   myUserId,
+  editingMessageId,
+  setEditingMessageId,
+  setEditedText,
+  editedText,
 }) => {
   const isReactionOpen = m._id === currentMessageId;
-
-
 
   const reactionGroups = Object.values(
     (m.reactions ?? []).reduce((groups, reaction) => {
@@ -41,6 +44,8 @@ const ChatMessageItem = ({
     }, {})
   );
 
+  const isEditing = editingMessageId === m._id;
+
   return (
     <div className={`chat-message-row ${isIncoming ? "incoming" : "outgoing"}`}>
       <div className="chat-message-content">
@@ -50,13 +55,49 @@ const ChatMessageItem = ({
           }`}
         >
           <div className="chat-message-bubble">
-            {m.type === "image" ? (
+            {isEditing ? (
+              <>
+                <div>
+                  <input
+                    type="text"
+                    value={editedText}
+                    onChange={(e) => {
+                      setEditedText(e.target.value);
+                    }}
+                  />
+                </div>
+                <div>
+                  <button
+                    disabled={
+                      editedText.trim() === "" ||
+                      editedText.trim() === m.content
+                    }
+                    className="send_edited"
+                    onClick={() => {
+                      //I will do something here
+                    }}
+                  >
+                    Send
+                  </button>
+                  <button
+                    className="cancle_edited"
+                    onClick={() => {
+                      setEditedText("");
+                      setEditingMessageId(null);
+                    }}
+                  >
+                    Cancle
+                  </button>
+                </div>
+              </>
+            ) : m.type === "image" ? (
               <>
                 <img
                   src={m.image?.url}
                   alt="sent attachment"
                   className="chat-image-message"
                 />
+
                 {m.content && <p>{m.content}</p>}
               </>
             ) : (
@@ -75,6 +116,17 @@ const ChatMessageItem = ({
             >
               <img src="/emoji_icon.png" height={20} width={20} alt="" />
             </button>
+
+            <div className="edit-button">
+              <button
+                onClick={() => {
+                  setEditingMessageId(m._id);
+                  setEditedText(m.content);
+                }}
+              >
+                hehe
+              </button>
+            </div>
 
             {isReactionOpen &&
               (pickerMode === PickerMode.QUICK ? (

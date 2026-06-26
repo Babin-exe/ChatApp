@@ -131,6 +131,10 @@ const ChatPanel = ({
 
   const [pickerMode, setPickerMode] = useState(PickerMode.QUICK);
 
+  const [editingMessageId, setEditingMessageId] = useState(null);
+
+  const [editedText, setEditedText] = useState("");
+
   useEffect(() => {
     if (!typingAudioRef.current) {
       const audio = new Audio("/typing.wav");
@@ -747,6 +751,10 @@ const ChatPanel = ({
         showMessageStatus={showMessageStatus}
         lastOutgoingTimeAgo={lastOutgoingTimeAgo}
         myUserId={myUserId}
+        editingMessageId={editingMessageId}
+        setEditingMessageId={setEditingMessageId}
+        editedText={editedText}
+        setEditedText={setEditedText}
       />
 
       <ChatComposer

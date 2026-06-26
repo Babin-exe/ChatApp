@@ -18,7 +18,10 @@ const ChatStream = ({
   PickerMode,
   showMessageStatus,
   lastOutgoingTimeAgo,
-  myUserId,
+  editingMessageId,
+  setEditingMessageId,
+  setEditedText,
+  editedText,
 }) => {
   return (
     <article
@@ -65,6 +68,10 @@ const ChatStream = ({
             PickerMode={PickerMode}
             showMessageStatus={showMessageStatus}
             lastOutgoingTimeAgo={lastOutgoingTimeAgo}
+            editingMessageId={editingMessageId}
+            setEditingMessageId={setEditingMessageId}
+            editedText={editedText}
+            setEditedText={setEditedText}
           />
         );
       })}
