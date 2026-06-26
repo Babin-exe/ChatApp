@@ -3,10 +3,12 @@
   min-height: 100dvh;
   padding: clamp(14px, 2vw, 24px);
   box-sizing: border-box;
+  overflow-x: auto;
 }
 
 .messages-shell {
   width: min(1160px, 100%);
+  min-width: 680px;
   margin: 0 auto;
   height: calc(100vh - clamp(28px, 4vw, 48px));
   height: calc(100dvh - clamp(28px, 4vw, 48px));
@@ -50,12 +52,13 @@
 }
 
 .messages-error-card {
-  max-width: 340px;
+  width: min(340px, 100%);
   padding: 16px;
   border: 1px solid #efc2c3;
   border-radius: 16px;
   background: #fff4f4;
   color: var(--danger);
+  box-sizing: border-box;
 }
 
 @media (max-width: 768px) {
@@ -71,13 +74,15 @@
     height: 100dvh;
     max-height: 100vh;
     max-height: 100dvh;
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: hidden;
     min-height: 0;
     box-sizing: border-box;
   }
 
   .messages-shell.messages-shell--mobile {
     width: 100%;
+    min-width: 350px;
     flex: 1 1 0;
     min-height: 0;
     margin: 0;

@@ -1,4 +1,3 @@
-import EmojiPicker from "emoji-picker-react";
 import QuickReaction from "./QuickReaction.jsx";
 import api from "../../../lib/api.js";
 import toast from "react-hot-toast";
@@ -62,7 +61,7 @@ const ChatMessageItem = ({
   return (
     <div className={`chat-message-row ${isIncoming ? "incoming" : "outgoing"}`}>
       <div className="chat-message-content">
-        <div
+        {/* <div
           className={`chat-message-main ${
             isReactionOpen ? "is-reaction-open" : ""
           }`}
@@ -128,7 +127,7 @@ const ChatMessageItem = ({
               <img src="/emoji_icon.png" height={20} width={20} alt="" />
             </button>
 
-            {myUserId === m.senderId._id.toString() && (
+            {myUserId === m.senderId?._id?.toString() && (
               <div className="edit-button">
                 <button
                   onClick={() => {
@@ -164,6 +163,97 @@ const ChatMessageItem = ({
                   />
                 </div>
               ))}
+          </div>
+        </div> */}
+
+        <div
+          className={`chat-message-main ${
+            isReactionOpen ? "is-reaction-open" : ""
+          }`}
+        >
+          {isReactionOpen && (
+            <QuickReaction
+              messageId={currentMessageId}
+              isIncoming={isIncoming}
+              onClose={() => setCurrentMessageId(null)}
+            />
+          )}
+
+          <div className="chat-message-bubble">
+            {isEditing ? (
+              <>
+                <div>
+                  <input
+                    type="text"
+                    value={editedText}
+                    onChange={(e) => {
+                      setEditedText(e.target.value);
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <button
+                    disabled={
+                      editedText.trim() === "" ||
+                      editedText.trim() === m.content
+                    }
+                    className="send_edited"
+                    onClick={handleSendEditedMessage}
+                  >
+                    Send
+                  </button>
+
+                  <button
+                    className="cancle_edited"
+                    onClick={() => {
+                      setEditedText("");
+                      setEditingMessageId(null);
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </>
+            ) : m.type === "image" ? (
+              <>
+                <img
+                  src={m.image?.url}
+                  alt="sent attachment"
+                  className="chat-image-message"
+                />
+
+                {m.content && <p>{m.content}</p>}
+              </>
+            ) : (
+              m.content
+            )}
+          </div>
+
+          <div className="chat-message-reaction">
+            <button
+              type="button"
+              aria-label="Add reaction"
+              onClick={() => {
+                setCurrentMessageId((prev) => (m._id === prev ? null : m._id));
+                setPickerMode(PickerMode.QUICK);
+              }}
+            >
+              <img src="/emoji_icon.png" height={20} width={20} alt="" />
+            </button>
+
+            {myUserId === m.senderId?._id?.toString() && (
+              <div className="edit-button">
+                <button
+                  onClick={() => {
+                    setEditingMessageId(m._id);
+                    setEditedText(m.content);
+                  }}
+                >
+                  Edit
+                </button>
+              </div>
+            )}
           </div>
         </div>
 

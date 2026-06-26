@@ -70,7 +70,9 @@ const ChatComposer = ({
 
       <button
         type="submit"
-        disabled={sending || (!newMessage.trim() && !selectedImage) || !canMessage}
+        disabled={
+          sending || (!newMessage.trim() && !selectedImage) || !canMessage
+        }
         className="ui-btn ui-btn-primary chat-send-btn"
       >
         {sending ? "Sending..." : "Send"}

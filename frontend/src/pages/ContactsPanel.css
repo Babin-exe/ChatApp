@@ -164,7 +164,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   width: 100%;
   text-align: left;
   border: 1px solid rgba(240, 212, 184, 0);
@@ -289,6 +289,9 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .contact-badge {
@@ -358,6 +361,10 @@
   font-weight: 800;
   color: #2a3040;
   letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
 }
 
 .discover-email,
