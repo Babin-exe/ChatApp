@@ -284,14 +284,26 @@ export const createMessage = async ({
 
   await Chat.findByIdAndUpdate(chatId, { lastMessage: message._id });
 
+  const populatedMessage = await Message.findById(message._id)
+    .populate("senderId", "name profilePic")
+    .populate("reactions.user", "name profilePic")
+    .populate({
+      path: "replyToMessageId",
+      select: "senderId content type",
+      populate: {
+        path: "senderId",
+        select: "name",
+      },
+    });
+
   const realtimePayload = {
     type: "message",
-    data: message.toObject(),
+    data: populatedMessage.toObject(),
   };
 
   sendToUser(receiverId.toString(), realtimePayload);
 
-  return message;
+  return populatedMessage;
 };
 
 export const sendMessage = async ({

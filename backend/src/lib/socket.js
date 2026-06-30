@@ -1,8 +1,3 @@
-/* Todo:
-Complete the delivered and see when user comes back after some time case 
-Scenario 2 : 
-*/
-
 import express from "express";
 import http from "http";
 import WebSocket, { WebSocketServer } from "ws";
@@ -312,6 +307,8 @@ wss.on("close", () => {
   clearInterval(interval);
 });
 
+
+
 wss.on("connection", async (ws, req) => {
   try {
     if (!isAllowedOrigin(req.headers.origin)) {
@@ -556,7 +553,7 @@ wss.on("connection", async (ws, req) => {
     ws.on("close", () => {
 
       // console.log(`User ${userId} disconnected`);
-      
+
       removeSocket(userId, ws);
 
       const socket = userSocket.get(userId);

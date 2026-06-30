@@ -138,6 +138,7 @@ const ChatMessageItem = ({
             {m.replyToMessageId?._id && (
               <div>Replied to : {m.replyToMessageId?.content}</div>
             )}
+            
           </div>
 
           <div className="chat-message-reaction">

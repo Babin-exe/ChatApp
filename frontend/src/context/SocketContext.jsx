@@ -3,6 +3,7 @@ import api from "../lib/api.js";
 import { SocketContext } from "./socketContext.js";
 
 export const SocketContextProvider = ({ children }) => {
+  
   const [socket, setSocket] = useState(null);
   const [authUser, setAuthUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);

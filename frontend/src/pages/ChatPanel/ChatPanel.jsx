@@ -654,6 +654,10 @@ const ChatPanel = ({
 
       if (activeMessagesContactIdRef.current !== contactId) return;
 
+      console.log(savedMessage);
+
+      
+
       setMessages((prev) => {
         if (prev.some((message) => message._id === savedMessage._id))
           return prev;
