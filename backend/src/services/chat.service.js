@@ -217,6 +217,7 @@ export const validateSendMessage = async ({
   image,
   type = DEFAULT_MESSAGE_TYPE,
   hasImage = false,
+  replyToMessageId,
 }) => {
   validateObjectId(senderId, "senderId");
   validateObjectId(receiverId, "receiverId");
@@ -240,6 +241,18 @@ export const validateSendMessage = async ({
     throw new HttpError("Active chat not found or request not accepted", 404);
   }
 
+  if (replyToMessageId) {
+    const repliedMessage = await Message.findById(replyToMessageId);
+
+    if (!repliedMessage) {
+      throw new HttpError("Reply Message not found", 404);
+    }
+
+    if (repliedMessage.chatId.toString() !== chat._id.toString()) {
+      throw new HttpError("Stuff dont match you stupid ", 401);
+    }
+  }
+
   const blocked = await isBlocked(senderId, receiverId);
 
   if (blocked) {
@@ -256,6 +269,7 @@ export const createMessage = async ({
   content,
   image,
   type,
+  replyToMessageId,
 }) => {
   const message = await Message.create({
     senderId,
@@ -265,6 +279,7 @@ export const createMessage = async ({
     type,
     image: type === "image" ? image : undefined,
     status: DEFAULT_MESSAGE_STATUS,
+    replyToMessageId: replyToMessageId,
   });
 
   await Chat.findByIdAndUpdate(chatId, { lastMessage: message._id });
@@ -406,8 +421,6 @@ export const messageReactionService = async ({ userId, messageId, emoji }) => {
   const result = await message.save();
   await result.populate("reactions.user", "name profilePic");
 
-  //Web socket emition must be done now
-
   const payload = {
     type: "message:reaction_updated",
     data: {
@@ -422,9 +435,11 @@ export const messageReactionService = async ({ userId, messageId, emoji }) => {
   return result;
 };
 
-
-export const sendEditedMessageService = async ({ messageId, userId, content }) => {
-
+export const sendEditedMessageService = async ({
+  messageId,
+  userId,
+  content,
+}) => {
   const message = await Message.findById(messageId);
 
   if (!message) {
@@ -435,18 +450,20 @@ export const sendEditedMessageService = async ({ messageId, userId, content }) =
     throw new HttpError("You can only edit your own message", 403);
   }
 
-
   if (message.type === "system") {
     throw new HttpError("Cannot edit system message", 403);
   }
 
-
-  const cannotMessage = await Blocked.findOne({ $or: [{ blocker: userId, blocked: message.receiverId }, { blocker: message.receiverId, blocked: userId }] });
+  const cannotMessage = await Blocked.findOne({
+    $or: [
+      { blocker: userId, blocked: message.receiverId },
+      { blocker: message.receiverId, blocked: userId },
+    ],
+  });
 
   if (cannotMessage) {
     throw new HttpError("Cannot edit message in blocked chat", 403);
   }
-
 
   const trimmedContent = String(content || "").trim();
 
@@ -471,13 +488,11 @@ export const sendEditedMessageService = async ({ messageId, userId, content }) =
       updatedAt: message.updatedAt,
       type: message.type,
       image: message.image,
-    }
+    },
   };
 
   sendToUser(message.senderId.toString(), payload);
   sendToUser(message.receiverId.toString(), payload);
-
-
 
   return message;
 };

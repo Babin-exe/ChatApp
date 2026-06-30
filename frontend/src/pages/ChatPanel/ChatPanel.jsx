@@ -116,7 +116,7 @@ const ChatPanel = ({
   const selectedContactId = selectedContact?._id;
 
   const selectedContactIsOnline = Boolean(
-    selectedContactId && onlineUsers?.has(String(selectedContactId)),
+    selectedContactId && onlineUsers?.has(String(selectedContactId))
   );
   const lastTypedUserRef = useRef(null);
 
@@ -135,6 +135,10 @@ const ChatPanel = ({
   const [editingMessageId, setEditingMessageId] = useState(null);
 
   const [editedText, setEditedText] = useState("");
+
+  const [replyToMessageId, setReplyToMessageId] = useState(null);
+
+  const [replyToMessage, setReplyToMessage] = useState(null);
 
   useEffect(() => {
     if (!typingAudioRef.current) {
@@ -228,7 +232,7 @@ const ChatPanel = ({
       const el = chatStreamRef.current;
       const prevScrollHeight = el ? el.scrollHeight : 0;
       const res = await api.get(
-        `/api/chats/messages/${contactId}?cursor=${nextCursor}`,
+        `/api/chats/messages/${contactId}?cursor=${nextCursor}`
       );
 
       if (activeMessagesContactIdRef.current !== contactId) return;
@@ -238,7 +242,7 @@ const ChatPanel = ({
       setMessages((prev) => {
         const seen = new Set(prev.map((message) => message._id));
         const uniqueOlder = olderMessages.filter(
-          (message) => !seen.has(message._id),
+          (message) => !seen.has(message._id)
         );
         return [...uniqueOlder, ...prev];
       });
@@ -276,7 +280,7 @@ const ChatPanel = ({
       if (socket.readyState !== WebSocket.OPEN) return;
       socket.send(JSON.stringify(payload));
     },
-    [socket],
+    [socket]
   );
 
   const clearTypingTimer = useCallback(() => {
@@ -342,12 +346,12 @@ const ChatPanel = ({
         stopTyping();
       }, TYPING_IDLE_MS);
     },
-    [stopTyping, selectedContactId, safeSend, clearTypingTimer],
+    [stopTyping, selectedContactId, safeSend, clearTypingTimer]
   );
 
   const defaultStatusFromBlockedList = useMemo(() => {
     const isBlockedByMe = blockedUsers.some(
-      (entry) => entry?.blocked?._id === selectedContact?._id,
+      (entry) => entry?.blocked?._id === selectedContact?._id
     );
 
     return {
@@ -513,7 +517,7 @@ const ChatPanel = ({
           deliveredAt: lastMessageStatus.deliveredAt ?? message.deliveredAt,
           seenAt: lastMessageStatus.seenAt ?? message.seenAt,
         };
-      }),
+      })
     );
   }, [lastMessageStatus]);
 
@@ -540,7 +544,7 @@ const ChatPanel = ({
       return prev.map((message) =>
         message._id === editedMessage.messageId
           ? { ...message, content: editedMessage.content }
-          : message,
+          : message
       );
     });
   }, [editedMessage]);
@@ -628,6 +632,10 @@ const ChatPanel = ({
         formData.append("image", imageToSend);
       }
 
+      if (replyToMessageId) {
+        formData.append("replyToMessageId", replyToMessageId);
+      }
+
       /*{
           url,
           data,
@@ -688,6 +696,8 @@ const ChatPanel = ({
     stopTyping();
 
     const sent = await sendCurrentMessage(content, selectedImage);
+
+    console.log(sent);
 
     if (!sent) return;
 
@@ -767,6 +777,10 @@ const ChatPanel = ({
         setEditingMessageId={setEditingMessageId}
         editedText={editedText}
         setEditedText={setEditedText}
+        replyToMessageId={replyToMessageId}
+        setReplyToMessageId={setReplyToMessageId}
+        replyToMessage={replyToMessage}
+        setReplyToMessage={setReplyToMessage}
       />
 
       <ChatComposer

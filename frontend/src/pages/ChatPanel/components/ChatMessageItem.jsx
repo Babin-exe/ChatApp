@@ -17,6 +17,10 @@ const ChatMessageItem = ({
   setEditingMessageId,
   setEditedText,
   editedText,
+  replyToMessageId,
+  setReplyToMessageId,
+  replyToMessage,
+  setReplyToMessage,
 }) => {
   const isReactionOpen = m._id === currentMessageId;
 
@@ -33,13 +37,13 @@ const ChatMessageItem = ({
 
       groups[reaction.emoji].users.push({
         id: userId,
-        name: isMine ? "You" : (user?.name ?? "Someone"),
+        name: isMine ? "You" : user?.name ?? "Someone",
         profilePic: user?.profilePic,
         isMine,
       });
 
       return groups;
-    }, {}),
+    }, {})
   );
 
   const handleSendEditedMessage = async () => {
@@ -55,7 +59,15 @@ const ChatMessageItem = ({
     }
   };
 
+  const handleReply = () => {
+    setReplyToMessageId(m._id);
+    setReplyToMessage(m.content);
+  };
+
   const isEditing = editingMessageId === m._id;
+
+  const senderId =
+    typeof m.senderId === "object" ? m.senderId?._id : m.senderId;
 
   return (
     <div className={`chat-message-row ${isIncoming ? "incoming" : "outgoing"}`}>
@@ -122,6 +134,10 @@ const ChatMessageItem = ({
             ) : (
               m.content
             )}
+
+            {m.replyToMessageId?._id && (
+              <div>Replied to : {m.replyToMessageId?.content}</div>
+            )}
           </div>
 
           <div className="chat-message-reaction">
@@ -136,7 +152,7 @@ const ChatMessageItem = ({
               <img src="/emoji_icon.png" height={20} width={20} alt="" />
             </button>
 
-            {myUserId === m.senderId?._id?.toString() && (
+            {myUserId === senderId.toString() && (
               <div className="edit-button">
                 <button
                   onClick={() => {
@@ -148,6 +164,10 @@ const ChatMessageItem = ({
                 </button>
               </div>
             )}
+
+            <div className="reply_to_message">
+              <button onClick={() => handleReply()}>Reply</button>
+            </div>
           </div>
         </div>
         <div className="message-reactions">

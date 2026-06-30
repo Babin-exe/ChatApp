@@ -190,7 +190,7 @@ export const getUserMessage = asyncHandler(async (req, res) => {
 
 export const sendMessageController = asyncHandler(async (req, res) => {
   const senderId = req.user._id;
-  const { content } = req.body;
+  const { content, replyToMessageId = null } = req.body;
   const { receiverId } = req.params;
 
   const type = req.file ? "image" : "text";
@@ -201,6 +201,7 @@ export const sendMessageController = asyncHandler(async (req, res) => {
     content,
     type,
     hasImage: Boolean(req.file),
+    replyToMessageId: replyToMessageId,
   });
 
   let image;
@@ -218,6 +219,7 @@ export const sendMessageController = asyncHandler(async (req, res) => {
       content: trimmedContent,
       image,
       type,
+      replyToMessageId: replyToMessageId,
     });
 
     return res.status(200).json({
@@ -309,11 +311,12 @@ export const messageReactionController = asyncHandler(async (req, res) => {
 });
 
 export const sendEditedMessageController = asyncHandler(async (req, res) => {
-
   const { messageId } = req.params;
   const userId = req.user._id.toString();
   const { content } = req.body;
 
   const data = await sendEditedMessageService({ messageId, userId, content });
-  return res.status(200).json({ sucess: true, message: "Message updated", data: data });
+  return res
+    .status(200)
+    .json({ sucess: true, message: "Message updated", data: data });
 });

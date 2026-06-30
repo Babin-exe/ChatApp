@@ -467,7 +467,8 @@ wss.on("connection", async (ws, req) => {
             },
             { new: true }
           );
-          console.log("Database updated i guess :", messageDoc);
+
+          // console.log("Database updated i guess :", messageDoc);
 
           if (!messageDoc) return;
 
@@ -482,7 +483,8 @@ wss.on("connection", async (ws, req) => {
         }
 
         if (type === "message:seen-late") {
-          console.log("Seen is partially working");
+
+          // console.log("Seen is partially working");
 
           const pending = await Message.find({
             senderId: data.data.contactId,
@@ -521,10 +523,10 @@ wss.on("connection", async (ws, req) => {
               },
             });
           }
-          console.log("Database updated");
+          // console.log("Database updated");
         }
 
-        //Dooooooo it make it correct or you are gone
+
 
         if (type !== "typing:start" && type !== "typing:stop") return;
 
@@ -552,7 +554,9 @@ wss.on("connection", async (ws, req) => {
     });
 
     ws.on("close", () => {
-      console.log(`User ${userId} disconnected`);
+
+      // console.log(`User ${userId} disconnected`);
+      
       removeSocket(userId, ws);
 
       const socket = userSocket.get(userId);
