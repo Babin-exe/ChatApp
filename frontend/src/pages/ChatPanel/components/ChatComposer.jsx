@@ -12,12 +12,14 @@ const ChatComposer = ({
   selectedImage,
   imagePreviewUrl,
   clearSelectedImage,
+  inputRef,
 }) => {
   return (
     <form className="chat-composer" onSubmit={handleSendMessage}>
       <input
         type="text"
         value={newMessage}
+        ref={inputRef}
         onChange={(e) => {
           setNewMessage(e.target.value);
           handleTyping(e.target.value);

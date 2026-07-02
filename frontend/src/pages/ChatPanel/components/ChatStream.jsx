@@ -27,6 +27,7 @@ const ChatStream = ({
   setReplyToMessageId,
   replyToMessage,
   setReplyToMessage,
+  inputRef,
 }) => {
   return (
     <article
@@ -82,6 +83,7 @@ const ChatStream = ({
             setReplyToMessageId={setReplyToMessageId}
             replyToMessage={replyToMessage}
             setReplyToMessage={setReplyToMessage}
+            inputRef={inputRef}
           />
         );
       })}

@@ -140,6 +140,8 @@ const ChatPanel = ({
 
   const [replyToMessage, setReplyToMessage] = useState(null);
 
+  const inputRef = useRef(null);
+
   useEffect(() => {
     if (!typingAudioRef.current) {
       const audio = new Audio("/typing.wav");
@@ -656,8 +658,6 @@ const ChatPanel = ({
 
       console.log(savedMessage);
 
-      
-
       setMessages((prev) => {
         if (prev.some((message) => message._id === savedMessage._id))
           return prev;
@@ -702,6 +702,9 @@ const ChatPanel = ({
     const sent = await sendCurrentMessage(content, selectedImage);
 
     console.log(sent);
+
+    setReplyToMessageId(null);
+    setReplyToMessage(null);
 
     if (!sent) return;
 
@@ -785,6 +788,7 @@ const ChatPanel = ({
         setReplyToMessageId={setReplyToMessageId}
         replyToMessage={replyToMessage}
         setReplyToMessage={setReplyToMessage}
+        inputRef={inputRef}
       />
 
       <ChatComposer
@@ -801,6 +805,7 @@ const ChatPanel = ({
         selectedImage={selectedImage}
         imagePreviewUrl={imagePreviewUrl}
         clearSelectedImage={clearSelectedImage}
+        inputRef={inputRef}
       />
 
       {sendError && hasFailedMessage && (

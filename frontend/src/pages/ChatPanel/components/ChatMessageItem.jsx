@@ -21,6 +21,7 @@ const ChatMessageItem = ({
   setReplyToMessageId,
   replyToMessage,
   setReplyToMessage,
+  inputRef,
 }) => {
   const isReactionOpen = m._id === currentMessageId;
 
@@ -62,6 +63,7 @@ const ChatMessageItem = ({
   const handleReply = () => {
     setReplyToMessageId(m._id);
     setReplyToMessage(m.content);
+    inputRef.current?.focus();
   };
 
   const isEditing = editingMessageId === m._id;
@@ -115,6 +117,8 @@ const ChatMessageItem = ({
                     onClick={() => {
                       setEditedText("");
                       setEditingMessageId(null);
+
+                      inputRef.current?.blur();
                     }}
                   >
                     Cancel
@@ -138,7 +142,6 @@ const ChatMessageItem = ({
             {m.replyToMessageId?._id && (
               <div>Replied to : {m.replyToMessageId?.content}</div>
             )}
-            
           </div>
 
           <div className="chat-message-reaction">
@@ -170,6 +173,7 @@ const ChatMessageItem = ({
               <button onClick={() => handleReply()}>Reply</button>
             </div>
           </div>
+
         </div>
         <div className="message-reactions">
           <div className="message-reactions">
@@ -190,6 +194,7 @@ const ChatMessageItem = ({
             ))}
           </div>
         </div>
+
         <div className="message-status-time-info">
           {isLastOutgoing && showMessageStatus && (
             <span className="latest-status">{m.status}</span>
@@ -199,6 +204,7 @@ const ChatMessageItem = ({
           )}
         </div>
       </div>
+     
     </div>
   );
 };
