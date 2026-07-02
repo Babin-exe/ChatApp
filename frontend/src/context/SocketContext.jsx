@@ -3,7 +3,6 @@ import api from "../lib/api.js";
 import { SocketContext } from "./socketContext.js";
 
 export const SocketContextProvider = ({ children }) => {
-  
   const [socket, setSocket] = useState(null);
   const [authUser, setAuthUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -38,7 +37,7 @@ export const SocketContextProvider = ({ children }) => {
       JSON.stringify({
         type: "message:seen-late",
         data: { contactId: normalizeId },
-      }),
+      })
     );
   }, []);
 
@@ -169,7 +168,7 @@ export const SocketContextProvider = ({ children }) => {
 
             setLastMessage(payload.data);
 
-            const senderId = String(payload.data.senderId || "");
+            const senderId = String(payload.data.senderId._id || "");
 
             if (senderId) {
               setOnlineUsers((prev) => {
@@ -189,7 +188,7 @@ export const SocketContextProvider = ({ children }) => {
                     to: senderId,
                     _id: payload?.data._id,
                   },
-                }),
+                })
               );
 
               if (senderId === String(selectedContactRef.current || "")) {
@@ -203,7 +202,7 @@ export const SocketContextProvider = ({ children }) => {
                       to: senderId,
                       _id: payload?.data?._id,
                     },
-                  }),
+                  })
                 );
               }
             }
@@ -418,7 +417,7 @@ export const SocketContextProvider = ({ children }) => {
       openConversation,
       lastReactionUpdate,
       editedMessage,
-    ],
+    ]
   );
   return (
     <SocketContext.Provider value={value}>{children}</SocketContext.Provider>
