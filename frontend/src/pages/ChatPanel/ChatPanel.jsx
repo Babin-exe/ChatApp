@@ -142,6 +142,8 @@ const ChatPanel = ({
 
   const inputRef = useRef(null);
 
+  const messageRefs = useRef({});
+
   useEffect(() => {
     if (!typingAudioRef.current) {
       const audio = new Audio("/typing.wav");
@@ -784,11 +786,10 @@ const ChatPanel = ({
         setEditingMessageId={setEditingMessageId}
         editedText={editedText}
         setEditedText={setEditedText}
-        replyToMessageId={replyToMessageId}
         setReplyToMessageId={setReplyToMessageId}
-        replyToMessage={replyToMessage}
         setReplyToMessage={setReplyToMessage}
         inputRef={inputRef}
+        messageRefs={messageRefs}
       />
 
       <ChatComposer

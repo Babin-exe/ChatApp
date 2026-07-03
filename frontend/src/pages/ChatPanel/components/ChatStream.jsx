@@ -23,11 +23,10 @@ const ChatStream = ({
   setEditedText,
   editedText,
   myUserId,
-  replyToMessageId,
   setReplyToMessageId,
-  replyToMessage,
   setReplyToMessage,
   inputRef,
+  messageRefs,
 }) => {
   return (
     <article
@@ -79,11 +78,10 @@ const ChatStream = ({
             setEditingMessageId={setEditingMessageId}
             editedText={editedText}
             setEditedText={setEditedText}
-            replyToMessageId={replyToMessageId}
             setReplyToMessageId={setReplyToMessageId}
-            replyToMessage={replyToMessage}
             setReplyToMessage={setReplyToMessage}
             inputRef={inputRef}
+            messageRefs={messageRefs}
           />
         );
       })}

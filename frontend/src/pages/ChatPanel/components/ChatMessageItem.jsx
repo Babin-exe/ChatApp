@@ -1,4 +1,5 @@
 import QuickReaction from "./QuickReaction.jsx";
+import EditMessageView from "./EditMessageView.jsx";
 import api from "../../../lib/api.js";
 import toast from "react-hot-toast";
 
@@ -17,11 +18,10 @@ const ChatMessageItem = ({
   setEditingMessageId,
   setEditedText,
   editedText,
-  replyToMessageId,
   setReplyToMessageId,
-  replyToMessage,
   setReplyToMessage,
   inputRef,
+  messageRefs,
 }) => {
   const isReactionOpen = m._id === currentMessageId;
 
@@ -47,13 +47,44 @@ const ChatMessageItem = ({
     }, {})
   );
 
+  const highlightBubble = (bubble) => {
+    bubble.classList.remove("highlight");
+    void bubble.offsetWidth;
+    bubble.classList.add("highlight");
+
+    bubble.addEventListener(
+      "animationend",
+      () => bubble.classList.remove("highlight"),
+      { once: true }
+    );
+  };
+
+  const jumpToReply = () => {
+    const bubble = messageRefs.current[m.replyToMessageId._id];
+
+    if (!bubble) return;
+
+    bubble.scrollIntoView({
+      behavior: "smooth",
+      block: "center",
+    });
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        highlightBubble(bubble);
+      });
+    });
+  };
+
   const handleSendEditedMessage = async () => {
     try {
       await api.patch(`/api/messages/edit/${m._id}`, {
         content: editedText,
       });
+
       setEditedText("");
       setEditingMessageId(null);
+
       toast.success("Message edited successfully");
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to edit message");
@@ -87,61 +118,55 @@ const ChatMessageItem = ({
             />
           )}
 
-          <div className="chat-message-bubble">
-            {isEditing ? (
-              <>
-                <div>
-                  <input
-                    type="text"
-                    value={editedText}
-                    onChange={(e) => {
-                      setEditedText(e.target.value);
-                    }}
-                  />
-                </div>
+          <div
+            className="chat-message-bubble"
+            ref={(element) => {
+              if (element) {
+                messageRefs.current[m._id] = element;
+              } else {
+                delete messageRefs.current[m._id];
+              }
+            }}
+          >
+            {m.replyToMessageId && (
+              <div className="reply_to" onClick={jumpToReply}>
+                <strong>Replying to : </strong>
 
-                <div>
-                  <button
-                    disabled={
-                      editedText.trim() === "" ||
-                      editedText.trim() === m.content
-                    }
-                    className="send_edited"
-                    onClick={handleSendEditedMessage}
-                  >
-                    Send
-                  </button>
+                <span>
+                  {m.replyToMessageId.content.length > 40
+                    ? `${m.replyToMessageId.content.slice(0, 40)}...`
+                    : m.replyToMessageId.content}
+                </span>
+              </div>
+            )}
 
-                  <button
-                    className="cancle_edited"
-                    onClick={() => {
-                      setEditedText("");
-                      setEditingMessageId(null);
-
-                      inputRef.current?.blur();
-                    }}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </>
-            ) : m.type === "image" ? (
-              <>
-                <img
-                  src={m.image?.url}
-                  alt="sent attachment"
-                  className="chat-image-message"
+            <div className="bubble-content">
+              {isEditing ? (
+                <EditMessageView
+                  editedText={editedText}
+                  setEditedText={setEditedText}
+                  originalMessage={m.content}
+                  onSend={handleSendEditedMessage}
+                  onCancel={() => {
+                    setEditedText("");
+                    setEditingMessageId(null);
+                    inputRef.current?.blur();
+                  }}
                 />
+              ) : (
+                <>
+                  {m.type === "image" && (
+                    <img
+                      src={m.image?.url}
+                      alt="sent attachment"
+                      className="chat-image-message"
+                    />
+                  )}
 
-                {m.content && <p>{m.content}</p>}
-              </>
-            ) : (
-              m.content
-            )}
-
-            {m.replyToMessageId?._id && (
-              <div>Replied to : {m.replyToMessageId?.content}</div>
-            )}
+                  {m.content && <p>{m.content}</p>}
+                </>
+              )}
+            </div>
           </div>
 
           <div className="chat-message-reaction">
@@ -149,62 +174,64 @@ const ChatMessageItem = ({
               type="button"
               aria-label="Add reaction"
               onClick={() => {
-                setCurrentMessageId((prev) => (m._id === prev ? null : m._id));
+                setCurrentMessageId((prev) => (prev === m._id ? null : m._id));
+
                 setPickerMode(PickerMode.QUICK);
               }}
             >
-              <img src="/emoji_icon.png" height={20} width={20} alt="" />
+              <img
+                src="/emoji_icon.png"
+                width={20}
+                height={20}
+                alt="Reaction"
+              />
             </button>
 
-            {myUserId === senderId.toString() && (
-              <div className="edit-button">
-                <button
-                  onClick={() => {
-                    setEditingMessageId(m._id);
-                    setEditedText(m.content);
-                  }}
-                >
-                  Edit
-                </button>
-              </div>
+            {myUserId === senderId?.toString() && (
+              <button
+                onClick={() => {
+                  setEditingMessageId(m._id);
+                  setEditedText(m.content);
+                }}
+              >
+                Edit
+              </button>
             )}
 
-            <div className="reply_to_message">
-              <button onClick={() => handleReply()}>Reply</button>
-            </div>
+            <button onClick={handleReply}>Reply</button>
           </div>
-
         </div>
-        <div className="message-reactions">
+
+        {reactionGroups.length > 0 && (
           <div className="message-reactions">
             {reactionGroups.map((group) => (
               <button
-                type="button"
+                key={group.emoji}
                 className={`reaction-pill ${
                   group.users.some((user) => user.isMine) ? "mine" : ""
                 }`}
-                key={group.emoji}
                 title={group.users
                   .map((user) => `${user.name} reacted ${group.emoji}`)
                   .join("\n")}
               >
                 <span>{group.emoji}</span>
+
                 {group.users.length > 1 && <span>{group.users.length}</span>}
               </button>
             ))}
           </div>
-        </div>
+        )}
 
         <div className="message-status-time-info">
           {isLastOutgoing && showMessageStatus && (
             <span className="latest-status">{m.status}</span>
           )}
+
           {isLastOutgoing && (
             <span className="latest-sent">{lastOutgoingTimeAgo}</span>
           )}
         </div>
       </div>
-     
     </div>
   );
 };
