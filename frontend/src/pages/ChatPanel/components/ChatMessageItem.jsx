@@ -192,13 +192,16 @@ const ChatMessageItem = ({
                 onClick={() => {
                   setEditingMessageId(m._id);
                   setEditedText(m.content);
+                  setReplyToMessageId(null);
+
+                  //I will do something here
                 }}
               >
-                Edit
+                ✍🏻
               </button>
             )}
 
-            <button onClick={handleReply}>Reply</button>
+            <button onClick={handleReply}>⏎</button>
           </div>
         </div>
 

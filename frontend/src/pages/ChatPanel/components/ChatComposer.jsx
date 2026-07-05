@@ -13,73 +13,100 @@ const ChatComposer = ({
   imagePreviewUrl,
   clearSelectedImage,
   inputRef,
+  replyToMessage,
+  replyToMessageId,
+  setReplyToMessageId,
 }) => {
   return (
-    <form className="chat-composer" onSubmit={handleSendMessage}>
-      <input
-        type="text"
-        value={newMessage}
-        ref={inputRef}
-        onChange={(e) => {
-          setNewMessage(e.target.value);
-          handleTyping(e.target.value);
-        }}
-        onBlur={() => stopTyping()}
-        className="chat-input"
-        disabled={!canMessage || sending}
-        placeholder={`Message ${selectedContact.name}`}
-      />
+    <>
+      {replyToMessageId && (
+        <div className="reply_popup">
+          <p>
+            Replying to :
+            {replyToMessage?.length > 40
+              ? " " + replyToMessage.slice(0, 40) + "..."
+              : " " + replyToMessage}
+          </p>
+          <span>
+            <button
+              onClick={() => {
+                console.log("Gonna do some stuff");
+                setReplyToMessageId(null);
+                
+              }}
+            >
+              <img src="./close.png" height={20} width={20} alt="" />
+            </button>
+          </span>
+        </div>
+      )}
 
-      <div className="chat-attachment-outer">
+      <form className="chat-composer" onSubmit={handleSendMessage}>
         <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
+          type="text"
+          value={newMessage}
+          ref={inputRef}
+          onChange={(e) => {
+            setNewMessage(e.target.value);
+            handleTyping(e.target.value);
+          }}
+          onBlur={() => stopTyping()}
+          className="chat-input"
           disabled={!canMessage || sending}
-          className="chat-input-file"
-          onChange={handleImageChange}
+          placeholder={`Message ${selectedContact.name}`}
         />
 
-        {selectedImage ? (
-          <div className="chat-attachment-preview">
-            {imagePreviewUrl && (
-              <img src={imagePreviewUrl} alt="Selected attachment Preview " />
-            )}
+        <div className="chat-attachment-outer">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            disabled={!canMessage || sending}
+            className="chat-input-file"
+            onChange={handleImageChange}
+          />
 
+          {selectedImage ? (
+            <div className="chat-attachment-preview">
+              {imagePreviewUrl && (
+                <img src={imagePreviewUrl} alt="Selected attachment Preview " />
+              )}
+
+              <button
+                type="button"
+                className="chat-attachment-remove"
+                onClick={clearSelectedImage}
+                disabled={sending}
+                aria-label="Remove selected image"
+              >
+                X
+              </button>
+            </div>
+          ) : (
             <button
               type="button"
-              className="chat-attachment-remove"
-              onClick={clearSelectedImage}
-              disabled={sending}
-              aria-label="Remove selected image"
+              className="chat-attachment-picker"
+              disabled={!canMessage || sending}
+              onClick={() => {
+                fileInputRef.current?.click();
+              }}
             >
-              X
+              <img src="/upload_image.png" alt="plus" />
             </button>
-          </div>
-        ) : (
-          <button
-            type="button"
-            className="chat-attachment-picker"
-            disabled={!canMessage || sending}
-            onClick={() => {
-              fileInputRef.current?.click();
-            }}
-          >
-            <img src="/upload_image.png" alt="plus" />
-          </button>
-        )}
-      </div>
+          )}
+        </div>
 
-      <button
-        type="submit"
-        disabled={
-          sending || (!newMessage.trim() && !selectedImage) || !canMessage
-        }
-        className="ui-btn ui-btn-primary chat-send-btn"
-      >
-        {sending ? "Sending..." : "Send"}
-      </button>
-    </form>
+        <button
+          type="submit"
+          disabled={
+            sending || (!newMessage.trim() && !selectedImage) || !canMessage
+          }
+          className="ui-btn ui-btn-primary chat-send-btn"
+        >
+          {sending ? "Sending..." : "Send"}
+        </button>
+      </form>
+    </>
   );
 };
 

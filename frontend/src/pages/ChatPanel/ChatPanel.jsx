@@ -807,6 +807,9 @@ const ChatPanel = ({
         imagePreviewUrl={imagePreviewUrl}
         clearSelectedImage={clearSelectedImage}
         inputRef={inputRef}
+        replyToMessage={replyToMessage}
+        setReplyToMessageId={setReplyToMessageId}
+        replyToMessageId={replyToMessageId}
       />
 
       {sendError && hasFailedMessage && (
