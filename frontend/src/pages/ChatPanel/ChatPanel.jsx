@@ -484,7 +484,7 @@ const ChatPanel = ({
 
   useEffect(() => {
     openConversation(selectedContactId);
-  }, [selectedContactId]);
+  }, [selectedContactId, openConversation]);
 
   useEffect(() => {
     return () => {
@@ -493,8 +493,6 @@ const ChatPanel = ({
   }, [stopTyping]);
 
   useEffect(() => {
-    //Okay what to do here is check if we have any selected iamge or not
-
     if (!selectedImage) {
       setImagePreviewUrl(null);
       return;

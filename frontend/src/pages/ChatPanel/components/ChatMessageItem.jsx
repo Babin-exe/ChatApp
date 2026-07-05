@@ -95,6 +95,8 @@ const ChatMessageItem = ({
     setReplyToMessageId(m._id);
     setReplyToMessage(m.content);
     inputRef.current?.focus();
+    setEditingMessageId(null);
+    setEditedText(null);
   };
 
   const isEditing = editingMessageId === m._id;
@@ -175,8 +177,14 @@ const ChatMessageItem = ({
               aria-label="Add reaction"
               onClick={() => {
                 setCurrentMessageId((prev) => (prev === m._id ? null : m._id));
-
                 setPickerMode(PickerMode.QUICK);
+
+                setReplyToMessageId(null);
+                setReplyToMessage(null);
+                setEditingMessageId(null);
+                setEditedText(null);
+
+                console.log("Emoji clicked yaay");
               }}
             >
               <img
@@ -193,8 +201,6 @@ const ChatMessageItem = ({
                   setEditingMessageId(m._id);
                   setEditedText(m.content);
                   setReplyToMessageId(null);
-
-                  //I will do something here
                 }}
               >
                 ✍🏻
