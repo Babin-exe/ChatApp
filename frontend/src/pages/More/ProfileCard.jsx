@@ -19,7 +19,7 @@ const ProfileCard = () => {
     formData.append("profilePic", file);
 
     try {
-      const res = await api.patch("/api/auth/update-profile", formData);
+      await api.patch("/api/auth/update-profile", formData);
       toast("Profile updated successfully", { icon: "✅" });
 
       if (refreshAuthUser) {
@@ -60,8 +60,8 @@ const ProfileCard = () => {
           src={
             authUser.profilePic ||
             "https://ui-avatars.com/api/?name=" +
-              encodeURIComponent(authUser.name) +
-              "&background=random"
+            encodeURIComponent(authUser.name) +
+            "&background=random"
           }
           alt={`${authUser.name}'s profile pic`}
           referrerPolicy="no-referrer"
