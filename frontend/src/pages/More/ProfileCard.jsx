@@ -3,7 +3,7 @@ import { UseSocketContext } from "../../context/socketContext.js";
 import toast from "react-hot-toast";
 import api from "../../lib/api.js";
 
-const ProfileCard = () => {
+const ProfileCard = ({ setActiveView }) => {
   const { authUser, refreshAuthUser } = UseSocketContext();
   const inputRef = useRef(null);
   const nameInputRef = useRef(null);
@@ -55,13 +55,23 @@ const ProfileCard = () => {
 
   return (
     <div className="profile_main">
+      <div className="back_button">
+        <button
+          onClick={() => {
+            setActiveView("default");
+          }}
+        >
+          Back
+        </button>
+      </div>
+
       <div className="profile_pic_wrapper">
         <img
           src={
             authUser.profilePic ||
             "https://ui-avatars.com/api/?name=" +
-            encodeURIComponent(authUser.name) +
-            "&background=random"
+              encodeURIComponent(authUser.name) +
+              "&background=random"
           }
           alt={`${authUser.name}'s profile pic`}
           referrerPolicy="no-referrer"

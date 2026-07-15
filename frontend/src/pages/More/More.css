@@ -13,9 +13,7 @@
   max-width: 320px;
   margin: 2rem auto;
   font-family: "Inter", system-ui, sans-serif;
-  transition:
-    transform 0.3s ease,
-    box-shadow 0.3s ease;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .profile_main:hover {
@@ -96,9 +94,7 @@
   padding: 2px 4px;
   border-radius: 6px;
   opacity: 0.5;
-  transition:
-    opacity 0.2s ease,
-    transform 0.2s ease;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .profile_name button:hover {
@@ -147,9 +143,7 @@
   outline: none;
   text-align: center;
   box-sizing: border-box;
-  transition:
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .edit_name_input input[type="text"]:focus {
@@ -214,4 +208,13 @@
 
 .cancel_button:active {
   transform: translateY(0);
+}
+
+.content_view {
+  background-color: pink;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  
 }
