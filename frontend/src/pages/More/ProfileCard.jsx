@@ -9,6 +9,12 @@ const ProfileCard = () => {
   const nameInputRef = useRef(null);
   const [editedName, setEditedName] = useState(null);
 
+  useEffect(() => {
+    if (editedName !== null) {
+      nameInputRef?.current?.focus();
+    }
+  }, [editedName]);
+
   if (!authUser) return null;
 
   const handleProfilePicChange = async (e) => {
@@ -46,12 +52,6 @@ const ProfileCard = () => {
       toast.error(error.response?.data?.message || "Failed to update name");
     }
   };
-
-  useEffect(() => {
-    if (editedName !== null) {
-      nameInputRef?.current?.focus();
-    }
-  }, [editedName]);
 
   return (
     <div className="profile_main">

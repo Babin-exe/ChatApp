@@ -569,7 +569,7 @@ const ChatPanel = ({
     if (myUserId !== senderId) return null;
 
     return formatTimeAgo(latest.createdAt);
-  }, [messages, tick, myUserId]);
+  }, [messages, myUserId]);
 
   const handleRetrySend = async () => {
     const content = newMessage.trim();
