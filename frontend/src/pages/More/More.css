@@ -1,0 +1,217 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+
+.profile_main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2.5rem 2rem;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(12px);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  max-width: 320px;
+  margin: 2rem auto;
+  font-family: "Inter", system-ui, sans-serif;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.profile_main:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+}
+
+.profile_pic_wrapper {
+  position: relative;
+  width: 130px;
+  height: 130px;
+  margin-bottom: 1.5rem;
+}
+
+.profile_pic_image {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #ffffff;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.profile_pic_wrapper:hover .profile_pic_image {
+  transform: scale(1.03);
+}
+
+.profile_pic_edit_btn {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  border: 2px solid #ffffff;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.profile_pic_edit_btn:hover {
+  transform: scale(1.15) rotate(5deg);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+.profile_pic_edit_btn:active {
+  transform: scale(0.95);
+}
+
+.profile_pic_edit_btn svg {
+  width: 18px;
+  height: 18px;
+  stroke: #ffffff;
+  fill: none;
+}
+
+.profile_name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0.5rem 0 0.25rem;
+  letter-spacing: -0.01em;
+}
+
+.profile_name button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 2px 4px;
+  border-radius: 6px;
+  opacity: 0.5;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+
+.profile_name button:hover {
+  opacity: 1;
+  transform: scale(1.2) rotate(-5deg);
+}
+
+.profile_email {
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin: 0;
+  font-weight: 400;
+}
+
+.edit_name_input {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin: 0.5rem 0;
+  animation: slide-in 0.18s ease;
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.edit_name_input input[type="text"] {
+  width: 100%;
+  padding: 0.55rem 1rem;
+  font-size: 0.95rem;
+  font-family: "Inter", system-ui, sans-serif;
+  font-weight: 500;
+  color: #1f2937;
+  background: #ffffff;
+  border: 1.5px solid #d1d5db;
+  border-radius: 10px;
+  outline: none;
+  text-align: center;
+  box-sizing: border-box;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.edit_name_input input[type="text"]:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.edit_name_buttons {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+}
+
+.save_button,
+.cancel_button {
+  flex: 1;
+  padding: 0.5rem 0;
+  font-size: 0.875rem;
+  font-family: "Inter", system-ui, sans-serif;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  letter-spacing: 0.01em;
+  transition: all 0.2s ease;
+}
+
+.save_button {
+  background: #3b82f6;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.save_button:hover:not(:disabled) {
+  background: #2563eb;
+  box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4);
+  transform: translateY(-1px);
+}
+
+.save_button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.25);
+}
+
+.save_button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.cancel_button {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1.5px solid #e5e7eb;
+}
+
+.cancel_button:hover {
+  background: #e5e7eb;
+  color: #374151;
+  transform: translateY(-1px);
+}
+
+.cancel_button:active {
+  transform: translateY(0);
+}

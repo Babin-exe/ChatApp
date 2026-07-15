@@ -5,6 +5,7 @@ import Login from "./pages/Login/Login.jsx";
 import Messages from "./pages/Messages.jsx";
 import { SocketContextProvider } from "./context/SocketContext.jsx";
 import { UseSocketContext } from "./context/socketContext.js";
+import More from "./pages/More/More.jsx";
 
 const RouteLoader = () => (
   <div className="page-wrap auth-page">
@@ -60,7 +61,20 @@ function App() {
               </ProtectedRoute>
             }
           />
-          <Route path="/messages" element={<Navigate to="/message" replace />} />
+          <Route
+            path="/messages"
+            element={<Navigate to="/message" replace />}
+          />
+
+          <Route
+            path="/more"
+            element={
+              <ProtectedRoute>
+                <More />
+              </ProtectedRoute>
+            }
+          />
+
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </SocketContextProvider>

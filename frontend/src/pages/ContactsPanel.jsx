@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import "./ContactsPanel.css";
 import { UseSocketContext } from "../context/socketContext";
+import { useNavigate } from "react-router-dom";
 
 const ContactsPanel = ({
   contacts,
@@ -22,6 +23,7 @@ const ContactsPanel = ({
   onBlockUser,
   onUnblockUser,
 }) => {
+  const navigate = useNavigate();
   const { onlineUsers } = UseSocketContext();
   const [activeTab, setActiveTab] = useState("discover");
   const [openMenuContactId, setOpenMenuContactId] = useState(null);
@@ -37,7 +39,7 @@ const ContactsPanel = ({
 
   const toggleContactMenu = (contactId) => {
     setOpenMenuContactId((current) =>
-      current === contactId ? null : contactId,
+      current === contactId ? null : contactId
     );
   };
 
@@ -59,6 +61,16 @@ const ContactsPanel = ({
     <aside className="contacts-panel">
       <div className="contacts-header">
         <h2>Contacts</h2>
+        <div className="header_more">
+          <button
+            onClick={() => {
+              console.log("User just clicked more");
+              navigate("/more");
+            }}
+          >
+            ℹ
+          </button>
+        </div>
         <p>
           {contacts.length} active chat{contacts.length <= 1 ? "" : "s"}
         </p>

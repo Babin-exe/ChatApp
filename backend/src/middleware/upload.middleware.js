@@ -16,11 +16,13 @@ const fileFilter = (req, file, cb) => {
 }
 
 
-export const uploadImage = multer({
+export const upload = multer({
     storage,
     limits: { fileSize: MAX_FILE_SIZE, files: 1, fields: 5, fieldSize: 4 * 1024, parts: 6 },
     fileFilter
-}).single("image");
+});
+
+export const uploadImage = upload.single("image");
 
 
 

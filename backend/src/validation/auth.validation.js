@@ -7,3 +7,11 @@ export const updateProfileSchema = z.object({
 export const googleAuthSchema = z.object({
   credential: z.string().min(1, "Google credential is required"),
 });
+
+export const updateNameSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(2, "Name must be at least 2 characters")
+    .max(50, "Name cannot exceed 50 characters"),
+});

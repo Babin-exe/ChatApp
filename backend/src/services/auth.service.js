@@ -3,15 +3,14 @@ import HttpError from "../utils/HttpError.js";
 import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 import cloudinary from "../lib/cloudinary.js";
+import { uploadImageToCloudinary } from "./cloudinaryUploader.service.js";
 
 const googleClient = new OAuth2Client();
 
 const createUserSession = (user) => {
-  return jwt.sign(
-    { id: user._id, email: user.email },
-    process.env.JWT_SECRET,
-    { expiresIn: "7d" },
-  );
+  return jwt.sign({ id: user._id, email: user.email }, process.env.JWT_SECRET, {
+    expiresIn: "7d",
+  });
 };
 
 export const logoutService = async (token) => {
@@ -21,23 +20,23 @@ export const logoutService = async (token) => {
 
   await User.updateOne(
     { "sessions.token": token },
-    { $pull: { sessions: { token } } },
+    { $pull: { sessions: { token } } }
   );
 };
 
-export const updateProfileService = async (userId, profilePic) => {
+export const updateProfileService = async (userId, profilePicBuffer) => {
   if (!userId) {
     throw new HttpError("Unauthorized", 401);
   }
 
-  if (!profilePic) {
+  if (!profilePicBuffer) {
     throw new HttpError("Profile Picture is required", 400);
   }
 
   // Upload to Cloudinary
   let uploadResponse;
   try {
-    uploadResponse = await cloudinary.uploader.upload(profilePic);
+    uploadResponse = await uploadImageToCloudinary(profilePicBuffer);
   } catch (err) {
     throw new HttpError("Failed to upload profile picture", 500);
   }
@@ -45,8 +44,8 @@ export const updateProfileService = async (userId, profilePic) => {
   // Update user profile
   const updatedUser = await User.findByIdAndUpdate(
     userId,
-    { profilePic: uploadResponse.secure_url },
-    { new: true },
+    { profilePic: uploadResponse.url },
+    { new: true }
   ).select("name email profilePic _id");
 
   if (!updatedUser) {
@@ -98,7 +97,6 @@ export const googleAuthService = async (credential) => {
     user = await User.findOne({ email });
   }
 
-
   if (!user) {
     user = await User.create({
       name: name || email.split("@")[0],
@@ -134,4 +132,20 @@ export const googleAuthService = async (credential) => {
     },
     token,
   };
+};
+
+export const changeNameService = async (userId, name) => {
+  if (!userId || !name) {throw new HttpError("UserId and name required", 400);}
+
+  const trimmedName = name?.trim();
+  if (!trimmedName){ throw new HttpError("Name cannot be empty", 400);}
+
+  const user = await User.findById(userId);
+
+  if (!user) {throw new HttpError("User not found", 404);}
+
+  user.name = trimmedName;
+  await user.save();
+
+  return user;
 };

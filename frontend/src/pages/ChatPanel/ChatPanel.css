@@ -86,6 +86,10 @@
   backdrop-filter: blur(2px);
   flex-shrink: 0;
 }
+.header_more {
+  display: flex;
+  justify-content: end;
+}
 
 .chat-header-text {
   min-width: 0;

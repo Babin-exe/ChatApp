@@ -3,6 +3,7 @@ import {
   logoutService,
   updateProfileService,
   googleAuthService,
+  changeNameService,
 } from "../services/auth.service.js";
 
 const sessionCookieOptions = {
@@ -44,18 +45,16 @@ export const getMe = asyncHandler(async (req, res) => {
 });
 
 export const updateProfile = asyncHandler(async (req, res) => {
-
   const userId = req.user?._id;
-  const { profilePic } = req.body;
+  const profilePicBuffer = req.file?.buffer;
 
-  const updatedUser = await updateProfileService(userId, profilePic);
+  const updatedUser = await updateProfileService(userId, profilePicBuffer);
 
   return res.status(200).json({
     success: true,
     message: "Profile updated successfully",
     user: updatedUser,
   });
-
 });
 
 export const googleAuth = asyncHandler(async (req, res) => {
@@ -70,4 +69,15 @@ export const googleAuth = asyncHandler(async (req, res) => {
     message: "Login successful",
     user,
   });
+});
+
+export const changeName = asyncHandler(async (req, res) => {
+  const userId = req.user?._id;
+  const { name } = req.body;
+
+  const user = await changeNameService(userId, name);
+
+  return res
+    .status(200)
+    .json({ success: true, message: "Name updated successfully", user });
 });

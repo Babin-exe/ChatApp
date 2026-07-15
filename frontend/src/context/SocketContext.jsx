@@ -29,6 +29,8 @@ export const SocketContextProvider = ({ children }) => {
 
   const [editedMessage, setEditedMessage] = useState(null);
 
+  
+
   const openConversation = useCallback((selectedContactId) => {
     const normalizeId = selectedContactId ? String(selectedContactId) : null;
     const ws = socketRef.current;
