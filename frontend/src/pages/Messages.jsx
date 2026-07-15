@@ -103,7 +103,7 @@ const Messages = () => {
 
   useEffect(() => {
     setSelectedContactInContext(selectedContact?._id);
-  }, [selectedContact]);
+  }, [selectedContact, setSelectedContactInContext]);
 
   const handleSendRequest = async (receiverId) => {
     const key = `request-${receiverId}`;

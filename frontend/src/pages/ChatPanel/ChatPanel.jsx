@@ -126,7 +126,6 @@ const ChatPanel = ({
 
   const [imagePreviewUrl, setImagePreviewUrl] = useState(null);
 
-  const [tick, setNowTick] = useState(0);
 
   const [currentMessageId, setCurrentMessageId] = useState("");
 
