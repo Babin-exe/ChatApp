@@ -1,7 +1,11 @@
+import { useRef } from "react";
 import QuickReaction from "./QuickReaction.jsx";
 import EditMessageView from "./EditMessageView.jsx";
 import api from "../../../lib/api.js";
 import toast from "react-hot-toast";
+
+const truncateText = (text, maxLength = 40) =>
+  text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
 
 const ChatMessageItem = ({
   m,
@@ -24,6 +28,7 @@ const ChatMessageItem = ({
   messageRefs,
 }) => {
   const isReactionOpen = m._id === currentMessageId;
+  const bubbleWrapRef = useRef(null);
 
   const reactionGroups = Object.values(
     (m.reactions ?? []).reduce((groups, reaction) => {
@@ -38,13 +43,13 @@ const ChatMessageItem = ({
 
       groups[reaction.emoji].users.push({
         id: userId,
-        name: isMine ? "You" : user?.name ?? "Someone",
+        name: isMine ? "You" : (user?.name ?? "Someone"),
         profilePic: user?.profilePic,
         isMine,
       });
 
       return groups;
-    }, {})
+    }, {}),
   );
 
   const highlightBubble = (bubble) => {
@@ -55,7 +60,7 @@ const ChatMessageItem = ({
     bubble.addEventListener(
       "animationend",
       () => bubble.classList.remove("highlight"),
-      { once: true }
+      { once: true },
     );
   };
 
@@ -104,6 +109,17 @@ const ChatMessageItem = ({
   const senderId =
     typeof m.senderId === "object" ? m.senderId?._id : m.senderId;
 
+  const replySenderName =
+    typeof m.replyToMessageId?.senderId === "object"
+      ? m.replyToMessageId.senderId?.name
+      : null;
+
+  const replyPreviewText = m.replyToMessageId?.content
+    ? truncateText(m.replyToMessageId.content)
+    : m.replyToMessageId?.type === "image"
+      ? "Photo"
+      : "";
+
   return (
     <div className={`chat-message-row ${isIncoming ? "incoming" : "outgoing"}`}>
       <div className="chat-message-content">
@@ -116,120 +132,146 @@ const ChatMessageItem = ({
             <QuickReaction
               messageId={currentMessageId}
               isIncoming={isIncoming}
+              anchorRef={bubbleWrapRef}
               onClose={() => setCurrentMessageId(null)}
             />
           )}
 
           <div
-            className="chat-message-bubble"
-            ref={(element) => {
-              if (element) {
-                messageRefs.current[m._id] = element;
-              } else {
-                delete messageRefs.current[m._id];
-              }
-            }}
+            ref={bubbleWrapRef}
+            className={`chat-message-bubble-wrap${
+              reactionGroups.length > 0 ? " has-reactions" : ""
+            }${isReactionOpen ? " is-picker-open" : ""}`}
           >
-            {m.replyToMessageId && (
-              <div className="reply_to" onClick={jumpToReply}>
-                <strong>Replying to : </strong>
-
-                <span>
-                  {m.replyToMessageId.content.length > 40
-                    ? `${m.replyToMessageId.content.slice(0, 40)}...`
-                    : m.replyToMessageId.content}
-                </span>
-              </div>
-            )}
-
-            <div className="bubble-content">
-              {isEditing ? (
-                <EditMessageView
-                  editedText={editedText}
-                  setEditedText={setEditedText}
-                  originalMessage={m.content}
-                  onSend={handleSendEditedMessage}
-                  onCancel={() => {
-                    setEditedText("");
-                    setEditingMessageId(null);
-                    inputRef.current?.blur();
-                  }}
-                />
-              ) : (
-                <>
-                  {m.type === "image" && (
-                    <img
-                      src={m.image?.url}
-                      alt="sent attachment"
-                      className="chat-image-message"
-                    />
-                  )}
-
-                  {m.content && <p>{m.content}</p>}
-                </>
-              )}
-            </div>
-          </div>
-
-          <div className="chat-message-reaction">
-            <button
-              type="button"
-              aria-label="Add reaction"
-              onClick={() => {
-                setCurrentMessageId((prev) => (prev === m._id ? null : m._id));
-                setPickerMode(PickerMode.QUICK);
-
-                setReplyToMessageId(null);
-                setReplyToMessage(null);
-                setEditingMessageId(null);
-                setEditedText(null);
-
-                console.log("Emoji clicked yaay");
+            <div
+              className="chat-message-bubble"
+              ref={(element) => {
+                if (element) {
+                  messageRefs.current[m._id] = element;
+                } else {
+                  delete messageRefs.current[m._id];
+                }
               }}
             >
-              <img
-                src="/emoji_icon.png"
-                width={20}
-                height={20}
-                alt="Reaction"
-              />
-            </button>
+              {m.replyToMessageId && (
+                <button
+                  type="button"
+                  className="reply_to"
+                  onClick={jumpToReply}
+                  aria-label="Jump to replied message"
+                >
+                  <span className="reply_to-label">
+                    {replySenderName ?? "Original message"}
+                  </span>
+                  <span className="reply_to-text">{replyPreviewText}</span>
+                </button>
+              )}
 
-            {myUserId === senderId?.toString() && (
+              <div className="bubble-content">
+                {isEditing ? (
+                  <EditMessageView
+                    editedText={editedText}
+                    setEditedText={setEditedText}
+                    originalMessage={m.content}
+                    onSend={handleSendEditedMessage}
+                    onCancel={() => {
+                      setEditedText("");
+                      setEditingMessageId(null);
+                      inputRef.current?.blur();
+                    }}
+                  />
+                ) : (
+                  <>
+                    {m.type === "image" && (
+                      <img
+                        src={m.image?.url}
+                        alt="sent attachment"
+                        className="chat-image-message"
+                      />
+                    )}
+
+                    {m.content && <p>{m.content}</p>}
+                  </>
+                )}
+              </div>
+            </div>
+
+            {reactionGroups.length > 0 && (
+              <div className="message-reactions">
+                {reactionGroups.map((group) => (
+                  <button
+                    key={group.emoji}
+                    type="button"
+                    className={`reaction-pill ${
+                      group.users.some((user) => user.isMine) ? "mine" : ""
+                    }`}
+                    title={group.users
+                      .map((user) => `${user.name} reacted ${group.emoji}`)
+                      .join("\n")}
+                  >
+                    <span>{group.emoji}</span>
+
+                    {group.users.length > 1 && (
+                      <span>{group.users.length}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {!isEditing && (
+            <div className="chat-message-reaction" aria-label="Message actions">
               <button
+                type="button"
+                aria-label="Add reaction"
                 onClick={() => {
-                  setEditingMessageId(m._id);
-                  setEditedText(m.content);
+                  setCurrentMessageId((prev) =>
+                    prev === m._id ? null : m._id,
+                  );
+                  setPickerMode(PickerMode.QUICK);
                   setReplyToMessageId(null);
+                  setReplyToMessage(null);
+                  setEditingMessageId(null);
+                  setEditedText(null);
                 }}
               >
-                ✍🏻
+                <img
+                  src="/emoji_icon.png"
+                  width={18}
+                  height={18}
+                  alt=""
+                  aria-hidden="true"
+                />
               </button>
-            )}
 
-            <button onClick={handleReply}>⏎</button>
-          </div>
-        </div>
+              {myUserId === senderId?.toString() && (
+                <button
+                  type="button"
+                  aria-label="Edit message"
+                  className="chat-action-edit"
+                  onClick={() => {
+                    setEditingMessageId(m._id);
+                    setEditedText(m.content);
+                    setReplyToMessageId(null);
+                    setReplyToMessage(null);
+                  }}
+                >
+                  ✎
+                </button>
+              )}
 
-        {reactionGroups.length > 0 && (
-          <div className="message-reactions">
-            {reactionGroups.map((group) => (
               <button
-                key={group.emoji}
-                className={`reaction-pill ${
-                  group.users.some((user) => user.isMine) ? "mine" : ""
-                }`}
-                title={group.users
-                  .map((user) => `${user.name} reacted ${group.emoji}`)
-                  .join("\n")}
+                type="button"
+                aria-label="Reply to message"
+                className="chat-action-reply"
+                onClick={handleReply}
               >
-                <span>{group.emoji}</span>
-
-                {group.users.length > 1 && <span>{group.users.length}</span>}
+                ↩
               </button>
-            ))}
-          </div>
-        )}
+            </div>
+          )}
+        </div>
 
         <div className="message-status-time-info">
           {isLastOutgoing && showMessageStatus && (

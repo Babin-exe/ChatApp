@@ -1,13 +1,15 @@
 const Themes = ({ setActiveView }) => {
   return (
     <>
-      <button
-        onClick={() => {
-          setActiveView("default");
-        }}
-      >
-        Back
-      </button>
+      <div className="back_button">
+        <button
+          onClick={() => {
+            setActiveView("default");
+          }}
+        >
+          Back
+        </button>
+      </div>
       This is Themes
     </>
   );

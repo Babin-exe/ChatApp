@@ -54,7 +54,7 @@ const ProfileCard = ({ setActiveView }) => {
   };
 
   return (
-    <div className="profile_main">
+    <>
       <div className="back_button">
         <button
           onClick={() => {
@@ -65,90 +65,92 @@ const ProfileCard = ({ setActiveView }) => {
         </button>
       </div>
 
-      <div className="profile_pic_wrapper">
-        <img
-          src={
-            authUser.profilePic ||
-            "https://ui-avatars.com/api/?name=" +
-              encodeURIComponent(authUser.name) +
-              "&background=random"
-          }
-          alt={`${authUser.name}'s profile pic`}
-          referrerPolicy="no-referrer"
-          className="profile_pic_image"
-        />
-        <button
-          className="profile_pic_edit_btn"
-          title="Change Profile Picture"
-          onClick={() => inputRef.current?.click()}
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
-            <circle cx="12" cy="13" r="4" />
-          </svg>
-        </button>
-        <input
-          type="file"
-          accept="image/*"
-          ref={inputRef}
-          style={{ display: "none" }}
-          onChange={handleProfilePicChange}
-        />
-      </div>
-
-      {editedName !== null ? (
-        <>
-          <div className="edit_name_input">
-            <input
-              type="text"
-              ref={nameInputRef}
-              value={editedName}
-              onChange={(e) => {
-                setEditedName(e.target.value);
-              }}
-            />
-            <div className="edit_name_buttons">
-              <button
-                className="save_button"
-                disabled={editedName.trim() === authUser.name}
-                onClick={changeUserName}
-              >
-                Save
-              </button>
-
-              <button
-                className="cancel_button"
-                onClick={() => {
-                  setEditedName(null);
-                }}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </>
-      ) : (
-        <h2 className="profile_name">
-          {authUser.name}
+      <div className="profile_main">
+        <div className="profile_pic_wrapper">
+          <img
+            src={
+              authUser.profilePic ||
+              "https://ui-avatars.com/api/?name=" +
+                encodeURIComponent(authUser.name) +
+                "&background=random"
+            }
+            alt={`${authUser.name}'s profile pic`}
+            referrerPolicy="no-referrer"
+            className="profile_pic_image"
+          />
           <button
-            onClick={() => {
-              setEditedName(authUser?.name || null);
-            }}
+            className="profile_pic_edit_btn"
+            title="Change Profile Picture"
+            onClick={() => inputRef.current?.click()}
           >
-            📝
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+              <circle cx="12" cy="13" r="4" />
+            </svg>
           </button>
-        </h2>
-      )}
+          <input
+            type="file"
+            accept="image/*"
+            ref={inputRef}
+            style={{ display: "none" }}
+            onChange={handleProfilePicChange}
+          />
+        </div>
 
-      <p className="profile_email">{authUser.email}</p>
-    </div>
+        {editedName !== null ? (
+          <>
+            <div className="edit_name_input">
+              <input
+                type="text"
+                ref={nameInputRef}
+                value={editedName}
+                onChange={(e) => {
+                  setEditedName(e.target.value);
+                }}
+              />
+              <div className="edit_name_buttons">
+                <button
+                  className="save_button"
+                  disabled={editedName.trim() === authUser.name}
+                  onClick={changeUserName}
+                >
+                  Save
+                </button>
+
+                <button
+                  className="cancel_button"
+                  onClick={() => {
+                    setEditedName(null);
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <h2 className="profile_name">
+            {authUser.name}
+            <button
+              onClick={() => {
+                setEditedName(authUser?.name || null);
+              }}
+            >
+              📝
+            </button>
+          </h2>
+        )}
+
+        <p className="profile_email">{authUser.email}</p>
+      </div>
+    </>
   );
 };
 

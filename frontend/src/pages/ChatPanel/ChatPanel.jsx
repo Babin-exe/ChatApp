@@ -807,6 +807,7 @@ const ChatPanel = ({
         inputRef={inputRef}
         replyToMessage={replyToMessage}
         setReplyToMessageId={setReplyToMessageId}
+        setReplyToMessage={setReplyToMessage}
         replyToMessageId={replyToMessageId}
       />
 

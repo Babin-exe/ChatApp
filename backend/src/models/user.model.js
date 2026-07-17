@@ -14,26 +14,33 @@ const sessionSchema = new mongoose.Schema(
 
 const userSchema = new mongoose.Schema(
   {
+    // Profile
     name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
+    profilePic: { type: String },
+    about: { type: String, default: "", maxlength: 120 },
+
+    //Authenticaiotn
     googleSub: { type: String, sparse: true, unique: true },
+    email: { type: String, required: true, unique: true },
+
     authProvider: {
       type: String,
       enum: ["google", "local"],
       default: "google",
       required: true,
     },
+
     isVerified: { type: Boolean, default: false },
+
     sessions: [sessionSchema],
-    profilePic: { type: String },
+
+    //Searching
     nameSearch: { type: String, default: "" },
     emailSearch: { type: String, default: "" },
 
-
+    //Google sync
     googleName: { type: String, default: "" },
-    googleProfilePic: { type: String, defaul: "" },
-    
-
+    googleProfilePic: { type: String, default: "" },
   },
   { timestamps: true }
 );

@@ -23,17 +23,15 @@ const EditMessageView = ({
 
   return (
     <div className="chat-message-edit">
-      <div className="chat-message-input">
-        <input
-          type="text"
-          className="chat-message-input-field"
-          value={editedText}
-          onChange={(e) => setEditedText(e.target.value)}
-          onKeyDown={handleKeyDown}
-          autoFocus
-          placeholder="Edit your message..."
-        />
-      </div>
+      <textarea
+        className="chat-message-edit-field"
+        value={editedText}
+        onChange={(e) => setEditedText(e.target.value)}
+        onKeyDown={handleKeyDown}
+        autoFocus
+        rows={1}
+        placeholder="Edit your message..."
+      />
 
       <div className="chat-message-edit-actions">
         <button type="button" className="cancle_edited" onClick={onCancel}>
@@ -46,7 +44,7 @@ const EditMessageView = ({
           disabled={isUnchanged || isEmpty}
           onClick={onSend}
         >
-          Send
+          Save
         </button>
       </div>
     </div>

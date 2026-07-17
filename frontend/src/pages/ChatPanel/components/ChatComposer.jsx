@@ -1,3 +1,6 @@
+const truncateText = (text, maxLength = 40) =>
+  text.length > maxLength ? `${text.slice(0, maxLength)}...` : text;
+
 const ChatComposer = ({
   handleSendMessage,
   newMessage,
@@ -16,28 +19,32 @@ const ChatComposer = ({
   replyToMessage,
   replyToMessageId,
   setReplyToMessageId,
+  setReplyToMessage,
 }) => {
+  const clearReply = () => {
+    setReplyToMessageId(null);
+    setReplyToMessage(null);
+  };
+
   return (
     <>
       {replyToMessageId && (
         <div className="reply_popup">
-          <p>
-            Replying to :
-            {replyToMessage?.length > 40
-              ? " " + replyToMessage.slice(0, 40) + "..."
-              : " " + replyToMessage}
-          </p>
-          <span>
-            <button
-              onClick={() => {
-                console.log("Gonna do some stuff");
-                setReplyToMessageId(null);
-                
-              }}
-            >
-              <img src="./close.png" height={20} width={20} alt="" />
-            </button>
-          </span>
+          <div className="reply_popup-content">
+            <span className="reply_popup-label">Replying to</span>
+            <span className="reply_popup-text">
+              {replyToMessage ? truncateText(replyToMessage) : "Message"}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            className="reply_popup-close"
+            onClick={clearReply}
+            aria-label="Cancel reply"
+          >
+            <img src="/close.png" height={16} width={16} alt="" aria-hidden="true" />
+          </button>
         </div>
       )}
 
