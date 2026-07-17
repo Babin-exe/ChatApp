@@ -29,8 +29,6 @@ export const SocketContextProvider = ({ children }) => {
 
   const [editedMessage, setEditedMessage] = useState(null);
 
-  
-
   const openConversation = useCallback((selectedContactId) => {
     const normalizeId = selectedContactId ? String(selectedContactId) : null;
     const ws = socketRef.current;
@@ -57,6 +55,9 @@ export const SocketContextProvider = ({ children }) => {
     try {
       const res = await api.get("/api/auth/me");
       if (res.data.success) {
+
+        console.log(res.data.user);
+        
         setAuthUser(res.data.user);
         return res.data.user;
       }

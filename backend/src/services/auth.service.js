@@ -105,13 +105,17 @@ export const googleAuthService = async (credential) => {
       profilePic: picture || "",
       isVerified: true,
       authProvider: "google",
+      googleName: name || "",
+      googleProfilePic: picture || "",
     });
   } else {
     user.googleSub = user.googleSub || sub;
     user.authProvider = "google";
     user.isVerified = true;
-    if (name && user.name !== name) user.name = name;
-    if (picture && user.profilePic !== picture) user.profilePic = picture;
+
+    if (name && user.googleName !== name) user.googleName = name;
+    if (picture && user.googleProfilePic !== picture)
+      user.googleProfilePic = picture;
   }
 
   const now = new Date();
@@ -135,14 +139,20 @@ export const googleAuthService = async (credential) => {
 };
 
 export const changeNameService = async (userId, name) => {
-  if (!userId || !name) {throw new HttpError("UserId and name required", 400);}
+  if (!userId || !name) {
+    throw new HttpError("UserId and name required", 400);
+  }
 
   const trimmedName = name?.trim();
-  if (!trimmedName){ throw new HttpError("Name cannot be empty", 400);}
+  if (!trimmedName) {
+    throw new HttpError("Name cannot be empty", 400);
+  }
 
   const user = await User.findById(userId);
 
-  if (!user) {throw new HttpError("User not found", 404);}
+  if (!user) {
+    throw new HttpError("User not found", 404);
+  }
 
   user.name = trimmedName;
   await user.save();

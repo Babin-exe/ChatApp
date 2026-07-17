@@ -16,20 +16,23 @@ const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-
-
-
-
     googleSub: { type: String, sparse: true, unique: true },
-    authProvider: { type: String, enum: ["google", "local"], default: "google", required: true },
-
-
+    authProvider: {
+      type: String,
+      enum: ["google", "local"],
+      default: "google",
+      required: true,
+    },
     isVerified: { type: Boolean, default: false },
     sessions: [sessionSchema],
     profilePic: { type: String },
-    
     nameSearch: { type: String, default: "" },
     emailSearch: { type: String, default: "" },
+
+
+    googleName: { type: String, default: "" },
+    googleProfilePic: { type: String, defaul: "" },
+    
 
   },
   { timestamps: true }
@@ -46,10 +49,5 @@ userSchema.index({ isVerified: 1, emailSearch: 1 });
 
 userSchema.index({ "sessions.expiresAt": 1 });
 
-
-
 const User = mongoose.model("User", userSchema);
 export default User;
-
-
-
