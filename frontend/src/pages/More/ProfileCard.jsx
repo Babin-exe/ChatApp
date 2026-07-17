@@ -5,9 +5,18 @@ import api from "../../lib/api.js";
 
 const ProfileCard = ({ setActiveView }) => {
   const { authUser, refreshAuthUser } = UseSocketContext();
+
   const inputRef = useRef(null);
   const nameInputRef = useRef(null);
   const [editedName, setEditedName] = useState(null);
+
+  const date = new Date(authUser?.createdAt);
+
+  const formatted = date.toLocaleDateString("en-US", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 
   useEffect(() => {
     if (editedName !== null) {
@@ -78,6 +87,7 @@ const ProfileCard = ({ setActiveView }) => {
             referrerPolicy="no-referrer"
             className="profile_pic_image"
           />
+
           <button
             className="profile_pic_edit_btn"
             title="Change Profile Picture"
@@ -148,7 +158,34 @@ const ProfileCard = ({ setActiveView }) => {
           </h2>
         )}
 
-        <p className="profile_email">{authUser.email}</p>
+        <p>
+          username :
+          {authUser?.username
+            ? authUser.username
+            : "@" +
+              authUser.name +
+              authUser.name[0].toLocaleLowerCase() +
+              authUser.name[authUser.name.length - 1].toLocaleLowerCase() +
+              "_"}
+        </p>
+
+        <p className="profile_about">
+          📝 About: {authUser.about || "No bio yet"}
+        </p>
+
+        <p className="profile_authenticator">
+          <strong>Connected with :</strong>{" "}
+          {authUser.authProvider.charAt(0).toUpperCase() +
+            authUser.authProvider.slice(1)}
+        </p>
+
+        <p className="profile_email">
+          <strong>Email:</strong> {authUser.email}
+        </p>
+
+        <p className="profile_creation">
+          <strong>Member Since:</strong> {formatted}
+        </p>
       </div>
     </>
   );

@@ -38,8 +38,12 @@ export const getMe = asyncHandler(async (req, res) => {
     user: {
       id: user._id,
       name: user.name,
+      username: user.username,
       email: user.email,
       profilePic: user.profilePic,
+      about: user.about,
+      authProvider: user.authProvider,
+      createdAt: user.createdAt,
     },
   });
 });

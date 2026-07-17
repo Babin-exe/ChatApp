@@ -16,8 +16,22 @@ const userSchema = new mongoose.Schema(
   {
     // Profile
     name: { type: String, required: true },
-    profilePic: { type: String },
-    about: { type: String, default: "", maxlength: 120 },
+    profilePic: { type: String, default: "" },
+    about: {
+      type: String,
+      default: "",
+      maxlength: 120,
+    },
+    username: {
+      type: String,
+      required: true,
+      unique: true,
+      trim: true,
+      lowercase: true,
+      minlength: 3,
+      maxlength: 20,
+      match: /^[a-z0-9_.]+$/,
+    },
 
     //Authenticaiotn
     googleSub: { type: String, sparse: true, unique: true },
@@ -37,6 +51,7 @@ const userSchema = new mongoose.Schema(
     //Searching
     nameSearch: { type: String, default: "" },
     emailSearch: { type: String, default: "" },
+    usernameSearch: { type: String, default: "" },
 
     //Google sync
     googleName: { type: String, default: "" },
@@ -48,13 +63,15 @@ const userSchema = new mongoose.Schema(
 userSchema.pre("save", function (next) {
   this.nameSearch = (this.name || "").trim().toLowerCase();
   this.emailSearch = (this.email || "").trim().toLowerCase();
+  this.usernameSearch = (this.username || "").trim().toLowerCase();
+
   next();
 });
 
 userSchema.index({ isVerified: 1, nameSearch: 1 });
 userSchema.index({ isVerified: 1, emailSearch: 1 });
-
 userSchema.index({ "sessions.expiresAt": 1 });
+userSchema.index({ isVerified: 1, usernameSearch: 1 });
 
 const User = mongoose.model("User", userSchema);
 export default User;

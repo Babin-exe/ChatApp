@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
 import cloudinary from "../lib/cloudinary.js";
 import { uploadImageToCloudinary } from "./cloudinaryUploader.service.js";
+import generateUserName from "../utils/generateUsername.js";
 
 const googleClient = new OAuth2Client();
 
@@ -57,6 +58,8 @@ export const updateProfileService = async (userId, profilePicBuffer) => {
     name: updatedUser.name,
     email: updatedUser.email,
     profilePic: updatedUser.profilePic,
+    username: updatedUser.username,
+    about: updatedUser.about,
   };
 };
 
@@ -98,16 +101,29 @@ export const googleAuthService = async (credential) => {
   }
 
   if (!user) {
-    user = await User.create({
-      name: name || email.split("@")[0],
-      email,
-      googleSub: sub,
-      profilePic: picture || "",
-      isVerified: true,
-      authProvider: "google",
-      googleName: name || "",
-      googleProfilePic: picture || "",
-    });
+    const displayName = name || email.split("@")[0];
+    while (true) {
+      try {
+        const username = await generateUserName(displayName);
+        user = await User.create({
+          name: displayName,
+          email,
+          googleSub: sub,
+          profilePic: picture || "",
+          isVerified: true,
+          authProvider: "google",
+          googleName: name || "",
+          googleProfilePic: picture || "",
+          username: username,
+        });
+        break;
+      } catch (error) {
+        if (error.code === 11000 && error.keyPattern?.username) {
+          continue;
+        }
+        throw error;
+      }
+    }
   } else {
     user.googleSub = user.googleSub || sub;
     user.authProvider = "google";
@@ -133,6 +149,7 @@ export const googleAuthService = async (credential) => {
       name: user.name,
       email: user.email,
       profilePic: user.profilePic,
+      username: user.username,
     },
     token,
   };
