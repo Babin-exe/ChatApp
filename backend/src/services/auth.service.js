@@ -2,7 +2,6 @@ import User from "../models/user.model.js";
 import HttpError from "../utils/HttpError.js";
 import jwt from "jsonwebtoken";
 import { OAuth2Client } from "google-auth-library";
-import cloudinary from "../lib/cloudinary.js";
 import { uploadImageToCloudinary } from "./cloudinaryUploader.service.js";
 import generateUserName from "../utils/generateUsername.js";
 

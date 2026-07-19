@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 const EditMessageView = ({
   editedText,
   setEditedText,
@@ -5,18 +7,27 @@ const EditMessageView = ({
   onSend,
   onCancel,
 }) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const isUnchanged = editedText.trim() === originalMessage;
   const isEmpty = editedText.trim() === "";
+
+  const handleSend = async () => {
+    if (isSubmitting || isUnchanged || isEmpty) return;
+    setIsSubmitting(true);
+    try {
+      await onSend();
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      if (!isUnchanged && !isEmpty) {
-        onSend();
-      }
+      handleSend();
     }
 
-    if (e.key === "Escape") {
+    if (e.key === "Escape" && !isSubmitting) {
       onCancel();
     }
   };
@@ -29,23 +40,34 @@ const EditMessageView = ({
         onChange={(e) => setEditedText(e.target.value)}
         onKeyDown={handleKeyDown}
         autoFocus
+        disabled={isSubmitting}
         rows={1}
         placeholder="Edit your message..."
       />
 
       <div className="chat-message-edit-actions">
-        <button type="button" className="cancle_edited" onClick={onCancel}>
-          Cancel
-        </button>
+        <span className="chat-message-edit-hint">
+          escape to cancel • enter to save
+        </span>
+        <div className="chat-message-edit-buttons">
+          <button 
+            type="button" 
+            className="cancle_edited" 
+            onClick={onCancel}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </button>
 
-        <button
-          type="button"
-          className="send_edited"
-          disabled={isUnchanged || isEmpty}
-          onClick={onSend}
-        >
-          Save
-        </button>
+          <button
+            type="button"
+            className="send_edited"
+            disabled={isUnchanged || isEmpty || isSubmitting}
+            onClick={handleSend}
+          >
+            {isSubmitting ? "Saving..." : "Save"}
+          </button>
+        </div>
       </div>
     </div>
   );

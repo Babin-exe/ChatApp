@@ -168,7 +168,27 @@ const ChatMessageItem = ({
               )}
 
               <div className="bubble-content">
-                {isEditing ? (
+                <div 
+                  className="original-message-content" 
+                  style={{ 
+                    opacity: isEditing ? 0.3 : 1, 
+                    filter: isEditing ? "blur(1px)" : "none", 
+                    transition: "all 0.2s ease",
+                    pointerEvents: isEditing ? "none" : "auto"
+                  }}
+                >
+                  {m.type === "image" && (
+                    <img
+                      src={m.image?.url}
+                      alt="sent attachment"
+                      className={`chat-image-message ${m.content ? "has-text" : "no-text"}`}
+                    />
+                  )}
+
+                  {m.content && <p>{m.content}</p>}
+                </div>
+
+                {isEditing && (
                   <EditMessageView
                     editedText={editedText}
                     setEditedText={setEditedText}
@@ -180,18 +200,6 @@ const ChatMessageItem = ({
                       inputRef.current?.blur();
                     }}
                   />
-                ) : (
-                  <>
-                    {m.type === "image" && (
-                      <img
-                        src={m.image?.url}
-                        alt="sent attachment"
-                        className="chat-image-message"
-                      />
-                    )}
-
-                    {m.content && <p>{m.content}</p>}
-                  </>
                 )}
               </div>
             </div>

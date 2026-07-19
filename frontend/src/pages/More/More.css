@@ -3,6 +3,7 @@
   flex-direction: column;
   align-items: center;
   min-height: 100vh;
+  min-width: 360px;
   padding: 2rem 1rem;
   background:
     radial-gradient(circle at 5% 0%, #ffe6c2 0%, transparent 35%),
@@ -10,86 +11,149 @@
     linear-gradient(145deg, #fffaf3 0%, #fff1e1 100%);
 }
 
-.menu_top {
-  width: min(400px, 100%);
+.dashboard-container {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 1.5rem;
-  margin-top: 1.5rem;
-  background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(237, 220, 200, 0.65);
-  border-radius: 24px;
-  box-shadow:
-    0 4px 6px rgba(75, 51, 28, 0.04),
-    0 12px 32px rgba(75, 51, 28, 0.09);
-  animation: more-rise 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  gap: 2rem;
+  animation: more-rise 400ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.menu_top::before {
-  content: "More";
-  display: block;
+.dashboard-header {
+  text-align: left;
+  padding: 1rem 0 0 0;
+}
+
+.dashboard-header h1 {
   font-family: "Space Grotesk", "Manrope", sans-serif;
-  font-size: 1.45rem;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #272a36;
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.02em;
+}
+
+.dashboard-header p {
+  font-family: "Manrope", sans-serif;
+  font-size: 1.1rem;
+  color: #69717f;
+  margin: 0;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.dashboard-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 24px;
+  padding: 2rem;
+  cursor: pointer;
+  box-shadow:
+    0 4px 24px rgba(75, 51, 28, 0.04),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+  transition: all 300ms cubic-bezier(0.22, 1, 0.36, 1);
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+}
+
+.dashboard-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow:
+    0 12px 40px rgba(75, 51, 28, 0.12),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.dashboard-card:hover::before {
+  opacity: 1;
+}
+
+.dashboard-card:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.card-icon {
+  font-size: 2.2rem;
+  margin-bottom: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  background: transparent;
+  z-index: 1;
+  overflow: visible;
+  transition: transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.profile-card .card-icon {
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
+}
+
+.card-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.profile-card .card-icon img {
+  object-fit: cover;
+}
+
+.dashboard-card h3 {
+  font-family: "Space Grotesk", "Manrope", sans-serif;
+  font-size: 1.4rem;
   font-weight: 700;
   color: #272a36;
-  letter-spacing: -0.01em;
-  margin-bottom: 6px;
+  margin: 0 0 0.5rem 0;
+  z-index: 1;
 }
 
-.moreOption {
-  background: transparent;
-  border-radius: 14px;
-  overflow: hidden;
-  transition:
-    background 180ms ease,
-    transform 160ms ease;
+.dashboard-card p {
+  font-family: "Manrope", sans-serif;
+  font-size: 0.95rem;
+  color: #69717f;
+  margin: 0;
+  line-height: 1.5;
+  z-index: 1;
 }
 
-.moreOption:hover {
-  background: rgba(221, 94, 61, 0.07);
-  transform: translateX(3px);
-}
-
-.moreOption button {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  background: none;
-  border: none;
-  font-family: "Manrope", "Segoe UI", sans-serif;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #272a36;
-  text-align: left;
-  cursor: pointer;
-  letter-spacing: 0.01em;
-  transition: color 160ms ease;
-}
-
-.moreOption button:hover {
-  color: #dd5e3d;
-}
-
-.option_profile button::before {
-  content: "👤";
-  font-size: 1.15rem;
-}
-.option_themes button::before {
-  content: "🎨";
-  font-size: 1.15rem;
-}
-.option_settings button::before {
-  content: "⚙️";
-  font-size: 1.15rem;
-}
-
-.moreOption + .moreOption {
-  border-top: 1px solid rgba(237, 220, 200, 0.55);
+/* Card icon hover — uniform gentle scale */
+.dashboard-card:hover .card-icon {
+  transform: scale(1.08);
 }
 
 .profile_main {
@@ -378,12 +442,196 @@
   }
 }
 
-@media (max-width: 480px) {
-  .profile_main,
-  .menu_top {
-    margin-top: 1rem;
-    padding: 1.5rem 1.25rem;
-    border-radius: 20px;
+.profile-full-page {
+  width: 100%;
+  max-width: 600px;
+  display: flex;
+  flex-direction: column;
+  animation: slide-in 0.3s ease;
+  box-sizing: border-box;
+}
+
+.profile-full-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 2.5rem;
+}
+
+.profile-full-header h1 {
+  font-family: "Space Grotesk", "Manrope", sans-serif;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #272a36;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.profile-full-body {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.profile-pic-section {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.profile-section-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 20px;
+  padding: 24px 32px;
+  box-shadow: 0 4px 24px rgba(75, 51, 28, 0.04);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s ease;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.profile-section-card:hover {
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 8px 32px rgba(75, 51, 28, 0.08);
+}
+
+.profile-section-label {
+  font-family: "Space Grotesk", "Manrope", sans-serif;
+  color: #dd5e3d;
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.profile-section-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.profile-section-value {
+  font-size: 1.25rem;
+  color: #272a36;
+  font-weight: 600;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.profile-edit-btn {
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  transition:
+    color 0.2s ease,
+    background 0.2s ease;
+}
+
+.profile-edit-btn:hover {
+  background: rgba(237, 220, 200, 0.5);
+  color: #dd5e3d;
+}
+
+.profile-helper-text {
+  font-size: 0.95rem;
+  color: #69717f;
+  margin-top: 12px;
+  font-weight: 500;
+}
+
+.profile-inline-edit {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 16px;
+}
+
+.profile-inline-input {
+  flex: 1;
+  font-size: 1.25rem;
+  color: #272a36;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid #eddcc8;
+  border-radius: 12px;
+  padding: 12px 16px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.profile-inline-input:focus {
+  border-color: #dd5e3d;
+}
+
+.profile-inline-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.profile-action-btn {
+  background: rgba(237, 220, 200, 0.45);
+  border: 1px solid rgba(237, 220, 200, 0.8);
+  color: #69717f;
+  cursor: pointer;
+  padding: 12px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.profile-action-btn:hover:not(:disabled) {
+  background: #272a36;
+  color: #fff;
+  border-color: #272a36;
+  transform: translateY(-2px);
+}
+
+.profile-action-btn.save:hover:not(:disabled) {
+  background: #dd5e3d;
+  color: #fff;
+  border-color: #dd5e3d;
+}
+
+.profile-action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .content_view {
+    padding: 1.5rem 1rem;
+  }
+
+  .dashboard-header h1 {
+    font-size: 2rem;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-full-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .profile-full-header {
+    margin-bottom: 1.5rem;
   }
 
   .profile_pic_wrapper {
@@ -391,7 +639,118 @@
     height: 100px;
   }
 
-  .profile_name {
-    font-size: 1.2rem;
+  .profile-pic-section {
+    margin-bottom: 1rem;
+  }
+
+  .profile-section-card {
+    padding: 18px 20px;
+    border-radius: 16px;
+  }
+
+  .profile-section-value {
+    font-size: 1.05rem;
+  }
+
+  .profile-inline-edit {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .profile-inline-input {
+    font-size: 1rem;
+    padding: 10px 14px;
+  }
+
+  .profile-inline-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .profile-action-btn {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .content_view {
+    padding: 1rem 0.75rem;
+  }
+
+  .dashboard-header h1 {
+    font-size: 1.6rem;
+  }
+
+  .dashboard-header p {
+    font-size: 0.95rem;
+  }
+
+  .dashboard-card {
+    padding: 1.5rem;
+    border-radius: 18px;
+  }
+
+  .card-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 1.8rem;
+    border-radius: 14px;
+    margin-bottom: 1rem;
+  }
+
+  .dashboard-card h3 {
+    font-size: 1.15rem;
+  }
+
+  .profile-full-header {
+    gap: 10px;
+    margin-bottom: 1rem;
+  }
+
+  .profile-full-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .profile_pic_wrapper {
+    width: 90px;
+    height: 90px;
+  }
+
+  .profile_pic_edit_btn {
+    width: 30px;
+    height: 30px;
+  }
+
+  .profile_pic_edit_btn svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .profile-section-card {
+    padding: 14px 16px;
+    border-radius: 14px;
+  }
+
+  .profile-section-label {
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+  }
+
+  .profile-section-value {
+    font-size: 0.95rem;
+  }
+
+  .profile-helper-text {
+    font-size: 0.8rem;
+  }
+
+  .profile-edit-btn {
+    padding: 8px;
+  }
+
+  .back_button button {
+    padding: 5px 10px;
+    font-size: 0.8rem;
   }
 }
