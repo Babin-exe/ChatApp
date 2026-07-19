@@ -27,6 +27,8 @@ const ChatStream = ({
   setReplyToMessage,
   inputRef,
   messageRefs,
+  imageSelected,
+  setImageSelected
 }) => {
   return (
     <article
@@ -82,6 +84,11 @@ const ChatStream = ({
             setReplyToMessage={setReplyToMessage}
             inputRef={inputRef}
             messageRefs={messageRefs}
+
+            ////////////////
+            imageSelected={imageSelected}
+            setImageSelected={setImageSelected}
+          //////////////////
           />
         );
       })}

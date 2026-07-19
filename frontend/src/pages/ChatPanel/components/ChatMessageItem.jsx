@@ -26,6 +26,10 @@ const ChatMessageItem = ({
   setReplyToMessage,
   inputRef,
   messageRefs,
+  //////
+  imageSelected,
+  setImageSelected
+  //////
 }) => {
   const isReactionOpen = m._id === currentMessageId;
   const bubbleWrapRef = useRef(null);
@@ -124,9 +128,8 @@ const ChatMessageItem = ({
     <div className={`chat-message-row ${isIncoming ? "incoming" : "outgoing"}`}>
       <div className="chat-message-content">
         <div
-          className={`chat-message-main ${
-            isReactionOpen ? "is-reaction-open" : ""
-          }`}
+          className={`chat-message-main ${isReactionOpen ? "is-reaction-open" : ""
+            }`}
         >
           {isReactionOpen && (
             <QuickReaction
@@ -139,9 +142,8 @@ const ChatMessageItem = ({
 
           <div
             ref={bubbleWrapRef}
-            className={`chat-message-bubble-wrap${
-              reactionGroups.length > 0 ? " has-reactions" : ""
-            }${isReactionOpen ? " is-picker-open" : ""}`}
+            className={`chat-message-bubble-wrap${reactionGroups.length > 0 ? " has-reactions" : ""
+              }${isReactionOpen ? " is-picker-open" : ""}`}
           >
             <div
               className="chat-message-bubble"
@@ -168,17 +170,21 @@ const ChatMessageItem = ({
               )}
 
               <div className="bubble-content">
-                <div 
-                  className="original-message-content" 
-                  style={{ 
-                    opacity: isEditing ? 0.3 : 1, 
-                    filter: isEditing ? "blur(1px)" : "none", 
+                <div
+                  className="original-message-content"
+                  style={{
+                    opacity: isEditing ? 0.3 : 1,
+                    filter: isEditing ? "blur(1px)" : "none",
                     transition: "all 0.2s ease",
                     pointerEvents: isEditing ? "none" : "auto"
                   }}
                 >
                   {m.type === "image" && (
                     <img
+                      onClick={() => {
+                        console.log("Clicked on the image i guess");
+                        setImageSelected(m.image?.url);
+                      }}
                       src={m.image?.url}
                       alt="sent attachment"
                       className={`chat-image-message ${m.content ? "has-text" : "no-text"}`}
@@ -210,9 +216,8 @@ const ChatMessageItem = ({
                   <button
                     key={group.emoji}
                     type="button"
-                    className={`reaction-pill ${
-                      group.users.some((user) => user.isMine) ? "mine" : ""
-                    }`}
+                    className={`reaction-pill ${group.users.some((user) => user.isMine) ? "mine" : ""
+                      }`}
                     title={group.users
                       .map((user) => `${user.name} reacted ${group.emoji}`)
                       .join("\n")}

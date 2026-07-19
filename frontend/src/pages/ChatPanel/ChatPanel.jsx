@@ -144,6 +144,9 @@ const ChatPanel = ({
 
   const messageRefs = useRef({});
 
+  const [imageSelected, setImageSelected] = useState(null);
+
+
   useEffect(() => {
     if (!typingAudioRef.current) {
       const audio = new Audio("/typing.wav");
@@ -788,6 +791,8 @@ const ChatPanel = ({
         setReplyToMessage={setReplyToMessage}
         inputRef={inputRef}
         messageRefs={messageRefs}
+        imageSelected={imageSelected}
+        setImageSelected={setImageSelected}
       />
 
       <ChatComposer
@@ -822,6 +827,28 @@ const ChatPanel = ({
           >
             {sending ? "Retrying..." : "Retry send"}
           </button>
+        </div>
+      )}
+
+      {imageSelected && (
+        <div className="fullscreen-image-overlay" onClick={() => setImageSelected(null)}>
+          <button
+            type="button"
+            className="fullscreen-image-close"
+            onClick={() => setImageSelected(null)}
+            aria-label="Close fullscreen image"
+          >
+            <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" strokeWidth="2" fill="none">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+          <img
+            src={imageSelected}
+            alt="Fullscreen attachment"
+            className="fullscreen-image-content"
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
       )}
     </section>

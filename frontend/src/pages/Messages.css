@@ -7,7 +7,8 @@
 }
 
 .messages-shell {
-  width: min(1160px, 100%);
+  width: 100%;
+  max-width: 1160px;
   min-width: 680px;
   margin: 0 auto;
   height: calc(100vh - clamp(28px, 4vw, 48px));
@@ -26,6 +27,7 @@
 .messages-sidebar,
 .messages-chat {
   min-height: 0;
+  min-width: 0;
   display: flex;
   flex-direction: column;
 }
@@ -37,7 +39,8 @@
 }
 
 .messages-state {
-  width: min(1160px, 100%);
+  width: 100%;
+  max-width: 1160px;
   margin: 0 auto;
   min-height: calc(100vh - clamp(28px, 4vw, 48px));
   border: 1px solid var(--border);
