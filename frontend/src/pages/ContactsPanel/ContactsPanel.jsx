@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import "./ContactsPanel.css";
-import { UseSocketContext } from "../context/socketContext";
+import { UseSocketContext } from "../../context/socketContext.js";
 import { useNavigate } from "react-router-dom";
 
 const ContactsPanel = ({
@@ -82,7 +82,7 @@ const ContactsPanel = ({
         <div className="header_more">
           <button
             onClick={() => {
-              console.log("User just clicked more");
+
               navigate("/more");
             }}
           >

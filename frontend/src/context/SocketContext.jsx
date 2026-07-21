@@ -211,7 +211,7 @@ export const SocketContextProvider = ({ children }) => {
               );
 
               if (senderId === String(selectedContactRef.current || "")) {
-                console.log("Is this running??");
+
 
                 ws.send(
                   JSON.stringify({
@@ -319,8 +319,9 @@ export const SocketContextProvider = ({ children }) => {
 
           ////////////////////////////////////////////////
           case "request:received": {
-            console.log("Request Event added:" + payload.data);
+
             setRequestEvent(payload.data);
+            break;
           }
           /////////////////////////////////////////////////
 
@@ -344,7 +345,7 @@ export const SocketContextProvider = ({ children }) => {
       if (!stopClearingOnlineUsersRef.current) {
         stopClearingOnlineUsersRef.current =
           setTimeout(() => {
-            console.log("we are clearing the online users");
+
             setOnlineUsers(new Set());
             stopClearingOnlineUsersRef.current = null;
           },

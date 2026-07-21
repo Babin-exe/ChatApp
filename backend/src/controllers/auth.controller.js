@@ -91,7 +91,7 @@ export const changeBio = asyncHandler(async (req, res) => {
   const userId = req.user?._id;
   const { bio } = req.body;
 
-  console.log(bio);
+
 
   const user = await changeBioService(userId, bio);
 

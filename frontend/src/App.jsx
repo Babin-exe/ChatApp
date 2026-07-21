@@ -2,7 +2,7 @@ import { Navigate, Routes, Route } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 import LandingPage from "./pages/LandingPage/LandingPage.jsx";
 import Login from "./pages/Login/Login.jsx";
-import Messages from "./pages/Messages.jsx";
+import Messages from "./pages/Messages/Messages.jsx";
 import { SocketContextProvider } from "./context/SocketContext.jsx";
 import { UseSocketContext } from "./context/socketContext.js";
 import More from "./pages/More/More.jsx";

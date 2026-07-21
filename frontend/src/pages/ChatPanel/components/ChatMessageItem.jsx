@@ -179,7 +179,7 @@ const ChatMessageItem = ({
                   {m.type === "image" && (
                     <img
                       onClick={() => {
-                        console.log("Clicked on the image i guess");
+
                         setImageSelected(m.image?.url);
                       }}
                       src={m.image?.url}

@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import "./Messages.css";
-import ContactsPanel from "./ContactsPanel.jsx";
-import ChatPanel from "./ChatPanel/ChatPanel.jsx";
+import ContactsPanel from "../ContactsPanel/ContactsPanel.jsx";
+import ChatPanel from "../ChatPanel/ChatPanel.jsx";
 import { toast } from "react-hot-toast";
-import api from "../lib/api.js";
-import { useMediaQuery } from "../hooks/useMediaQuery.js";
-import { UseSocketContext } from "../context/socketContext.js";
+import api from "../../lib/api.js";
+import { useMediaQuery } from "../../hooks/useMediaQuery.js";
+import { UseSocketContext } from "../../context/socketContext.js";
 
 const MOBILE_BREAKPOINT = "(max-width: 768px)";
 
@@ -26,7 +26,7 @@ const Messages = () => {
   const [blockedUsers, setBlockedUsers] = useState([]);
   const [blockedLoading, setBlockedLoading] = useState(false);
 
-  const { requestEvent, setRequestEvent, setSelectedContactInContext } = UseSocketContext();
+  const { requestEvent, setSelectedContactInContext } = UseSocketContext();
 
   const fetchContacts = useCallback(async () => {
     try {
@@ -50,8 +50,6 @@ const Messages = () => {
       setRequestsLoading(true);
       const res = await api.get("/api/chats/requests/incoming");
       setIncomingRequest(res.data.requests || []);
-      console.log(incomingRequests);
-      console.log(res.data.requests);
     } catch (error) {
       toast.error(
         error.response?.data?.message || "Failed to load incoming request"
@@ -108,11 +106,11 @@ const Messages = () => {
   }, [selectedContact, setSelectedContactInContext]);
 
   useEffect(() => {
-    console.log("Request array must be changed");
+
     if (requestEvent) {
       fetchIncomingRequest();
     }
-  }, [requestEvent]);
+  }, [requestEvent, fetchIncomingRequest]);
 
   const handleSendRequest = async (receiverId) => {
     const key = `request-${receiverId}`;

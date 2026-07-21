@@ -668,7 +668,7 @@ const ChatPanel = ({
 
       if (activeMessagesContactIdRef.current !== contactId) return;
 
-      console.log(savedMessage);
+
 
       setMessages((prev) => {
         if (prev.some((message) => message._id === savedMessage._id))
@@ -713,7 +713,7 @@ const ChatPanel = ({
 
     const sent = await sendCurrentMessage(content, selectedImage);
 
-    console.log(sent);
+
 
     setReplyToMessageId(null);
     setReplyToMessage(null);

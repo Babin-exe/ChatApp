@@ -80,7 +80,7 @@ const ProfileCard = ({ setActiveView }) => {
     }
 
     try {
-      console.log("This is what we have: " + editedBio);
+
 
       await api.patch("/api/auth/update_bio", { bio: editedBio });
 
