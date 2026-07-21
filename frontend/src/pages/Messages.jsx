@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import "./Messages.css";
 import ContactsPanel from "./ContactsPanel.jsx";
 import ChatPanel from "./ChatPanel/ChatPanel.jsx";
@@ -26,7 +26,7 @@ const Messages = () => {
   const [blockedUsers, setBlockedUsers] = useState([]);
   const [blockedLoading, setBlockedLoading] = useState(false);
 
-  const { setSelectedContactInContext } = UseSocketContext();
+  const { requestEvent, setRequestEvent, setSelectedContactInContext } = UseSocketContext();
 
   const fetchContacts = useCallback(async () => {
     try {
@@ -50,6 +50,8 @@ const Messages = () => {
       setRequestsLoading(true);
       const res = await api.get("/api/chats/requests/incoming");
       setIncomingRequest(res.data.requests || []);
+      console.log(incomingRequests);
+      console.log(res.data.requests);
     } catch (error) {
       toast.error(
         error.response?.data?.message || "Failed to load incoming request"
@@ -104,6 +106,13 @@ const Messages = () => {
   useEffect(() => {
     setSelectedContactInContext(selectedContact?._id);
   }, [selectedContact, setSelectedContactInContext]);
+
+  useEffect(() => {
+    console.log("Request array must be changed");
+    if (requestEvent) {
+      fetchIncomingRequest();
+    }
+  }, [requestEvent]);
 
   const handleSendRequest = async (receiverId) => {
     const key = `request-${receiverId}`;

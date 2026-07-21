@@ -19,13 +19,8 @@ import {
 } from "../validation/chat.validation.js";
 
 const router = express.Router();
-
-
-// router.use(arcjetProtection);
-
-
+router.use(arcjetProtection);
 router.get("/contacts", protectRoute, getContacts);
-
 
 router.post(
   "/request/:receiverId",
@@ -41,17 +36,13 @@ router.post(
   validate(chatParamsSchema, "params"),
   acceptChatRequest,
 );
+
 router.post(
   "/decline/:chatId",
   protectRoute,
   validate(chatParamsSchema, "params"),
   declineChatRequest,
 );
-
-
-
-
-
 
 router.get(
   "/messages/:receiverId",
@@ -75,4 +66,3 @@ router.get(
 
 export default router;
 
-       

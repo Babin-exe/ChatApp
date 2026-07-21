@@ -84,11 +84,8 @@ const ChatStream = ({
             setReplyToMessage={setReplyToMessage}
             inputRef={inputRef}
             messageRefs={messageRefs}
-
-            ////////////////
             imageSelected={imageSelected}
             setImageSelected={setImageSelected}
-          //////////////////
           />
         );
       })}

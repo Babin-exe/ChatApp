@@ -545,7 +545,6 @@ const ChatPanel = ({
 
   useEffect(() => {
     setMessages((prev) => {
-      console.log(prev);
       return prev.map((message) =>
         message._id === editedMessage.messageId
           ? { ...message, content: editedMessage.content }
@@ -571,8 +570,18 @@ const ChatPanel = ({
 
     if (myUserId !== senderId) return null;
 
+    if (latest.status === "seen" && latest.seenAt) {
+      return formatTimeAgo(latest.seenAt);
+    } else if (latest.status === "delivered" && latest.deliveredAt) {
+      return formatTimeAgo(latest.deliveredAt);
+    }
+
     return formatTimeAgo(latest.createdAt);
+
   }, [messages, myUserId]);
+
+
+
 
   const handleRetrySend = async () => {
     const content = newMessage.trim();

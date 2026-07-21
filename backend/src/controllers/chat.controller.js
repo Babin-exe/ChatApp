@@ -20,11 +20,27 @@ import {
 import { sendToUser } from "../lib/socket.js";
 import Message from "../models/Message.js";
 
+
+
 export const createChatRequest = asyncHandler(async (req, res) => {
   const senderId = req.user._id;
   const { receiverId } = req.params;
 
   const populatedChat = await createNewChatRequest({ senderId, receiverId });
+
+
+
+  const payload = {
+    type: "request:received",
+    data: {
+      senderId: senderId,
+      senderName: req.user.name,
+      receiverId: receiverId,
+      chatId: populatedChat._id
+    }
+  };
+
+  sendToUser(receiverId, payload);
 
   return res.status(201).json({
     success: true,

@@ -28,9 +28,13 @@ const ContactsPanel = ({
   const [activeTab, setActiveTab] = useState("discover");
   const [openMenuContactId, setOpenMenuContactId] = useState(null);
   const [blockTarget, setBlockTarget] = useState(null);
+  const [unblockTarget, setUnblockTarget] = useState(null);
 
   const blockTargetKey = blockTarget ? `block-${blockTarget._id}` : "";
   const blockingTarget = actionLoadingId === blockTargetKey;
+
+  const unblockTargetKey = unblockTarget ? `unblock-${unblockTarget._id}` : "";
+  const unblockingTarget = actionLoadingId === unblockTargetKey;
 
   const selectContact = (contact) => {
     setOpenMenuContactId(null);
@@ -54,6 +58,20 @@ const ContactsPanel = ({
     const blocked = await onBlockUser(blockTarget._id);
     if (blocked) {
       setBlockTarget(null);
+    }
+  };
+
+  const requestUnblockConfirmation = (contact) => {
+    setUnblockTarget(contact);
+    setOpenMenuContactId(null);
+  };
+
+  const confirmUnblock = async () => {
+    if (!unblockTarget?._id || !onUnblockUser) return;
+
+    const unblocked = await onUnblockUser(unblockTarget._id);
+    if (unblocked) {
+      setUnblockTarget(null);
     }
   };
 
@@ -152,7 +170,6 @@ const ContactsPanel = ({
                   <div key={user._id} className="discover-item">
                     <div className="discover-user">
                       <div className="discover-name">{user.name}</div>
-                      <div className="discover-email">{user.email}</div>
                     </div>
 
                     <button
@@ -196,9 +213,8 @@ const ContactsPanel = ({
                 >
                   <div className="contact-name">
                     <span
-                      className={`presence-dot ${
-                        isOnline ? "is-online" : "is-offline"
-                      }`}
+                      className={`presence-dot ${isOnline ? "is-online" : "is-offline"
+                        }`}
                       aria-label={isOnline ? "Online" : "Offline"}
                       role="img"
                     />
@@ -209,7 +225,6 @@ const ContactsPanel = ({
                       </span>
                     )}
                   </div>
-                  <div className="contact-email">{c.email}</div>
                 </button>
 
                 <button
@@ -231,14 +246,25 @@ const ContactsPanel = ({
                     <button type="button" role="menuitem" disabled>
                       Mute notifications
                     </button>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      className="danger-option"
-                      onClick={() => requestBlockConfirmation(c)}
-                    >
-                      Block
-                    </button>
+                    {c.blockedByCurrentUser ? (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className="danger-option"
+                        onClick={() => requestUnblockConfirmation(c)}
+                      >
+                        Unblock
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        className="danger-option"
+                        onClick={() => requestBlockConfirmation(c)}
+                      >
+                        Block
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -275,7 +301,6 @@ const ContactsPanel = ({
                     <div className="req-name">
                       {request.from?.name || "Unknown"}
                     </div>
-                    <div className="req-email">{request.from?.email || ""}</div>
                   </div>
 
                   <div className="req-button">
@@ -323,16 +348,13 @@ const ContactsPanel = ({
                 <div key={entry._id || user._id} className="request-container">
                   <div className="req-user">
                     <div className="req-name">{user?.name}</div>
-                    <div className="req-email">{user?.email}</div>
                   </div>
 
                   <div className="req-button">
                     <button
                       type="button"
                       disabled={isBusy}
-                      onClick={() => {
-                        onUnblockUser(user._id);
-                      }}
+                      onClick={() => requestUnblockConfirmation(user)}
                     >
                       {isBusy ? "Unblocking..." : "Unblock"}
                     </button>
@@ -372,6 +394,40 @@ const ContactsPanel = ({
                 disabled={blockingTarget}
               >
                 {blockingTarget ? "Blocking..." : "Yes, block"}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {unblockTarget && (
+        <div className="block-confirm-backdrop" role="presentation">
+          <section
+            className="block-confirm"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="unblock-confirm-title"
+          >
+            <h3 id="unblock-confirm-title">Unblock {unblockTarget.name}?</h3>
+            <p>
+              This contact will be able to send you messages and see your profile again.
+            </p>
+
+            <div className="block-confirm-actions">
+              <button
+                type="button"
+                onClick={() => setUnblockTarget(null)}
+                disabled={unblockingTarget}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="danger-option"
+                onClick={confirmUnblock}
+                disabled={unblockingTarget}
+              >
+                {unblockingTarget ? "Unblocking..." : "Yes, unblock"}
               </button>
             </div>
           </section>

@@ -48,10 +48,6 @@ const ChatHeader = ({
             aria-hidden="true"
           />
           <span>{selectedContactIsOnline ? "Online" : "Offline"}</span>
-          <span className="chat-subtitle-sep" aria-hidden="true">
-            •
-          </span>
-          <span className="chat-email">{selectedContact.email}</span>
         </p>
       </div>
 

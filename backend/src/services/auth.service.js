@@ -175,3 +175,25 @@ export const changeNameService = async (userId, name) => {
 
   return user;
 };
+
+export const changeBioService = async (userId, bio) => {
+  if (!userId || !bio) {
+    throw new HttpError("UserId and bio required", 400);
+  }
+
+  const trimmedBio = bio?.trim();
+  if (!trimmedBio) {
+    throw new HttpError("Bio cannot be empty", 400);
+  }
+
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new HttpError("User not found", 404);
+  }
+
+  user.about = trimmedBio;
+  await user.save();
+
+  return user;
+};

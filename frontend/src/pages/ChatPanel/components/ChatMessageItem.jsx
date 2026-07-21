@@ -26,10 +26,7 @@ const ChatMessageItem = ({
   setReplyToMessage,
   inputRef,
   messageRefs,
-  //////
-  imageSelected,
   setImageSelected
-  //////
 }) => {
   const isReactionOpen = m._id === currentMessageId;
   const bubbleWrapRef = useRef(null);
@@ -291,9 +288,11 @@ const ChatMessageItem = ({
             <span className="latest-status">{m.status}</span>
           )}
 
+
           {isLastOutgoing && (
             <span className="latest-sent">{lastOutgoingTimeAgo}</span>
-          )}
+          )
+          }
         </div>
       </div>
     </div>

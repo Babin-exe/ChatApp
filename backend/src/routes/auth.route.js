@@ -5,12 +5,14 @@ import {
   updateProfile,
   googleAuth,
   changeName,
+  changeBio,
 } from "../controllers/auth.controller.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
 import { arcjetProtection } from "../middleware/arcjet.middleware.js";
 import { validate } from "../middleware/validate.middleware.js";
 import {
   googleAuthSchema,
+  updateBioSchema,
   updateNameSchema,
 } from "../validation/auth.validation.js";
 import { upload } from "../middleware/upload.middleware.js";
@@ -36,5 +38,7 @@ router.patch(
   validate(updateNameSchema),
   changeName
 );
+
+router.patch("/update_bio", protectRoute, validate(updateBioSchema), changeBio);
 
 export default router;
