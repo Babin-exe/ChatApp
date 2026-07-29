@@ -197,3 +197,46 @@ export const changeBioService = async (userId, bio) => {
 
   return user;
 };
+
+
+export const changeUserNameService = async (userId, userName) => {
+
+  if (!userId || !userName) {
+    throw new HttpError("UserId and userName required", 400);
+  }
+
+  const trimmedUserName = userName?.trim();
+  if (!trimmedUserName) {
+    throw new HttpError("UserName cannot be empty", 400);
+  }
+
+  const user = await User.findById(userId);
+
+  if (!user) {
+    throw new HttpError("User not found", 404);
+  }
+
+  const existUserName = await User.findOne({ username: trimmedUserName });
+
+  if (existUserName) {
+    throw new HttpError("Username already exists", 400);
+  }
+
+
+  user.username = trimmedUserName;
+  await user.save();
+
+  return user;
+
+};
+
+export const checkUsernameAvailabilityService = async (username) => {
+  if (!username) {
+    throw new HttpError("Username is required", 400);
+  }
+  const trimmedUserName = username?.trim();
+  const existingUser = await User.findOne({ username: trimmedUserName });
+
+  return !existingUser;
+
+};

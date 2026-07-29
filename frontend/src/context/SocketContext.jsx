@@ -318,9 +318,10 @@ export const SocketContextProvider = ({ children }) => {
           }
 
           ////////////////////////////////////////////////
-          case "request:received": {
-
-            setRequestEvent(payload.data);
+          case "request:received":
+          case "request:accepted":
+          case "request:declined": {
+            setRequestEvent({ type: payload.type, data: payload.data, timestamp: Date.now() });
             break;
           }
           /////////////////////////////////////////////////

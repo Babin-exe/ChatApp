@@ -60,6 +60,14 @@ export const acceptChatRequest = asyncHandler(async (req, res) => {
     systemMessage: "Chat request accepted",
   });
 
+  const otherUserId = updatedChat.members.find((member) => member._id.toString() !== acceptorId.toString());
+  if (otherUserId) {
+    sendToUser(otherUserId._id.toString(), {
+      type: "request:accepted",
+      data: updatedChat,
+    });
+  }
+
   return res.status(200).json({
     success: true,
     message: "Chat request accepted successfully",
@@ -74,6 +82,14 @@ export const declineChatRequest = asyncHandler(async (req, res) => {
     actorId: req.user._id,
     systemMessage: "Chat request declined",
   });
+
+  const otherUserId = updatedChat.members.find((member) => member._id.toString() !== req.user._id.toString());
+  if (otherUserId) {
+    sendToUser(otherUserId._id.toString(), {
+      type: "request:declined",
+      data: updatedChat,
+    });
+  }
 
   return res.status(200).json({
     success: true,

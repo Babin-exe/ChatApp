@@ -106,11 +106,19 @@ const Messages = () => {
   }, [selectedContact, setSelectedContactInContext]);
 
   useEffect(() => {
-
     if (requestEvent) {
-      fetchIncomingRequest();
+      if (requestEvent.type === "request:received") {
+        fetchIncomingRequest();
+      } else if (requestEvent.type === "request:accepted") {
+        fetchContacts();
+        fetchDiscoverUsers(searchText);
+      } else if (requestEvent.type === "request:declined") {
+        fetchDiscoverUsers(searchText);
+      } else {
+        fetchIncomingRequest();
+      }
     }
-  }, [requestEvent, fetchIncomingRequest]);
+  }, [requestEvent, fetchIncomingRequest, fetchContacts, fetchDiscoverUsers, searchText]);
 
   const handleSendRequest = async (receiverId) => {
     const key = `request-${receiverId}`;

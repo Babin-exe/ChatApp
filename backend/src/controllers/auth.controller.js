@@ -5,6 +5,8 @@ import {
   googleAuthService,
   changeNameService,
   changeBioService,
+  changeUserNameService,
+  checkUsernameAvailabilityService,
 } from "../services/auth.service.js";
 
 const sessionCookieOptions = {
@@ -98,4 +100,23 @@ export const changeBio = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json({ success: true, message: "Bio updated successfully", user });
+});
+
+
+export const changeUserName = asyncHandler(async (req, res) => {
+  const userId = req.user?._id;
+  const { username } = req.body;
+
+  const user = await changeUserNameService(userId, username);
+
+  return res
+    .status(200)
+    .json({ success: true, message: "Username updated successfully", user });
+});
+
+export const checkUsernameAvailability = asyncHandler(async (req, res) => {
+  const { username } = req.query;
+  const isAvailable = await checkUsernameAvailabilityService(username);
+
+  return res.status(200).json({ success: true, isAvailable });
 });

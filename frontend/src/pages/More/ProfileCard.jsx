@@ -14,6 +14,14 @@ const ProfileCard = ({ setActiveView }) => {
   const bioInputRef = useRef(null);
   const [editedBio, setEditedBio] = useState(null);
 
+  const usernameInputRef = useRef(null);
+  const [editedUsername, setEditedUserName] = useState(null);
+
+
+  const [isChecking, setIsChecking] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
+
+
   const date = new Date(authUser?.createdAt);
 
   const formatted = date.toLocaleDateString("en-US", {
@@ -33,6 +41,82 @@ const ProfileCard = ({ setActiveView }) => {
       bioInputRef?.current?.focus();
     }
   }, [editedBio]);
+
+  useEffect(() => {
+    if (editedUsername !== null) {
+      usernameInputRef?.current?.focus();
+    }
+  }, [editedUsername]);
+
+
+
+  useEffect(() => {
+    let ignore = false;
+    console.log("Username is changing so i have to do some stuff");
+
+    //nothing to chage the name to 
+    if (!editedUsername) {
+      setStatusMessage("");
+      setIsChecking(false);
+      return;
+    }
+
+    //Same username
+    if (editedUsername === authUser?.username) {
+      setStatusMessage("");
+      setIsChecking(false);
+      return;
+    }
+
+
+    //check for min length
+    if (editedUsername.trim().length < 3) {
+      setStatusMessage("Username must be at least 3 characters");
+      setIsChecking(false);
+      return;
+    }
+
+    // Check allowed characters using Regex
+    const isValidFormat = /^[a-zA-Z0-9_.]+$/.test(editedUsername);
+    if (!isValidFormat) {
+      setStatusMessage("Only letters, numbers, _ and . allowed");
+      setIsChecking(false);
+      return;
+    }
+
+    const timeout = setTimeout(async () => {
+      console.log("Here we have to do the stuff");
+      setIsChecking(true);
+      try {
+
+        const response = await api.get(`/api/auth/check-username?username=${editedUsername}`);
+
+        if (!ignore) {
+          const { isAvailable } = response.data;
+          setStatusMessage(isAvailable ? "Username is available" : "Username not available");
+        }
+      } catch (error) {
+        if (!ignore) {
+          toast.error("Failed to check username availability");
+        }
+      } finally {
+        if (!ignore) {
+          setIsChecking(false);
+        }
+      }
+
+    }, 500);
+
+
+    //In case this runs again clear the "timeout" and ignore old API responses
+    return () => {
+      ignore = true;
+      clearTimeout(timeout);
+    };
+
+
+  }, [editedUsername]);
+
 
   if (!authUser) return null;
 
@@ -92,6 +176,23 @@ const ProfileCard = ({ setActiveView }) => {
     }
   };
 
+  const changeUsername = async () => {
+    const username = editedUsername?.trim();
+    if (!username) {
+      toast.error("Username cannot be empty");
+      return;
+    }
+
+    try {
+      await api.patch("/api/auth/update_username", { username });
+      await refreshAuthUser();
+      toast.success("Username updated");
+      setEditedUserName(null);
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Failed to update the username");
+    }
+  };
+
   return (
     <div className="profile-full-page">
       <header className="profile-full-header">
@@ -108,8 +209,8 @@ const ProfileCard = ({ setActiveView }) => {
               src={
                 authUser.profilePic ||
                 "https://ui-avatars.com/api/?name=" +
-                  encodeURIComponent(authUser.name) +
-                  "&background=random"
+                encodeURIComponent(authUser.name) +
+                "&background=random"
               }
               alt="Profile"
               className="profile_pic_image"
@@ -190,22 +291,81 @@ const ProfileCard = ({ setActiveView }) => {
 
         <div className="profile-section-card">
           <div className="profile-section-label">Username</div>
-          <div className="profile-section-content">
-            <span className="profile-section-value">
-              {authUser?.username
-                ? authUser.username
-                : "@" +
+
+          {editedUsername !== null ? (
+            <div className="profile-inline-edit" style={{ flexDirection: "column", alignItems: "stretch" }}>
+              <div style={{ display: "flex", width: "100%", gap: "8px", alignItems: "center" }}>
+                <input
+                  type="text"
+                  ref={usernameInputRef}
+                  value={editedUsername}
+                  onChange={(e) => setEditedUserName(e.target.value)}
+                  className="profile-inline-input"
+                  style={{ flex: 1 }}
+                />
+
+                <div className="profile-inline-actions">
+                  <button
+                    className="profile-action-btn"
+                    onClick={() => {
+                      setEditedUserName(null);
+                      setStatusMessage("");
+                      setIsChecking(false);
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    className="profile-action-btn save"
+                    onClick={changeUsername}
+                    disabled={
+                      !editedUsername ||
+                      editedUsername.trim() === (authUser?.username || "") ||
+                      isChecking ||
+                      statusMessage !== "Username is available"
+                    }
+                  >
+                    Save
+                  </button>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  fontSize: "12px",
+                  marginTop: "6px",
+                  color: isChecking ? "gray" :
+                    statusMessage.includes("available") ? "green" :
+                      "red"
+                }}
+              >
+                {isChecking ? "Checking availability..." : statusMessage}
+              </div>
+            </div>
+          ) : (
+            <div className="profile-section-content">
+              <span className="profile-section-value">
+                {authUser?.username
+                  ? authUser.username
+                  : "@" +
                   authUser.name +
                   authUser.name[0].toLowerCase() +
                   authUser.name[authUser.name.length - 1].toLowerCase() +
                   "_"}
-            </span>
-          </div>
+              </span>
+              <button
+                className="profile-edit-btn"
+                onClick={() => setEditedUserName(authUser?.username || "")}
+              >
+                <img width={20} height={20} src="./edit.png" alt="edit" />
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="profile-section-card">
           <div className="profile-section-label">About</div>
-          
+
           {editedBio !== null ? (
             <div className="profile-inline-edit">
               <input

@@ -6,6 +6,8 @@ import {
   googleAuth,
   changeName,
   changeBio,
+  changeUserName,
+  checkUsernameAvailability,
 } from "../controllers/auth.controller.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
 import { arcjetProtection } from "../middleware/arcjet.middleware.js";
@@ -14,6 +16,7 @@ import {
   googleAuthSchema,
   updateBioSchema,
   updateNameSchema,
+  updateUserNameSchema,
 } from "../validation/auth.validation.js";
 import { upload } from "../middleware/upload.middleware.js";
 
@@ -40,5 +43,7 @@ router.patch(
 );
 
 router.patch("/update_bio", protectRoute, validate(updateBioSchema), changeBio);
+router.patch("/update_username", protectRoute, validate(updateUserNameSchema), changeUserName);
+router.get("/check-username", protectRoute, checkUsernameAvailability);
 
 export default router;
