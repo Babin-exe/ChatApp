@@ -97,6 +97,7 @@ const ProfileCard = ({ setActiveView }) => {
         }
       } catch (error) {
         if (!ignore) {
+          console.error("Error checking username availability:", error);
           toast.error("Failed to check username availability");
         }
       } finally {
@@ -115,7 +116,7 @@ const ProfileCard = ({ setActiveView }) => {
     };
 
 
-  }, [editedUsername]);
+  }, [editedUsername, authUser?.username]);
 
 
   if (!authUser) return null;
