@@ -59,26 +59,58 @@ const Settings = ({ setActiveView }) => {
             <strong>Settings..</strong>
 
             <div className="settings_row">
-              <p>Typing Sound </p>
-              <button type="button" onClick={() => flipState("typingSound")}>
-                {notificationSettings.typingSound ? "On" : "Off"}
-              </button>
-            </div>
+              <div>
+                <p>Typing Sound </p>
+                <span>Play a sound while the other person is typing.</span>
+              </div>
 
-            <div className="settings_row">
-              <p>Message Sound </p>
-              <button type="button" onClick={() => flipState("messageSound")}>
-                {notificationSettings.messageSound ? "On" : "Off"}
-              </button>
-            </div>
-
-            <div className="settings_row">
-              <p>Desktop Notifications </p>
               <button
                 type="button"
-                onClick={() => flipState("desktopNotifications")}
+                className={`settings_switch ${
+                  notificationSettings.typingSound ? "is_on" : ""
+                }`}
+                role="switch"
+                aria-checked={notificationSettings.typingSound}
+                onClick={() => flipState("typingSound")}
               >
-                {notificationSettings.desktopNotifications ? "On" : "Off"}
+                <span />
+              </button>
+            </div>
+
+            <div className="settings_row">
+              <div>
+                <p>Message Sound </p>
+                <span>Message Sound stuff</span>
+              </div>
+
+              <button
+                type="button"
+                role="switch"
+                className={`settings_switch ${
+                  notificationSettings.messageSound ? "is_on" : ""
+                }`}
+                onClick={() => flipState("messageSound")}
+                aria-checked={notificationSettings.messageSound}
+              >
+                <span />
+              </button>
+            </div>
+
+            <div className="settings_row">
+              <div>
+                <p>Desktop Notifications </p>
+                <span>Notification stuff</span>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                className={`settings_switch ${
+                  notificationSettings.desktopNotifications ? "is_on" : ""
+                }`}
+                onClick={() => flipState("desktopNotifications")}
+                aria-checked={notificationSettings.desktopNotifications}
+              >
+                <span />
               </button>
             </div>
           </div>
