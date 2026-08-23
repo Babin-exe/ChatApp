@@ -57,9 +57,9 @@
 .messages-error-card {
   width: min(340px, 100%);
   padding: 16px;
-  border: 1px solid #efc2c3;
+  border: 1px solid var(--danger-border);
   border-radius: 16px;
-  background: #fff4f4;
+  background: var(--danger-soft);
   color: var(--danger);
   box-sizing: border-box;
 }

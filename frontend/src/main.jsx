@@ -3,6 +3,7 @@ import "./index.css";
 import App from "./App.jsx";
 import { BrowserRouter } from "react-router-dom";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import { applyStoredTheme } from "./lib/theme.js";
 
 const googleClientId = import.meta.env.VITE_GOOGLE_AUTH_CLIENT_ID;
 
@@ -20,6 +21,7 @@ if (!googleClientId) {
 }
 
 showConsoleSecurityNotice();
+applyStoredTheme();
 
 createRoot(document.getElementById("root")).render(
   <BrowserRouter>

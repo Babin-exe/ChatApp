@@ -31,49 +31,42 @@ export const SocketContextProvider = ({ children }) => {
 
   const [requestEvent, setRequestEvent] = useState(null);
 
-  const openConversation =
-    useCallback((selectedContactId) => {
-      const normalizeId =
-        selectedContactId
-          ? String(selectedContactId)
-          : null;
-      const ws = socketRef.current;
-      if (ws?.readyState !== ws.OPEN)
-        return;
-      ws.send(JSON.stringify({
+  const openConversation = useCallback((selectedContactId) => {
+    const normalizeId = selectedContactId ? String(selectedContactId) : null;
+    const ws = socketRef.current;
+    if (ws?.readyState !== ws.OPEN) return;
+    ws.send(
+      JSON.stringify({
         type: "message:seen-late",
         data: { contactId: normalizeId },
-      }));
-    },
-      []);
+      })
+    );
+  }, []);
 
   const selectedContactRef = useRef(null);
 
-  const setSelectedContactInContext =
-    useCallback((selectedContact) => {
-      selectedContactRef.current =
-        selectedContact ? String(selectedContact) : null;
-    },
-      []);
+  const setSelectedContactInContext = useCallback((selectedContact) => {
+    selectedContactRef.current = selectedContact
+      ? String(selectedContact)
+      : null;
+  }, []);
 
-  const refreshAuthUser = useCallback(
-    async () => {
-      try {
-        const res = await api.get("/api/auth/me");
-        if (res.data.success) {
-          setAuthUser(res.data.user);
-          return res.data.user;
-        }
-        setAuthUser(null);
-        return null;
-      } catch {
-        setAuthUser(null);
-        return null;
-      } finally {
-        setAuthLoading(false);
+  const refreshAuthUser = useCallback(async () => {
+    try {
+      const res = await api.get("/api/auth/me");
+      if (res.data.success) {
+        setAuthUser(res.data.user);
+        return res.data.user;
       }
-    },
-    []);
+      setAuthUser(null);
+      return null;
+    } catch {
+      setAuthUser(null);
+      return null;
+    } finally {
+      setAuthLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     const handleOnline = () => {
@@ -83,43 +76,37 @@ export const SocketContextProvider = ({ children }) => {
       setRetryCount((prev) => prev + 1);
     };
     window.addEventListener("online", handleOnline);
-    return () => window.removeEventListener("online",
-      handleOnline);
-  },
-    []);
-
-  useEffect(
-    () => {
-      const interval = setInterval(
-        () => {
-          const now = Date.now();
-
-          setTypingUsers((prev) => {
-            if (prev.size === 0)
-              return prev;
-
-            let changed = false;
-            const next = new Map(prev);
-            for (const [userId, timestamp] of prev.entries()) {
-              if (now - timestamp > 3000) {
-                next.delete(userId);
-                changed = true;
-              }
-            }
-            return changed ? next : prev;
-          });
-        },
-        1000);
-
-      return () => clearInterval(interval);
-    },
-    []);
-
-  useEffect(() => { refreshAuthUser(); }, [refreshAuthUser]);
+    return () => window.removeEventListener("online", handleOnline);
+  }, []);
 
   useEffect(() => {
-    if (!authUser)
-      return;
+    const interval = setInterval(() => {
+      const now = Date.now();
+
+      setTypingUsers((prev) => {
+        if (prev.size === 0) return prev;
+
+        let changed = false;
+        const next = new Map(prev);
+        for (const [userId, timestamp] of prev.entries()) {
+          if (now - timestamp > 3000) {
+            next.delete(userId);
+            changed = true;
+          }
+        }
+        return changed ? next : prev;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    refreshAuthUser();
+  }, [refreshAuthUser]);
+
+  useEffect(() => {
+    if (!authUser) return;
 
     shouldReconnectRef.current = true;
 
@@ -139,24 +126,20 @@ export const SocketContextProvider = ({ children }) => {
       setRetryCount(0);
       lastSocketEventRef.current = Date.now();
 
-      socketHealthIntervalRef.current =
-        setInterval(() => {
-          const st = socketRef.current;
-          if (!st || st.readyState !== WebSocket.OPEN)
-            return;
+      socketHealthIntervalRef.current = setInterval(() => {
+        const st = socketRef.current;
+        if (!st || st.readyState !== WebSocket.OPEN) return;
 
-          const timeSinceLastEvent =
-            Date.now() - lastSocketEventRef.current;
+        const timeSinceLastEvent = Date.now() - lastSocketEventRef.current;
 
-          if (timeSinceLastEvent > 40000) {
-            st.send(JSON.stringify({ type: "ping" }));
-          }
+        if (timeSinceLastEvent > 40000) {
+          st.send(JSON.stringify({ type: "ping" }));
+        }
 
-          if (timeSinceLastEvent > 45000) {
-            st.close();
-          }
-        },
-          5000);
+        if (timeSinceLastEvent > 45000) {
+          st.close();
+        }
+      }, 5000);
 
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
@@ -170,8 +153,7 @@ export const SocketContextProvider = ({ children }) => {
     };
 
     ws.onmessage = (event) => {
-      if (ws !== socketRef.current)
-        return;
+      if (ws !== socketRef.current) return;
 
       try {
         lastSocketEventRef.current = Date.now();
@@ -182,8 +164,7 @@ export const SocketContextProvider = ({ children }) => {
             return;
 
           case "message": {
-            if (!(payload?.data?._id || payload?.data?.id))
-              break;
+            if (!(payload?.data?._id || payload?.data?.id)) break;
 
             setLastMessage(payload.data);
 
@@ -211,8 +192,6 @@ export const SocketContextProvider = ({ children }) => {
               );
 
               if (senderId === String(selectedContactRef.current || "")) {
-
-
                 ws.send(
                   JSON.stringify({
                     type: "message:seen-instant",
@@ -229,8 +208,7 @@ export const SocketContextProvider = ({ children }) => {
           }
 
           case "presence:initial":
-            if (!Array.isArray(payload.data?.onlineUserIds))
-              return;
+            if (!Array.isArray(payload.data?.onlineUserIds)) return;
 
             setOnlineUsers((prev) => {
               const next = new Set(prev);
@@ -242,8 +220,7 @@ export const SocketContextProvider = ({ children }) => {
             break;
 
           case "presence:update": {
-            if (typeof payload.data?.isOnline !== "boolean")
-              break;
+            if (typeof payload.data?.isOnline !== "boolean") break;
 
             const id = String(payload?.data?.userId);
 
@@ -274,8 +251,7 @@ export const SocketContextProvider = ({ children }) => {
             const fromUserId = String(payload?.data?.fromUserId || "");
             const isTyping = payload?.data?.isTyping;
 
-            if (!fromUserId || typeof isTyping !== "boolean")
-              return;
+            if (!fromUserId || typeof isTyping !== "boolean") return;
 
             setOnlineUsers((prev) => {
               if (!prev.has(fromUserId)) {
@@ -288,10 +264,8 @@ export const SocketContextProvider = ({ children }) => {
 
             setTypingUsers((prev) => {
               const next = new Map(prev);
-              if (isTyping)
-                next.set(fromUserId, Date.now());
-              else
-                next.delete(fromUserId);
+              if (isTyping) next.set(fromUserId, Date.now());
+              else next.delete(fromUserId);
               return next;
             });
             break;
@@ -321,7 +295,11 @@ export const SocketContextProvider = ({ children }) => {
           case "request:received":
           case "request:accepted":
           case "request:declined": {
-            setRequestEvent({ type: payload.type, data: payload.data, timestamp: Date.now() });
+            setRequestEvent({
+              type: payload.type,
+              data: payload.data,
+              timestamp: Date.now(),
+            });
             break;
           }
           /////////////////////////////////////////////////
@@ -335,35 +313,27 @@ export const SocketContextProvider = ({ children }) => {
     };
 
     ws.onclose = () => {
-      if (socketRef.current !== ws)
-        return;
-      if (!shouldReconnectRef.current)
-        return;
+      if (socketRef.current !== ws) return;
+      if (!shouldReconnectRef.current) return;
       console.log(`Socket closed for user: ${authUser.id}`);
       setSocket(null);
       socketRef.current = null;
 
       if (!stopClearingOnlineUsersRef.current) {
-        stopClearingOnlineUsersRef.current =
-          setTimeout(() => {
-
-            setOnlineUsers(new Set());
-            stopClearingOnlineUsersRef.current = null;
-          },
-            10000);
+        stopClearingOnlineUsersRef.current = setTimeout(() => {
+          setOnlineUsers(new Set());
+          stopClearingOnlineUsersRef.current = null;
+        }, 10000);
       }
 
-      if (reconnectTimeoutRef.current)
-        return;
+      if (reconnectTimeoutRef.current) return;
 
       const delay = Math.min(1000 * 2 * retryCount, 30000);
 
-      reconnectTimeoutRef.current =
-        setTimeout(() => {
-          reconnectTimeoutRef.current = null;
-          setRetryCount((prev) => prev + 1);
-        },
-          delay);
+      reconnectTimeoutRef.current = setTimeout(() => {
+        reconnectTimeoutRef.current = null;
+        setRetryCount((prev) => prev + 1);
+      }, delay);
 
       if (socketHealthIntervalRef.current) {
         clearInterval(socketHealthIntervalRef.current);
@@ -400,8 +370,7 @@ export const SocketContextProvider = ({ children }) => {
         socketHealthIntervalRef.current = null;
       }
     };
-  },
-    [authUser, retryCount]);
+  }, [authUser, retryCount]);
 
   useEffect(() => {
     if (!authUser) {
@@ -423,25 +392,25 @@ export const SocketContextProvider = ({ children }) => {
 
       setTypingUsers(new Map());
     }
-  },
-    [authUser]);
+  }, [authUser]);
 
-  const value = useMemo(() => ({
-    socket,
-    authUser,
-    authLoading,
-    lastMessage,
-    refreshAuthUser,
-    onlineUsers,
-    typingUsers,
-    lastMessageStatus,
-    openConversation,
-    setSelectedContactInContext,
-    lastReactionUpdate,
-    editedMessage,
-    requestEvent,
-    setRequestEvent
-  }),
+  const value = useMemo(
+    () => ({
+      socket,
+      authUser,
+      authLoading,
+      lastMessage,
+      refreshAuthUser,
+      onlineUsers,
+      typingUsers,
+      lastMessageStatus,
+      openConversation,
+      setSelectedContactInContext,
+      lastReactionUpdate,
+      editedMessage,
+      requestEvent,
+      setRequestEvent,
+    }),
     [
       socket,
       authUser,
@@ -455,7 +424,10 @@ export const SocketContextProvider = ({ children }) => {
       openConversation,
       lastReactionUpdate,
       editedMessage,
-      requestEvent
-    ]);
-  return (<SocketContext.Provider value={value}>{children} </ SocketContext.Provider >);
+      requestEvent,
+    ]
+  );
+  return (
+    <SocketContext.Provider value={value}>{children} </SocketContext.Provider>
+  );
 };

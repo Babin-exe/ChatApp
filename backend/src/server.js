@@ -37,7 +37,6 @@ app.use("/api/chats", chatRoutes);
 app.use("/api/messages", messageRouters);
 app.use("/api/access", blockRoutes);
 
-
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
@@ -49,6 +48,7 @@ if (process.env.NODE_ENV === "production") {
 app.use(errorHandler);
 
 const port = process.env.PORT || 4000;
+
 server.listen(port, async () => {
   console.log(`The server is running at port :${port}`);
   await connectDb();

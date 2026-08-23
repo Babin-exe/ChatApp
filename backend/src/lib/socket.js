@@ -307,8 +307,6 @@ wss.on("close", () => {
   clearInterval(interval);
 });
 
-
-
 wss.on("connection", async (ws, req) => {
   try {
     if (!isAllowedOrigin(req.headers.origin)) {
@@ -480,7 +478,6 @@ wss.on("connection", async (ws, req) => {
         }
 
         if (type === "message:seen-late") {
-
           // console.log("Seen is partially working");
 
           const pending = await Message.find({
@@ -509,7 +506,6 @@ wss.on("connection", async (ws, req) => {
             ]
           );
 
-
           for (const p of pending) {
             sendToUser(data.data.contactId.toString(), {
               type: "message:status",
@@ -522,8 +518,6 @@ wss.on("connection", async (ws, req) => {
           }
           // console.log("Database updated");
         }
-
-
 
         if (type !== "typing:start" && type !== "typing:stop") return;
 
@@ -551,7 +545,6 @@ wss.on("connection", async (ws, req) => {
     });
 
     ws.on("close", () => {
-
       // console.log(`User ${userId} disconnected`);
 
       removeSocket(userId, ws);
