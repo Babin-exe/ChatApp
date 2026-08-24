@@ -8,6 +8,11 @@ import ChatComposer from "./components/ChatComposer.jsx";
 import ChatHeader from "./components/ChatHeader.jsx";
 import ChatStream from "./components/ChatStream.jsx";
 
+import {
+  NOTIFICATION_SETTINGS_CHANGED_EVENT,
+  readNotificationSettings,
+} from "../../lib/notificationSettings.js";
+
 const isRequestCanceled = (err) =>
   axios.isCancel(err) ||
   err?.code === "ERR_CANCELED" ||
@@ -121,12 +126,20 @@ const ChatPanel = ({
   const lastTypedUserRef = useRef(null);
 
   const typingAudioRef = useRef(null);
+  const messageAudioRef = useRef(null);
+
+  const messageSoundEnabledRef = useRef(false);
+  const lastMessageSoundHandledIdRef = useRef(null);
 
   const [selectedImage, setSelectedImage] = useState(null);
 
   const [imagePreviewUrl, setImagePreviewUrl] = useState(null);
 
   const [_tick, setNowTick] = useState(0);
+
+  const [notificationSettings, setNotificationSettings] = useState(() =>
+    readNotificationSettings()
+  );
 
   const [currentMessageId, setCurrentMessageId] = useState("");
 
@@ -146,6 +159,31 @@ const ChatPanel = ({
 
   const [imageSelected, setImageSelected] = useState(null);
 
+  useEffect(() => {
+    const syncNotificationSettings = (event) => {
+      setNotificationSettings(
+        event?.detail ? event.detail : readNotificationSettings()
+      );
+    };
+
+    window.addEventListener("storage", syncNotificationSettings);
+    window.addEventListener(
+      NOTIFICATION_SETTINGS_CHANGED_EVENT,
+      syncNotificationSettings
+    );
+
+    return () => {
+      window.removeEventListener("storage", syncNotificationSettings);
+      window.removeEventListener(
+        NOTIFICATION_SETTINGS_CHANGED_EVENT,
+        syncNotificationSettings
+      );
+    };
+  }, []);
+
+  useEffect(() => {
+    messageSoundEnabledRef.current = notificationSettings.messageSound;
+  }, [notificationSettings.messageSound]);
 
   useEffect(() => {
     if (!typingAudioRef.current) {
@@ -159,7 +197,7 @@ const ChatPanel = ({
 
     const isSelectedUserTyping = typingUsers?.has(String(selectedContactId));
 
-    if (isSelectedUserTyping) {
+    if (isSelectedUserTyping && notificationSettings.typingSound) {
       if (audio.paused) {
         audio.play().catch((error) => {
           console.log("Audio Error :", error);
@@ -178,7 +216,7 @@ const ChatPanel = ({
         typingAudioRef.current.currentTime = 0;
       }
     };
-  }, [selectedContactId, typingUsers]);
+  }, [notificationSettings.typingSound, selectedContactId, typingUsers]);
 
   const getSenderId = (message) => {
     if (!message?.senderId) return "";
@@ -448,10 +486,22 @@ const ChatPanel = ({
   }, [selectedContactId, defaultStatusFromBlockedList]);
 
   useEffect(() => {
-    if (!selectedContact || !lastMessage || !myUserId) return;
+    if (!lastMessage || !myUserId) return;
 
+    const messageId = lastMessage._id || lastMessage.id;
     const senderId = normalizeId(lastMessage.senderId);
     const receiverId = normalizeId(lastMessage.receiverId);
+    const isReceivedMessage = senderId !== myUserId;
+    const shouldConsiderSound =
+      Boolean(messageId) &&
+      isReceivedMessage &&
+      lastMessageSoundHandledIdRef.current !== messageId;
+
+    if (shouldConsiderSound) {
+      lastMessageSoundHandledIdRef.current = messageId;
+    }
+
+    if (!selectedContact) return;
 
     const belongsToOpenChat =
       (senderId === myUserId && receiverId === selectedContact._id) ||
@@ -466,6 +516,18 @@ const ChatPanel = ({
       if (prev.some((m) => m._id === lastMessage._id)) return prev;
       return [...prev, lastMessage];
     });
+
+    if (shouldConsiderSound && messageSoundEnabledRef.current) {
+      if (!messageAudioRef.current) {
+        messageAudioRef.current = new Audio("/messenger.mp3");
+        messageAudioRef.current.volume = 0.35;
+      }
+
+      messageAudioRef.current.currentTime = 0;
+      messageAudioRef.current.play().catch((error) => {
+        console.log("Message sound error:", error);
+      });
+    }
 
     setTimeout(() => {
       if (activeMessagesContactIdRef.current !== contactId) return;
@@ -577,11 +639,7 @@ const ChatPanel = ({
     }
 
     return formatTimeAgo(latest.createdAt);
-
   }, [messages, myUserId]);
-
-
-
 
   const handleRetrySend = async () => {
     const content = newMessage.trim();
@@ -668,8 +726,6 @@ const ChatPanel = ({
 
       if (activeMessagesContactIdRef.current !== contactId) return;
 
-
-
       setMessages((prev) => {
         if (prev.some((message) => message._id === savedMessage._id))
           return prev;
@@ -712,8 +768,6 @@ const ChatPanel = ({
     stopTyping();
 
     const sent = await sendCurrentMessage(content, selectedImage);
-
-
 
     setReplyToMessageId(null);
     setReplyToMessage(null);
@@ -840,14 +894,24 @@ const ChatPanel = ({
       )}
 
       {imageSelected && (
-        <div className="fullscreen-image-overlay" onClick={() => setImageSelected(null)}>
+        <div
+          className="fullscreen-image-overlay"
+          onClick={() => setImageSelected(null)}
+        >
           <button
             type="button"
             className="fullscreen-image-close"
             onClick={() => setImageSelected(null)}
             aria-label="Close fullscreen image"
           >
-            <svg viewBox="0 0 24 24" width="28" height="28" stroke="currentColor" strokeWidth="2" fill="none">
+            <svg
+              viewBox="0 0 24 24"
+              width="28"
+              height="28"
+              stroke="currentColor"
+              strokeWidth="2"
+              fill="none"
+            >
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </svg>

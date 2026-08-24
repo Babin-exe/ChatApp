@@ -1,30 +1,8 @@
 import { useEffect, useState } from "react";
-
-const DEFAULT_NOTIFICATION_STATES = {
-  typingSound: true,
-  messageSound: true,
-  desktopNotifications: false,
-};
-
-const NOTIFICATION_SETTINGS_KEY = "chat-app-notification-settings";
-
-const readNotificationSettings = () => {
-  if (typeof window === "undefined") return DEFAULT_NOTIFICATION_STATES;
-
-  try {
-    const savedSettings = window.localStorage.getItem(
-      NOTIFICATION_SETTINGS_KEY
-    );
-    if (!savedSettings) return DEFAULT_NOTIFICATION_STATES;
-
-    return {
-      ...DEFAULT_NOTIFICATION_STATES,
-      ...JSON.parse(savedSettings),
-    };
-  } catch {
-    return DEFAULT_NOTIFICATION_STATES;
-  }
-};
+import {
+  readNotificationSettings,
+  writeNotificationSettings,
+} from "../../lib/notificationSettings.js";
 
 const Settings = ({ setActiveView }) => {
   const [notificationSettings, setNotificationSettings] = useState(() =>
@@ -32,10 +10,7 @@ const Settings = ({ setActiveView }) => {
   );
 
   useEffect(() => {
-    window.localStorage.setItem(
-      NOTIFICATION_SETTINGS_KEY,
-      JSON.stringify(notificationSettings)
-    );
+    writeNotificationSettings(notificationSettings);
   }, [notificationSettings]);
 
   const flipState = (key) => {

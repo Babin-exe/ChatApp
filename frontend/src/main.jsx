@@ -23,6 +23,8 @@ if (!googleClientId) {
 showConsoleSecurityNotice();
 applyStoredTheme();
 
+
+
 createRoot(document.getElementById("root")).render(
   <BrowserRouter>
     <GoogleOAuthProvider clientId={googleClientId}>

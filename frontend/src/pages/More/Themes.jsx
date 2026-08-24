@@ -7,9 +7,8 @@ import {
 } from "../../lib/theme.js";
 
 const Themes = ({ setActiveView }) => {
-
   const [activeTheme, setActiveTheme] = useState(() => readStoredTheme());
-  
+
   const selectedTheme = getThemeById(activeTheme);
 
   const handleThemeChange = (themeId) => {
@@ -44,7 +43,6 @@ const Themes = ({ setActiveView }) => {
 
   return (
     <div className="themes-page">
-
       <header className="themes-header">
         <div className="back_button">
           <button
@@ -114,6 +112,3 @@ const Themes = ({ setActiveView }) => {
 };
 
 export default Themes;
-
-
-
