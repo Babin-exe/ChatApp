@@ -190,7 +190,7 @@ const ProfileCard = ({ setActiveView }) => {
   return (
     <div className="profile-full-page">
       <header className="profile-full-header">
-        <div className="back_button" style={{ margin: 0, alignSelf: "center" }}>
+        <div className="back_button m-0 self-center">
           <button onClick={() => setActiveView("default")}>Back</button>
         </div>
         <h1>Your Profile</h1>
@@ -231,7 +231,7 @@ const ProfileCard = ({ setActiveView }) => {
               type="file"
               accept="image/*"
               ref={inputRef}
-              style={{ display: "none" }}
+              className="hidden"
               onChange={handleProfilePicChange}
             />
           </div>
@@ -256,11 +256,11 @@ const ProfileCard = ({ setActiveView }) => {
                 >
                   Cancel
                 </button>
-                  <button
-                    className="profile-action-btn save"
-                    onClick={changeDisplayName}
-                    disabled={editedName.trim() === authUser.name}
-                  >
+                <button
+                  className="profile-action-btn save"
+                  onClick={changeDisplayName}
+                  disabled={editedName.trim() === authUser.name}
+                >
                   Save
                 </button>
               </div>
@@ -287,8 +287,8 @@ const ProfileCard = ({ setActiveView }) => {
           <div className="profile-section-label">Username</div>
 
           {editedUsername !== null ? (
-            <div className="profile-inline-edit" style={{ flexDirection: "column", alignItems: "stretch" }}>
-              <div style={{ display: "flex", width: "100%", gap: "8px", alignItems: "center" }}>
+            <div className="profile-inline-edit flex-col items-stretch">
+              <div className="flex w-full gap-2 items-center">
                 <input
                   type="text"
                   ref={usernameInputRef}
@@ -325,13 +325,13 @@ const ProfileCard = ({ setActiveView }) => {
               </div>
 
               <div
-                style={{
-                  fontSize: "12px",
-                  marginTop: "6px",
-                  color: isChecking ? "gray" :
-                    statusMessage.includes("available") ? "green" :
-                      "red"
-                }}
+                className={`text-xs mt-1.5 ${
+                  isChecking
+                    ? "text-gray-500"
+                    : statusMessage.includes("available")
+                    ? "text-green-500"
+                    : "text-red-500"
+                }`}
               >
                 {isChecking ? "Checking availability..." : statusMessage}
               </div>
@@ -402,31 +402,15 @@ const ProfileCard = ({ setActiveView }) => {
 
         <div className="profile-section-card">
           <div className="profile-section-label">Account Details</div>
-          <div
-            style={{ display: "flex", flexDirection: "column", gap: "16px" }}
-          >
+          <div className="flex flex-col gap-4">
             <div>
-              <div
-                style={{
-                  color: "#69717f",
-                  fontSize: "0.9rem",
-                  marginBottom: "4px",
-                  fontWeight: 600,
-                }}
-              >
+              <div className="text-[#69717f] text-[0.9rem] mb-1 font-semibold">
                 Email
               </div>
               <div className="profile-section-value">{authUser.email}</div>
             </div>
             <div>
-              <div
-                style={{
-                  color: "#69717f",
-                  fontSize: "0.9rem",
-                  marginBottom: "4px",
-                  fontWeight: 600,
-                }}
-              >
+              <div className="text-[#69717f] text-[0.9rem] mb-1 font-semibold">
                 Connected via
               </div>
               <div className="profile-section-value">
@@ -435,14 +419,7 @@ const ProfileCard = ({ setActiveView }) => {
               </div>
             </div>
             <div>
-              <div
-                style={{
-                  color: "#69717f",
-                  fontSize: "0.9rem",
-                  marginBottom: "4px",
-                  fontWeight: 600,
-                }}
-              >
+              <div className="text-[#69717f] text-[0.9rem] mb-1 font-semibold">
                 Member Since
               </div>
               <div className="profile-section-value">{formatted}</div>

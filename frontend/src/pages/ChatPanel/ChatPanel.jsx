@@ -34,7 +34,7 @@ const PickerMode = {
   FULL: "full",
 };
 
-export const applyEditedMessageUpdate = (messages, editedMessage) => {
+const applyEditedMessageUpdate = (messages, editedMessage) => {
   if (!editedMessage?.messageId) return messages;
 
   return messages.map((message) =>
