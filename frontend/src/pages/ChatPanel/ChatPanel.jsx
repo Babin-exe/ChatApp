@@ -88,7 +88,7 @@ const ChatPanel = ({
   selectedContact,
   onUnblockUser,
   actionLoadingId,
-  blockedUsers = [],
+  blockedUsers,
   onBack,
 }) => {
   const {
@@ -408,7 +408,7 @@ const ChatPanel = ({
   );
 
   const defaultStatusFromBlockedList = useMemo(() => {
-    const isBlockedByMe = blockedUsers.some(
+    const isBlockedByMe = (blockedUsers || []).some(
       (entry) => entry?.blocked?._id === selectedContact?._id
     );
 
