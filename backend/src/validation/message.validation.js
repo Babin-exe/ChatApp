@@ -5,6 +5,7 @@ const objectIdRegex = /^[a-f\d]{24}$/i;
 
 export const sendMessageBodySchema = z.object({
   content: z.string().trim().max(1000, "Message too large").optional().default(""),
+  replyToMessageId: z.string().regex(objectIdRegex, objectIdMessage).optional(),
 });
 
 export const messageParamsSchema = z.object({
@@ -14,4 +15,3 @@ export const messageParamsSchema = z.object({
 export const reactionBodySchema = z.object({
   emoji: z.string().trim().min(1, "Reaction is required").max(16, "Reaction is too long"),
 });
-

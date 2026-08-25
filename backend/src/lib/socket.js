@@ -363,11 +363,8 @@ wss.on("connection", async (ws, req) => {
     const contacts = contactsByUser.get(userId) ?? new Set();
     const onlineContacts = [...contacts].filter(isUserOnline);
 
-    console.log(`A user is connected to the socket server: ${userId}`);
-
     lastSeen.set(userId, Date.now());
 
-    //Call the function as soon as the user connects
     await syncDeliveredOnConnect(userId);
 
     ws.send(
@@ -463,8 +460,6 @@ wss.on("connection", async (ws, req) => {
             { new: true }
           );
 
-          // console.log("Database updated i guess :", messageDoc);
-
           if (!messageDoc) return;
 
           sendToUser(messageDoc.senderId.toString(), {
@@ -478,8 +473,6 @@ wss.on("connection", async (ws, req) => {
         }
 
         if (type === "message:seen-late") {
-          // console.log("Seen is partially working");
-
           const pending = await Message.find({
             senderId: data.data.contactId,
             receiverId: user._id,
@@ -516,7 +509,6 @@ wss.on("connection", async (ws, req) => {
               },
             });
           }
-          // console.log("Database updated");
         }
 
         if (type !== "typing:start" && type !== "typing:stop") return;
@@ -545,8 +537,6 @@ wss.on("connection", async (ws, req) => {
     });
 
     ws.on("close", () => {
-      // console.log(`User ${userId} disconnected`);
-
       removeSocket(userId, ws);
 
       const socket = userSocket.get(userId);

@@ -10,7 +10,6 @@ const ProfileCard = ({ setActiveView }) => {
   const nameInputRef = useRef(null);
   const [editedName, setEditedName] = useState(null);
 
-  //Use these later
   const bioInputRef = useRef(null);
   const [editedBio, setEditedBio] = useState(null);
 
@@ -52,31 +51,25 @@ const ProfileCard = ({ setActiveView }) => {
 
   useEffect(() => {
     let ignore = false;
-    console.log("Username is changing so i have to do some stuff");
 
-    //nothing to chage the name to 
     if (!editedUsername) {
       setStatusMessage("");
       setIsChecking(false);
       return;
     }
 
-    //Same username
     if (editedUsername === authUser?.username) {
       setStatusMessage("");
       setIsChecking(false);
       return;
     }
 
-
-    //check for min length
     if (editedUsername.trim().length < 3) {
       setStatusMessage("Username must be at least 3 characters");
       setIsChecking(false);
       return;
     }
 
-    // Check allowed characters using Regex
     const isValidFormat = /^[a-zA-Z0-9_.]+$/.test(editedUsername);
     if (!isValidFormat) {
       setStatusMessage("Only letters, numbers, _ and . allowed");
@@ -85,15 +78,19 @@ const ProfileCard = ({ setActiveView }) => {
     }
 
     const timeout = setTimeout(async () => {
-      console.log("Here we have to do the stuff");
       setIsChecking(true);
       try {
-
-        const response = await api.get(`/api/auth/check-username?username=${editedUsername}`);
+        const response = await api.get(
+          `/api/auth/check-username?username=${encodeURIComponent(
+            editedUsername
+          )}`
+        );
 
         if (!ignore) {
           const { isAvailable } = response.data;
-          setStatusMessage(isAvailable ? "Username is available" : "Username not available");
+          setStatusMessage(
+            isAvailable ? "Username is available" : "Username not available"
+          );
         }
       } catch (error) {
         if (!ignore) {
@@ -108,14 +105,10 @@ const ProfileCard = ({ setActiveView }) => {
 
     }, 500);
 
-
-    //In case this runs again clear the "timeout" and ignore old API responses
     return () => {
       ignore = true;
       clearTimeout(timeout);
     };
-
-
   }, [editedUsername, authUser?.username]);
 
 
@@ -130,7 +123,7 @@ const ProfileCard = ({ setActiveView }) => {
 
     try {
       await api.patch("/api/auth/update-profile", formData);
-      toast("Profile updated successfully", { icon: "✅" });
+      toast.success("Profile updated successfully");
 
       if (refreshAuthUser) {
         refreshAuthUser();
@@ -140,7 +133,7 @@ const ProfileCard = ({ setActiveView }) => {
     }
   };
 
-  const changeUserName = async () => {
+  const changeDisplayName = async () => {
     const name = editedName?.trim();
     if (!name) {
       toast.error("Name cannot be empty ");
@@ -263,11 +256,11 @@ const ProfileCard = ({ setActiveView }) => {
                 >
                   Cancel
                 </button>
-                <button
-                  className="profile-action-btn save"
-                  onClick={changeUserName}
-                  disabled={editedName.trim() === authUser.name}
-                >
+                  <button
+                    className="profile-action-btn save"
+                    onClick={changeDisplayName}
+                    disabled={editedName.trim() === authUser.name}
+                  >
                   Save
                 </button>
               </div>

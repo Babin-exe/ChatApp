@@ -34,6 +34,21 @@ const PickerMode = {
   FULL: "full",
 };
 
+export const applyEditedMessageUpdate = (messages, editedMessage) => {
+  if (!editedMessage?.messageId) return messages;
+
+  return messages.map((message) =>
+    message._id === editedMessage.messageId
+      ? {
+          ...message,
+          content: editedMessage.content,
+          edited: editedMessage.edited ?? message.edited,
+          updatedAt: editedMessage.updatedAt ?? message.updatedAt,
+        }
+      : message
+  );
+};
+
 function validateImageFile(file) {
   if (!ALLOWED_MIME_TYPES.has(file.type)) {
     return "Use PNG , JPEG , JPG , GIF  or Webp";
@@ -199,9 +214,7 @@ const ChatPanel = ({
 
     if (isSelectedUserTyping && notificationSettings.typingSound) {
       if (audio.paused) {
-        audio.play().catch((error) => {
-          console.log("Audio Error :", error);
-        });
+        audio.play().catch(() => {});
       }
     } else {
       if (!audio.paused) {
@@ -524,9 +537,7 @@ const ChatPanel = ({
       }
 
       messageAudioRef.current.currentTime = 0;
-      messageAudioRef.current.play().catch((error) => {
-        console.log("Message sound error:", error);
-      });
+      messageAudioRef.current.play().catch(() => {});
     }
 
     setTimeout(() => {
@@ -606,13 +617,9 @@ const ChatPanel = ({
   }, [lastReactionUpdate]);
 
   useEffect(() => {
-    setMessages((prev) => {
-      return prev.map((message) =>
-        message._id === editedMessage.messageId
-          ? { ...message, content: editedMessage.content }
-          : message
-      );
-    });
+    if (!editedMessage?.messageId) return;
+
+    setMessages((prev) => applyEditedMessageUpdate(prev, editedMessage));
   }, [editedMessage]);
 
   const lastOutgoingIndex = useMemo(() => {

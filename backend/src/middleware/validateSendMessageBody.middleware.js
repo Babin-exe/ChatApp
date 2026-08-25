@@ -19,7 +19,7 @@ export const validateSendMessageBody = (req, res, next) => {
         return next(new HttpError("Message must contain text or image", 400));
     }
 
-    req.body.content = content;
+    req.body = result.data;
 
     return next();
 };

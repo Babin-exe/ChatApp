@@ -73,11 +73,11 @@ const Settings = ({ setActiveView }) => {
 
         <div className="settings_main">
           <div className="settings-header">
-            <strong>Settings..</strong>
+            <strong>Settings</strong>
 
             <div className="settings_row">
               <div>
-                <p>Typing Sound </p>
+                <p>Typing sound</p>
                 <span>Play a sound while the other person is typing.</span>
               </div>
 
@@ -96,8 +96,8 @@ const Settings = ({ setActiveView }) => {
 
             <div className="settings_row">
               <div>
-                <p>Message Sound </p>
-                <span>Message Sound stuff</span>
+                <p>Message sound</p>
+                <span>Play a sound when a new message arrives.</span>
               </div>
 
               <button
@@ -115,8 +115,8 @@ const Settings = ({ setActiveView }) => {
 
             <div className="settings_row">
               <div>
-                <p>Desktop Notifications </p>
-                <span>Notification stuff</span>
+                <p>Desktop notifications</p>
+                <span>Show browser notifications for new messages.</span>
               </div>
               <button
                 type="button"

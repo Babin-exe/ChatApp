@@ -61,7 +61,7 @@ export const updateChatStatus = async ({
   const blocked = await isBlocked(actorId, otherMemberId);
 
   if (status === "accepted" && blocked) {
-    throw new HttpError("Cannot do stuff with blocked chat request", 403);
+    throw new HttpError("Cannot accept a blocked chat request", 403);
   }
 
   const newMessage = await Message.create({
@@ -249,7 +249,7 @@ export const validateSendMessage = async ({
     }
 
     if (repliedMessage.chatId.toString() !== chat._id.toString()) {
-      throw new HttpError("Stuff dont match you stupid ", 401);
+      throw new HttpError("Reply message does not belong to this chat", 403);
     }
   }
 

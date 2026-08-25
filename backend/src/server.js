@@ -50,7 +50,7 @@ app.use(errorHandler);
 const port = process.env.PORT || 4000;
 
 server.listen(port, async () => {
-  console.log(`The server is running at port :${port}`);
+  console.info(`Server running on port ${port}`);
   await connectDb();
   cleanExpiredSessions();
 });

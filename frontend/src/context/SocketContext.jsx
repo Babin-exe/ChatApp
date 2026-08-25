@@ -308,14 +308,14 @@ export const SocketContextProvider = ({ children }) => {
             const id = String(payload?.data?.userId);
 
             setOnlineUsers((prev) => {
-              const stuff = new Set(prev);
+              const next = new Set(prev);
 
               if (payload?.data?.isOnline) {
-                stuff.add(id);
+                next.add(id);
               } else {
-                stuff.delete(id);
+                next.delete(id);
               }
-              return stuff;
+              return next;
             });
             break;
           }
@@ -374,7 +374,6 @@ export const SocketContextProvider = ({ children }) => {
             break;
           }
 
-          ////////////////////////////////////////////////
           case "request:received":
           case "request:accepted":
           case "request:declined": {
@@ -385,20 +384,20 @@ export const SocketContextProvider = ({ children }) => {
             });
             break;
           }
-          /////////////////////////////////////////////////
 
           default:
             break;
         }
-      } catch {
-        console.log("Non-JSON socket payload:", event.data);
+      } catch (error) {
+        if (import.meta.env.DEV) {
+          console.warn("Ignored non-JSON socket payload:", error);
+        }
       }
     };
 
     ws.onclose = () => {
       if (socketRef.current !== ws) return;
       if (!shouldReconnectRef.current) return;
-      console.log(`Socket closed for user: ${authUser.id}`);
       setSocket(null);
       socketRef.current = null;
 
@@ -427,7 +426,6 @@ export const SocketContextProvider = ({ children }) => {
     };
 
     ws.onerror = () => {
-      console.log(`Socket error for user: ${authUser.id}`);
       ws.close();
     };
 
