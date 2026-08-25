@@ -1,6 +1,32 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import api from "../lib/api.js";
 import { SocketContext } from "./socketContext.js";
+import {
+  NOTIFICATION_SETTINGS_CHANGED_EVENT,
+  canShowDesktopNotifications,
+  readNotificationSettings,
+} from "../lib/notificationSettings.js";
+
+const normalizeId = (value) => {
+  if (!value) return "";
+  if (typeof value === "string") return value;
+  return value._id || value.id || "";
+};
+
+const getSenderName = (message) => {
+  if (typeof message?.senderId === "object") {
+    return message.senderId?.name || "New message";
+  }
+
+  return "New message";
+};
+
+const getNotificationBody = (message) => {
+  const content = message?.content?.trim();
+  if (content) return content.length > 90 ? `${content.slice(0, 87)}...` : content;
+  if (message?.type === "image") return "Sent a photo";
+  return "Sent you a message";
+};
 
 export const SocketContextProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
@@ -20,6 +46,8 @@ export const SocketContextProvider = ({ children }) => {
   const lastSocketEventRef = useRef(Date.now());
 
   const socketHealthIntervalRef = useRef(null);
+  const notificationSettingsRef = useRef(readNotificationSettings());
+  const lastDesktopNotificationMessageIdRef = useRef(null);
 
   const [typingUsers, setTypingUsers] = useState(new Map());
 
@@ -77,6 +105,28 @@ export const SocketContextProvider = ({ children }) => {
     };
     window.addEventListener("online", handleOnline);
     return () => window.removeEventListener("online", handleOnline);
+  }, []);
+
+  useEffect(() => {
+    const syncNotificationSettings = (event) => {
+      notificationSettingsRef.current = event?.detail
+        ? event.detail
+        : readNotificationSettings();
+    };
+
+    window.addEventListener("storage", syncNotificationSettings);
+    window.addEventListener(
+      NOTIFICATION_SETTINGS_CHANGED_EVENT,
+      syncNotificationSettings
+    );
+
+    return () => {
+      window.removeEventListener("storage", syncNotificationSettings);
+      window.removeEventListener(
+        NOTIFICATION_SETTINGS_CHANGED_EVENT,
+        syncNotificationSettings
+      );
+    };
   }, []);
 
   useEffect(() => {
@@ -168,7 +218,40 @@ export const SocketContextProvider = ({ children }) => {
 
             setLastMessage(payload.data);
 
-            const senderId = String(payload.data.senderId._id || "");
+            const messageId = String(payload.data._id || payload.data.id || "");
+            const senderId = normalizeId(payload.data.senderId);
+            const currentUserId = normalizeId(authUser);
+            const isOwnMessage = senderId === currentUserId;
+            const isCurrentOpenChat =
+              senderId === String(selectedContactRef.current || "");
+            const shouldConsiderDesktopNotification =
+              Boolean(messageId) &&
+              !isOwnMessage &&
+              lastDesktopNotificationMessageIdRef.current !== messageId;
+
+            if (shouldConsiderDesktopNotification) {
+              lastDesktopNotificationMessageIdRef.current = messageId;
+
+              if (
+                notificationSettingsRef.current.desktopNotifications &&
+                canShowDesktopNotifications() &&
+                (document.hidden || !isCurrentOpenChat)
+              ) {
+                const notification = new window.Notification(
+                  getSenderName(payload.data),
+                  {
+                    body: getNotificationBody(payload.data),
+                    icon: "/chat.png",
+                    tag: `chat-message-${messageId}`,
+                  }
+                );
+
+                notification.onclick = () => {
+                  window.focus();
+                  notification.close();
+                };
+              }
+            }
 
             if (senderId) {
               setOnlineUsers((prev) => {

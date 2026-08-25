@@ -9,6 +9,17 @@ export const DEFAULT_NOTIFICATION_SETTINGS = {
 export const NOTIFICATION_SETTINGS_CHANGED_EVENT =
   "notification-settings:changed";
 
+export const isDesktopNotificationSupported = () =>
+  typeof window !== "undefined" && "Notification" in window;
+
+export const getDesktopNotificationPermission = () => {
+  if (!isDesktopNotificationSupported()) return "unsupported";
+  return window.Notification.permission;
+};
+
+export const canShowDesktopNotifications = () =>
+  getDesktopNotificationPermission() === "granted";
+
 export const readNotificationSettings = () => {
   if (typeof window === "undefined") return DEFAULT_NOTIFICATION_SETTINGS;
 
@@ -19,10 +30,19 @@ export const readNotificationSettings = () => {
 
     if (!savedSettings) return DEFAULT_NOTIFICATION_SETTINGS;
 
-    return {
+    const settings = {
       ...DEFAULT_NOTIFICATION_SETTINGS,
       ...JSON.parse(savedSettings),
     };
+
+    if (settings.desktopNotifications && !canShowDesktopNotifications()) {
+      return {
+        ...settings,
+        desktopNotifications: false,
+      };
+    }
+
+    return settings;
   } catch {
     return DEFAULT_NOTIFICATION_SETTINGS;
   }
@@ -34,6 +54,8 @@ export const writeNotificationSettings = (settings) => {
   const nextSettings = {
     ...DEFAULT_NOTIFICATION_SETTINGS,
     ...settings,
+    desktopNotifications:
+      Boolean(settings.desktopNotifications) && canShowDesktopNotifications(),
   };
 
   window.localStorage.setItem(

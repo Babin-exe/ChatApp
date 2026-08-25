@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import {
+  getDesktopNotificationPermission,
+  isDesktopNotificationSupported,
   readNotificationSettings,
   writeNotificationSettings,
 } from "../../lib/notificationSettings.js";
@@ -17,6 +20,45 @@ const Settings = ({ setActiveView }) => {
     setNotificationSettings((prev) => ({
       ...prev,
       [key]: !prev[key],
+    }));
+  };
+
+  const toggleDesktopNotifications = async () => {
+    if (notificationSettings.desktopNotifications) {
+      setNotificationSettings((prev) => ({
+        ...prev,
+        desktopNotifications: false,
+      }));
+      return;
+    }
+
+    if (!isDesktopNotificationSupported()) {
+      toast.error("Desktop notifications are not supported in this browser.");
+      return;
+    }
+
+    let permission = getDesktopNotificationPermission();
+
+    if (permission === "default") {
+      permission = await window.Notification.requestPermission();
+    }
+
+    if (permission !== "granted") {
+      toast.error(
+        permission === "denied"
+          ? "Desktop notifications are blocked in browser settings."
+          : "Desktop notifications were not enabled."
+      );
+      setNotificationSettings((prev) => ({
+        ...prev,
+        desktopNotifications: false,
+      }));
+      return;
+    }
+
+    setNotificationSettings((prev) => ({
+      ...prev,
+      desktopNotifications: true,
     }));
   };
 
@@ -82,7 +124,7 @@ const Settings = ({ setActiveView }) => {
                 className={`settings_switch ${
                   notificationSettings.desktopNotifications ? "is_on" : ""
                 }`}
-                onClick={() => flipState("desktopNotifications")}
+                onClick={toggleDesktopNotifications}
                 aria-checked={notificationSettings.desktopNotifications}
               >
                 <span />
