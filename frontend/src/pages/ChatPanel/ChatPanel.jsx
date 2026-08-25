@@ -12,6 +12,7 @@ import {
   NOTIFICATION_SETTINGS_CHANGED_EVENT,
   readNotificationSettings,
 } from "../../lib/notificationSettings.js";
+import { applyEditedMessageUpdate } from "./utils/applyEditedMessageUpdate.js";
 
 const isRequestCanceled = (err) =>
   axios.isCancel(err) ||
@@ -32,21 +33,6 @@ const ALLOWED_MIME_TYPES = new Set([
 const PickerMode = {
   QUICK: "quick",
   FULL: "full",
-};
-
-const applyEditedMessageUpdate = (messages, editedMessage) => {
-  if (!editedMessage?.messageId) return messages;
-
-  return messages.map((message) =>
-    message._id === editedMessage.messageId
-      ? {
-          ...message,
-          content: editedMessage.content,
-          edited: editedMessage.edited ?? message.edited,
-          updatedAt: editedMessage.updatedAt ?? message.updatedAt,
-        }
-      : message
-  );
 };
 
 function validateImageFile(file) {
